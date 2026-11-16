@@ -1,4 +1,4 @@
-const VERSION = '0.16.0';
+const VERSION = '0.16.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -127,7 +127,6 @@ function render() {
     const r = flipped ? 7-i : i, c = flipped ? 7-j : j;
     const d = document.createElement('div');
     d.className = 'sq ' + ((r+c)%2 ? 'dark' : 'light'); d.style.backgroundPosition = `${(c*37+r*11)%100}% ${(r*53+c*7)%100}%`;
-    const L = D.last; if (L && ((L.fr===r&&L.fc===c)||(L.tr===r&&L.tc===c))) d.classList.add('last');
     if (selected && selected[0]===r && selected[1]===c) d.classList.add('sel');
     if (chk && chk[0]===r && chk[1]===c) d.classList.add('check');
     const mv = legalForSel.find(m => m.tr===r && m.tc===c);
