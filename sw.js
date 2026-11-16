@@ -1,8 +1,8 @@
 // Bump CACHE_VERSION on every release so phones and tablets pick up the update.
-const CACHE_VERSION = 'hub-0.1.14';
+const CACHE_VERSION = 'hub-0.1.15';
 const FILES = [
   './', 'index.html', 'apps.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css', 'apps/chess/pieces.svg', 'apps/chess/logo.svg',
+  'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css', 'apps/chess/pieces/standard.svg', 'apps/chess/pieces/staunty.svg', 'apps/chess/pieces/royal.svg', 'apps/chess/pieces/regal.svg', 'apps/chess/logo.svg',
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
