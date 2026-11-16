@@ -128,3 +128,8 @@ body[data-font="marcellus"] { --display: Marcellus, serif; }
 .act:disabled { opacity:.45; cursor:default; }
 .ucount { display:block; font-family:Inter,sans-serif; font-size:.7rem; opacity:.75; margin-top:2px; text-transform:none; }
 #undo span { text-align:center; }
+
+#soundchoices { display:flex; flex-wrap:wrap; gap:8px; align-self:stretch; }
+.sndopt { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 14px; border-radius:12px; border:2px solid transparent; background:#3a2a1c; color:#f3e2c4; font:600 .95rem var(--display); cursor:pointer; }
+.sndopt.on { border-color:#e6c79a; background:#4e3826; }
+.sndopt .play { font-size:.75rem; opacity:.7; }

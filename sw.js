@@ -1,8 +1,8 @@
 // Bump CACHE_VERSION on every release so phones and tablets pick up the update.
-const CACHE_VERSION = 'hub-0.1.21';
+const CACHE_VERSION = 'hub-0.1.22';
 const FILES = [
   './', 'index.html', 'apps.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css', 'apps/chess/pieces/merida.svg', 'apps/chess/pieces/alpha.svg', 'apps/chess/pieces/maestro.svg', 'apps/chess/logo.svg',
+  'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css', 'apps/chess/pieces/merida.svg', 'apps/chess/sounds/standard/Move.mp3', 'apps/chess/sounds/standard/Capture.mp3', 'apps/chess/sounds/standard/GenericNotify.mp3', 'apps/chess/sounds/woodland/Move.mp3', 'apps/chess/sounds/woodland/Capture.mp3', 'apps/chess/sounds/woodland/GenericNotify.mp3', 'apps/chess/sounds/piano/Move.mp3', 'apps/chess/sounds/piano/Capture.mp3', 'apps/chess/sounds/piano/GenericNotify.mp3', 'apps/chess/sounds/sfx/Move.mp3', 'apps/chess/sounds/sfx/Capture.mp3', 'apps/chess/sounds/sfx/GenericNotify.mp3',  'apps/chess/pieces/alpha.svg', 'apps/chess/pieces/maestro.svg', 'apps/chess/logo.svg',
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

@@ -1,4 +1,4 @@
-const VERSION = '0.13.0';
+const VERSION = '0.13.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -180,32 +180,21 @@ function slide(fr, fc, tr, tc) {
   requestAnimationFrame(() => requestAnimationFrame(() => { pc.style.transition = 'transform .18s cubic-bezier(.3,.7,.4,1)'; pc.style.transform = ''; }));
 }
 
-// ---- sounds (made in code, no files) ----
-let AC = null;
-function sound(kind) {
+// ---- sounds (lichess sound sets, chosen in Settings; Off by default) ----
+const SOUNDS = [['off','Off'],['standard','Classic'],['woodland','Wooden'],['piano','Piano'],['sfx','Soft']];
+let SND = 'off';
+try { const v = localStorage.getItem('gambit-sound'); if (SOUNDS.some(x => x[0] === v)) SND = v; } catch {}
+const audioCache = {};
+function playFile(set, file) {
+  if (set === 'off') return;
   try {
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    if (AC.state === 'suspended') AC.resume();
-    const now = AC.currentTime;
-    const knock = (t, freq, vol, len) => {
-      const n = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate), d = n.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 4);
-      const src = AC.createBufferSource(); src.buffer = n;
-      const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
-      const g = AC.createGain(); g.gain.value = vol;
-      src.connect(f).connect(g).connect(AC.destination); src.start(now + t);
-    };
-    const tone = (t, freq, vol, len) => {
-      const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = freq;
-      g.gain.setValueAtTime(0, now + t); g.gain.linearRampToValueAtTime(vol, now + t + .02); g.gain.exponentialRampToValueAtTime(.0001, now + t + len);
-      o.connect(g).connect(AC.destination); o.start(now + t); o.stop(now + t + len);
-    };
-    if (kind === 'move') knock(0, 1400, 1.2, .07);
-    if (kind === 'castle') { knock(0, 1400, 1.1, .07); knock(.09, 1300, 1, .07); }
-    if (kind === 'capture') { knock(0, 900, 2.2, .1); knock(.03, 2200, .8, .05); }
-    if (kind === 'check') { knock(0, 1200, 1.2, .07); tone(.05, 660, .18, .25); tone(.17, 880, .16, .3); }
-    if (kind === 'end') { knock(0, 1000, 1.4, .08); tone(.08, 523, .16, .9); tone(.08, 659, .14, .9); tone(.08, 784, .12, .9); }
+    const key = set + '/' + file;
+    const a = audioCache[key] || (audioCache[key] = new Audio(`sounds/${set}/${file}.mp3`));
+    a.currentTime = 0; a.play().catch(() => {});
   } catch {}
+}
+function sound(kind) {
+  playFile(SND, kind === 'capture' ? 'Capture' : kind === 'end' ? 'GenericNotify' : 'Move');
 }
 
 // ---- tap and drag on the board ----
@@ -272,6 +261,13 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('../../sw.js'
 
 // Settings
 function renderSettings() {
+  const sb = document.getElementById('soundchoices'); sb.innerHTML = '';
+  for (const [id, name] of SOUNDS) {
+    const b = document.createElement('button'); b.className = 'sndopt' + (id === SND ? ' on' : '');
+    b.innerHTML = `<span>${name}</span>${id !== 'off' ? '<span class="play">▶</span>' : ''}`;
+    b.onclick = () => { SND = id; try { localStorage.setItem('gambit-sound', id); } catch {} playFile(id, 'Move'); setTimeout(() => playFile(id, 'Capture'), 450); renderSettings(); };
+    sb.appendChild(b);
+  }
   const box = document.getElementById('setchoices'); box.innerHTML = '';
   for (const [id, name] of SETS) {
     const b = document.createElement('button'); b.className = 'setopt' + (id === PSET ? ' on' : '');
