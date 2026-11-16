@@ -46,9 +46,9 @@ function render() {
   for (const a of catalog.apps) {
     const have = hasHub ? Hub.installedVersion(a.package) : '';
     const row = document.createElement('div'); row.className = 'app';
-    let meta = have ? `Installed v${have}` : 'Not installed';
+    let meta = have ? `Installed v${a.live || have}` : 'Not installed';
     if (have && newer(a.version, have)) meta += ` · v${a.version} available`;
-    else if (!have) meta += ` · v${a.version}`;
+    else if (!have) meta += ` · v${a.live || a.version}`;
     row.innerHTML = `<div class="icon">${a.icon}</div><div class="info"><div class="name">${a.name}</div><div class="meta">${meta}</div>${status[a.id] ? `<div class="status">${status[a.id]}</div>` : ''}</div>`;
     const btn = document.createElement('button');
     if (!have) { btn.className = 'install'; btn.textContent = 'Install'; btn.onclick = () => { onStatus(a.id, 'Starting download…'); Hub.install(a.id, apkUrl(a)); }; }
