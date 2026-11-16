@@ -1,0 +1,23 @@
+name: Publish uploaded APK
+# For ready-made APKs too big to keep in the repo (like Quillsong). Push a temporary branch named
+# upload/<id>-<version> holding the APK split into upload/part-* (each under 100 MB). This joins
+# the parts, publishes release <id>-v<version> with <id>.apk for App Hub, then deletes the branch.
+on:
+  push:
+    branches: ['upload/**']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Join parts and release
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          name="${GITHUB_REF_NAME#upload/}"; id="${name%-*}"; ver="${name##*-}"; tag="$id-v$ver"
+          cat upload/part-* > "$id.apk"
+          (cd upload && sha256sum -c sha256.txt)
+          if gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "$tag already released"; else
+            gh release create "$tag" "$id.apk" -R "$GITHUB_REPOSITORY" --target main --title "$id $ver" --notes "$id version $ver"; fi
+          git push origin --delete "$GITHUB_REF_NAME"
