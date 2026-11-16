@@ -1,4 +1,4 @@
-const VERSION = '0.13.1';
+const VERSION = '0.13.2';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -160,7 +160,6 @@ function tap(r, c) {
 }
 const sqEl = (r, c) => boardEl.children[flipped ? (7-r)*8 + (7-c) : r*8 + c];
 function doMove(m, animate = true) {
-  const captured = !!(S.board[m.tr][m.tc] || m.enpassant);
   history.push(S); S = apply(S, m);
   const k = posKey(S); S.positions[k] = (S.positions[k]||0) + 1;
   selected = null; legalForSel = []; save(); render();
@@ -169,8 +168,6 @@ function doMove(m, animate = true) {
     if (m.castle === 'K') slide(m.tr, 7, m.tr, 5);
     if (m.castle === 'Q') slide(m.tr, 0, m.tr, 3);
   }
-  const over = result(S);
-  sound(over ? 'end' : inCheck(S, S.turn) ? 'check' : captured ? 'capture' : m.castle ? 'castle' : 'move');
 }
 function slide(fr, fc, tr, tc) {
   const from = sqEl(fr, fc).getBoundingClientRect(), to = sqEl(tr, tc), pc = to.querySelector('svg.pc');
@@ -178,23 +175,6 @@ function slide(fr, fc, tr, tc) {
   const t = to.getBoundingClientRect();
   pc.style.transition = 'none'; pc.style.transform = `translate(${from.left - t.left}px, ${from.top - t.top}px)`; pc.style.zIndex = 5;
   requestAnimationFrame(() => requestAnimationFrame(() => { pc.style.transition = 'transform .18s cubic-bezier(.3,.7,.4,1)'; pc.style.transform = ''; }));
-}
-
-// ---- sounds (lichess sound sets, chosen in Settings; Off by default) ----
-const SOUNDS = [['off','Off'],['standard','Classic'],['woodland','Wooden'],['piano','Piano'],['sfx','Soft']];
-let SND = 'off';
-try { const v = localStorage.getItem('gambit-sound'); if (SOUNDS.some(x => x[0] === v)) SND = v; } catch {}
-const audioCache = {};
-function playFile(set, file) {
-  if (set === 'off') return;
-  try {
-    const key = set + '/' + file;
-    const a = audioCache[key] || (audioCache[key] = new Audio(`sounds/${set}/${file}.mp3`));
-    a.currentTime = 0; a.play().catch(() => {});
-  } catch {}
-}
-function sound(kind) {
-  playFile(SND, kind === 'capture' ? 'Capture' : kind === 'end' ? 'GenericNotify' : 'Move');
 }
 
 // ---- tap and drag on the board ----
@@ -261,13 +241,6 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('../../sw.js'
 
 // Settings
 function renderSettings() {
-  const sb = document.getElementById('soundchoices'); sb.innerHTML = '';
-  for (const [id, name] of SOUNDS) {
-    const b = document.createElement('button'); b.className = 'sndopt' + (id === SND ? ' on' : '');
-    b.innerHTML = `<span>${name}</span>${id !== 'off' ? '<span class="play">▶</span>' : ''}`;
-    b.onclick = () => { SND = id; try { localStorage.setItem('gambit-sound', id); } catch {} playFile(id, 'Move'); setTimeout(() => playFile(id, 'Capture'), 450); renderSettings(); };
-    sb.appendChild(b);
-  }
   const box = document.getElementById('setchoices'); box.innerHTML = '';
   for (const [id, name] of SETS) {
     const b = document.createElement('button'); b.className = 'setopt' + (id === PSET ? ' on' : '');
