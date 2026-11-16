@@ -234,3 +234,18 @@ body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,
 #undo, #hint, #flip { grid-column:span 2; }
 .actions.solo #undo, .actions.solo #hint { grid-column:span 3; }
 #hint.busy span::after { content:'…'; }
+
+/* 0.23.0: game review */
+.moves-card { flex-direction:column; gap:8px; }
+.revbtn { align-self:stretch; padding:10px; border-radius:10px; border:1px solid var(--p3); background:var(--b2); color:#f3e2c4; font:600 .95rem var(--display); cursor:pointer; }
+.review-card[hidden] { display:none; }
+.review-card { display:flex; flex-direction:column; gap:8px; padding:12px 14px; border-radius:14px; background:var(--well); border:1px solid var(--p3); color:#f3e2c4; }
+.evalbar { height:14px; border-radius:7px; background:#1a1512; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,.6); }
+#evalfill { height:100%; width:50%; background:linear-gradient(180deg,#fffaf0,#e6dccb); transition:width .35s; }
+#evaltxt { font:600 .9rem Inter,sans-serif; color:var(--soft); }
+.rrow { display:flex; align-items:center; gap:10px; font:600 .85rem Inter,sans-serif; }
+.rrow b { width:46px; color:#f3e2c4; }
+.q { font-style:normal; font-weight:800; }
+#moves .q { margin-left:6px; font-size:.8rem; }
+.q-best { color:#e8b84a; } .q-good { color:#d8c8a8; } .q-inaccuracy { color:#e7b04a; } .q-mistake { color:#e07a40; } .q-blunder { color:#e0463a; }
+#moves .mv.cur .q-best { color:#9a6a10; } #moves .mv.cur .q-good { color:#6b5a3a; } #moves .mv.cur .q-inaccuracy { color:#a06a10; } #moves .mv.cur .q-mistake { color:#a84a18; } #moves .mv.cur .q-blunder { color:#b02418; }

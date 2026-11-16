@@ -1,4 +1,4 @@
-const VERSION = '0.22.0';
+const VERSION = '0.23.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -60,7 +60,7 @@ const LEVELS = [
   { name:'Master',   skill:20, ms:1500,           think:[2.5, 5] } ];
 let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
 try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeof v.cpu === 'boolean') setup = v; } catch {}
-let hintMove = null, hintBusy = false;
+let hintMove = null, hintBusy = false, review = null, reviewing = false, lastScore = null;
 let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
@@ -167,7 +167,7 @@ const boardEl = document.getElementById('board'), statusEl = document.getElement
 const UNDO_LIMIT = 3;
 let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
 function newGame() {
-  cancelThink(); hintMove = null;
+  cancelThink(); hintMove = null; if (review || reviewing) stopReview();
   mode = setup.cpu ? { cpu:true, level:setup.level, human: setup.color === 'r' ? (Math.random() < .5 ? 'w' : 'b') : setup.color } : { cpu:false };
   if (mode.cpu) flipped = mode.human === 'b';
   clock = timeCtl ? { base: timeCtl[0], inc: timeCtl[1], w: timeCtl[0]*60000, b: timeCtl[0]*60000, flag: null } : null; viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); maybeCpu(); }
@@ -202,7 +202,12 @@ function render() {
     btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
   renderMoves(); renderClock(); drawHint();
   { const h = document.getElementById('hint'); h.disabled = !!result(S) || cpuTurn() || viewIdx != null; h.classList.toggle('busy', hintBusy); }
-  if (viewIdx != null) { statusEl.textContent = `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`; statusEl.classList.remove('over'); return; }
+  renderReview();
+  if (viewIdx != null) {
+    const c = review?.cls[viewIdx], label = `${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} ${sanAt(viewIdx)}`;
+    statusEl.textContent = c ? `${label}: ${QNAME[c]}${c !== 'best' && review.bestSan[viewIdx] ? `. Better was ${review.bestSan[viewIdx]}` : ''}` : `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`;
+    statusEl.classList.remove('over'); return; }
+  if (reviewing) { statusEl.textContent = `Reviewing the game… ${reviewing.done} / ${reviewing.total}`; return; }
   statusEl.textContent = over || (hintMove && !cpuTurn() ? `Hint: ${hintMove.san}` : '') || (mode.cpu ? (S.turn === mode.human ? 'Your move' : 'Computer is thinking…') : `${S.turn==='w' ? 'White' : 'Black'} to move`) + (chk ? ' (check!)' : '');
 }
 
@@ -227,6 +232,7 @@ function doMove(m, animate = true) {
   const rookFrom = m.castle ? sqEl(m.tr, m.castle === 'K' ? 7 : 0).getBoundingClientRect() : null;
   if (clock && history.length) clock[S.turn] += clock.inc * 1000;
   hintMove = null; if (hintBusy) { hintBusy = false; cancelThink(); }
+  if (review || reviewing) stopReview();
   history.push(S); S = apply(S, m);
   const k = posKey(S); S.positions[k] = (S.positions[k]||0) + 1;
   selected = null; legalForSel = []; save(); render();
@@ -367,7 +373,7 @@ document.getElementById('undo').onclick = () => {
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;
   cancelThink();
-  hintMove = null; undos[who]--; viewIdx = null; for (let i = 0; i < n; i++) S = history.pop(); selected = null; legalForSel = []; save(); render();
+  if (review || reviewing) stopReview(); hintMove = null; undos[who]--; viewIdx = null; for (let i = 0; i < n; i++) S = history.pop(); selected = null; legalForSel = []; save(); render();
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
@@ -431,7 +437,7 @@ function renderMoves() {
   el._cache.length = sans.length;
   let h = '';
   for (let i = 0; i < sans.length; i += 2) {
-    const cell = j => j < sans.length ? `<span class="mv${(viewIdx ?? sans.length-1) === j ? ' cur' : ''}" data-i="${j}">${sans[j]}</span>` : '<span></span>';
+    const cell = j => j < sans.length ? `<span class="mv${(viewIdx ?? sans.length-1) === j ? ' cur' : ''}" data-i="${j}">${sans[j]}${review?.cls[j] ? `<i class="q q-${review.cls[j]}">${QSYM[review.cls[j]]}</i>` : ''}</span>` : '<span></span>';
     h += `<span class="num">${i/2+1}.</span>${cell(i)}${cell(i+1)}`;
   }
   el.innerHTML = h || '<span class="empty">Moves will appear here</span>';
@@ -501,6 +507,7 @@ function getEngine() {
   engine = new Worker('engine/stockfish.js');
   engine.onmessage = e => {
     const line = typeof e.data === 'string' ? e.data : '';
+    if (line.startsWith('info') && line.includes(' score ')) { const m = line.match(/score (cp|mate) (-?\d+)/); if (m) lastScore = { [m[1]]: +m[2] }; return; }
     if (!line.startsWith('bestmove')) return;
     searching = false;
     if (ignoreBest > 0) { ignoreBest--; return; }
@@ -610,3 +617,64 @@ document.getElementById('hint').onclick = () => {
   eng.postMessage('position fen ' + fen(S));
   searching = true; eng.postMessage('go movetime 800');
 };
+
+// ---- game review: the engine checks every position and rates each move ----
+const QSYM = { best:'★', good:'✓', inaccuracy:'?!', mistake:'?', blunder:'??' };
+const QNAME = { best:'Best move', good:'Good move', inaccuracy:'Inaccuracy', mistake:'Mistake', blunder:'Blunder' };
+const sanAt = j => document.querySelector(`#moves .mv[data-i="${j}"]`)?.firstChild?.textContent || '';
+const winChance = cp => 1 / (1 + Math.pow(10, -cp / 400));   // 0..1 for White
+function scoreToWhite(sc, turn) {
+  let cp = sc.mate != null ? (sc.mate > 0 ? 10000 - sc.mate : -10000 - sc.mate) : sc.cp;
+  if (sc.mate === 0) cp = -10000;
+  return turn === 'w' ? cp : -cp;
+}
+function stopReview() { if (reviewing) cancelThink(); reviewing = false; review = null; }
+function startReview() {
+  if (reviewing || history.length < 1) return;
+  cancelThink(); hintMove = null; viewIdx = null;
+  const positions = [...history, S], evals = [], bests = [];
+  reviewing = { done: 0, total: positions.length };
+  const eng = getEngine(); eng.postMessage('setoption name Skill Level value 20');
+  const next = i => {
+    if (!reviewing) return;
+    reviewing.done = i; render();
+    if (i === positions.length) return finishReview(positions, evals, bests);
+    const p = positions[i], legal = allLegal(p);
+    if (!legal.length) { evals[i] = inCheck(p, p.turn) ? (p.turn === 'w' ? -10000 : 10000) : 0; bests[i] = null; return next(i + 1); }
+    lastScore = null;
+    onBest = uci => { evals[i] = lastScore ? scoreToWhite(lastScore, p.turn) : (evals[i - 1] || 0); bests[i] = uci; setTimeout(() => next(i + 1), 0); };
+    eng.postMessage('position fen ' + fenOf(p, i)); searching = true; eng.postMessage('go movetime 250');
+  };
+  next(0);
+}
+function fenOf(p, plies) { const h = history; return fen(p).replace(/ \d+$/, ' ' + (Math.floor(plies / 2) + 1)); }
+function finishReview(positions, evals, bests) {
+  const cls = [], bestSan = [], counts = { w:{}, b:{} };
+  for (let j = 0; j < positions.length - 1; j++) {
+    const pre = positions[j], post = positions[j + 1], m = post.last, who = pre.turn;
+    const uci = 'abcdefgh'[m.fc] + (8 - m.fr) + 'abcdefgh'[m.tc] + (8 - m.tr) + (m.promo || '');
+    const before = winChance(evals[j]), after = winChance(evals[j + 1]);
+    const loss = who === 'w' ? before - after : after - before;
+    let c = uci === bests[j] ? 'best' : loss < .05 ? 'good' : loss < .10 ? 'inaccuracy' : loss < .15 ? 'mistake' : 'blunder';
+    cls[j] = c; counts[who][c] = (counts[who][c] || 0) + 1;
+    if (c !== 'best' && bests[j]) { const F = 'abcdefgh', b = bests[j];
+      const bm = allLegal(pre).find(x => x.fc === F.indexOf(b[0]) && x.fr === 8 - +b[1] && x.tc === F.indexOf(b[2]) && x.tr === 8 - +b[3] && (!b[4] || x.promo === b[4]));
+      bestSan[j] = bm ? san(pre, bm) : ''; }
+  }
+  reviewing = false; review = { evals, cls, bestSan, counts };
+  viewIdx = positions.length > 1 ? 0 : null; render();
+}
+function renderReview() {
+  const card = document.getElementById('reviewcard'), btn = document.getElementById('reviewbtn');
+  btn.hidden = !!review || !!reviewing || history.length < 2 || !(result(S) || (!mode.cpu && !clock));
+  card.hidden = !review && !reviewing;
+  if (!review) { document.getElementById('evalfill').style.width = '50%'; document.getElementById('evaltxt').textContent = reviewing ? 'Checking moves…' : ''; document.getElementById('revcounts').innerHTML = ''; return; }
+  const idx = viewIdx == null ? review.evals.length - 1 : viewIdx + 1, cp = review.evals[idx] ?? 0;
+  document.getElementById('evalfill').style.width = (winChance(Math.max(-1500, Math.min(1500, cp))) * 100).toFixed(1) + '%';
+  document.getElementById('evaltxt').textContent = Math.abs(cp) >= 9000 ? (cp > 0 ? 'White is winning (checkmate)' : 'Black is winning (checkmate)') : Math.abs(cp) < 30 ? 'Even' : `${cp > 0 ? 'White' : 'Black'} is ahead by ${(Math.abs(cp) / 100).toFixed(1)}`;
+  const row = side => `<div class="rrow"><b>${side === 'w' ? 'White' : 'Black'}</b>${['best','good','inaccuracy','mistake','blunder'].map(k => `<span class="q q-${k}" title="${QNAME[k]}">${QSYM[k]} ${review.counts[side][k] || 0}</span>`).join('')}</div>`;
+  document.getElementById('revcounts').innerHTML = row('w') + row('b');
+}
+document.getElementById('reviewbtn').onclick = startReview;
+document.getElementById('winreview').onclick = () => { document.getElementById('win').classList.remove('show'); startReview(); };
+render();
