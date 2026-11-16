@@ -5,7 +5,8 @@ document.getElementById('ver').textContent = VERSION;
 
 // Board: board[r][c], r=0 is rank 8. Piece = {t:'p|n|b|r|q|k', c:'w|b'} or null.
 let PSET = new URLSearchParams(location.search).get('pieces') || 'standard';
-const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
+let PFX = new URLSearchParams(location.search).get('fx') || '';
+const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use href="pieces/${PSET}.svg#${c}${t}"${PFX ? ` filter="url(#${PFX})"` : ''}/></svg>`;
 const VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
