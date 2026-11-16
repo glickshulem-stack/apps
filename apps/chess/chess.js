@@ -1,4 +1,4 @@
-const VERSION = '0.19.0';
+const VERSION = '0.20.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -7,15 +7,30 @@ document.getElementById('ver').textContent = VERSION;
 // Piece sets offered in Settings. Add more here later.
 const SETS = [['maestro','Maestro'],['merida','Merida'],['alpha','Alpha']];
 let PSET = 'maestro';
-// Board colors offered in Settings: [id, name, light square, dark square]. Same board style, different colors.
-const BOARDS = [['fide','Tournament','#e6c79a','#9a6a3e'],['maple','Maple','#f0d9b5','#b58863'],['cherry','Cherry','#f0d2c0','#a0523d'],
-  ['mahogany','Mahogany','#e9c9a6','#6e3b24'],['burgundy','Burgundy','#f1dcc6','#8c3b3b'],['stone','Stone','#ece6da','#7d746c']];
+// Boards offered in Settings. Each is a matched set: board squares, page background and panel colors,
+// in the same style as the original Tournament board on saddle leather.
+const NOISE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")`;
+const leather = (a, b, c) => `${NOISE}, radial-gradient(1000px 700px at 35% 45%, ${a} 0%, ${b} 55%, ${c} 100%)`;
+const marble = (n, col) => `url(boards/${n}.jpg) ${col}`;
+const BROWN = { p1:'#4a3422', p2:'#2e2016', p3:'#6b4c32', b1:'#5a3f29', b2:'#43301f', b3:'#7a5838', chip:'#3a2a1c', chipon:'#4e3826', well:'rgba(46,32,22,.55)', soft:'#c9a880' };
+const panel = (p1, p2, p3, soft) => ({ p1, p2, p3, b1:p1, b2:p2, b3:p3, chip:p2, chipon:p1, well:`color-mix(in srgb, ${p2} 60%, transparent)`, soft });
+const BOARDS = [
+  { id:'fide', name:'Tournament', l:'#e6c79a', d:'#9a6a3e', page:leather('#bf8650','#a06a3a','#7a4e28'), ui:BROWN },
+  { id:'maple', name:'Maple', l:'#f0d9b5', d:'#b58863', page:leather('#b4743f','#94592c','#6e3f1d'), ui:BROWN },
+  { id:'mahogany', name:'Mahogany', l:'#e9c9a6', d:'#6e3b24', page:leather('#8e4630','#6e2e1e','#481a0e'), ui:panel('#4a2218','#2c120c','#6e3626','#c99a88') },
+  { id:'stone', name:'Stone', l:'#ece6da', d:'#7d746c', page:leather('#8a847b','#6a655e','#45423d'), ui:panel('#3e3b37','#252321','#5a5650','#b5aea4') },
+  { id:'emerald', name:'Emerald', l:marble('green-l','#e6e9de'), d:marble('green-d','#1e4a3a'), cl:'#1e4a3a', cd:'#e6e9de', page:leather('#2f5e4b','#1f4436','#11281f'), ui:panel('#1f3d31','#11251d','#355e4c','#a9c4b6') },
+  { id:'royal', name:'Royal Blue', l:marble('blue-l','#e9ecf2'), d:marble('blue-d','#1f3b7c'), cl:'#1f3b7c', cd:'#e9ecf2', page:leather('#33569c','#22407c','#142650'), ui:panel('#20345f','#121e3a','#36508a','#a9b8d8') },
+  { id:'amethyst', name:'Amethyst', l:marble('purple-l','#eee8f1'), d:marble('purple-d','#4a2a6e'), cl:'#4a2a6e', cd:'#eee8f1', page:leather('#5e3a82','#452a62','#28173c'), ui:panel('#3a2452','#221432','#5a3c78','#c2aed6') },
+];
 let BOARD = 'fide';
-try { const v = localStorage.getItem('gambit-board'); if (BOARDS.some(x => x[0] === v)) BOARD = v; } catch {}
+try { const v = localStorage.getItem('gambit-board'); if (BOARDS.some(x => x.id === v)) BOARD = v; } catch {}
 { const q = new URLSearchParams(location.search).get('board'); if (q) BOARD = q; }
 function applyBoard() {
-  const b = BOARDS.find(x => x[0] === BOARD) || BOARDS[0], st = document.body.style;
-  st.setProperty('--light', b[2]); st.setProperty('--dark', b[3]); st.setProperty('--cl', b[3]); st.setProperty('--cd', b[2]);
+  const b = BOARDS.find(x => x.id === BOARD) || BOARDS[0], st = document.body.style;
+  st.setProperty('--light', b.l); st.setProperty('--dark', b.d); st.setProperty('--cl', b.cl || b.d); st.setProperty('--cd', b.cd || b.l);
+  st.setProperty('--page', b.page);
+  for (const [k, v] of Object.entries(b.ui)) st.setProperty('--' + k, v);
 }
 applyBoard();
 try { const v = localStorage.getItem('gambit-pieces'); if (SETS.some(x => x[0] === v)) PSET = v; } catch {}
@@ -359,10 +374,10 @@ function renderSettings() {
     box.appendChild(b);
   }
   const bb = document.getElementById('boardchoices'); bb.innerHTML = '';
-  for (const [id, name, l, d] of BOARDS) {
+  for (const { id, name, l, d, page } of BOARDS) {
     const b = document.createElement('button'); b.className = 'boardopt' + (id === BOARD ? ' on' : '');
-    let cells = ''; for (let i = 0; i < 16; i++) cells += `<i style="background:${(i + (i >> 2)) % 2 ? d : l}"></i>`;
-    b.innerHTML = `<div class="boardprev">${cells}</div><div class="setname">${name}</div>`;
+    let cells = ''; for (let i = 0; i < 16; i++) cells += `<i style="background:${(i + (i >> 2)) % 2 ? d : l}; background-position:${i*29%100}% ${i*47%100}%"></i>`;
+    b.innerHTML = `<div class="boardprev" style="background:${page}; border-radius:8px"><div class="mini">${cells}</div></div><div class="setname">${name}</div>`;
     b.onclick = () => { BOARD = id; try { localStorage.setItem('gambit-board', id); } catch {} applyBoard(); renderSettings(); };
     bb.appendChild(b);
   }
