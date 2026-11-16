@@ -1,0 +1,5 @@
+{
+  "apps": [
+    { "id": "hub", "name": "App Hub", "icon": "▦", "package": "com.glickshulem.apphub", "version": "0.2.0" }
+  ]
+}

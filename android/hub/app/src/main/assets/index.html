@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>App Hub</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:system-ui,Roboto,sans-serif; background:#111827; color:#f9fafb; min-height:100vh; user-select:none; }
+  header { padding:28px 16px 8px; text-align:center; }
+  h1 { margin:0; font-size:1.8rem; }
+  .ver { color:#9ca3af; font-size:.85rem; margin-top:4px; }
+  main { display:flex; flex-direction:column; gap:12px; padding:16px; max-width:700px; margin:0 auto; }
+  .app { display:flex; align-items:center; gap:14px; padding:16px; background:#1f2937; border-radius:16px; }
+  .icon { font-size:2.6rem; width:56px; text-align:center; }
+  .info { flex:1; min-width:0; }
+  .name { font-weight:600; font-size:1.15rem; }
+  .meta { color:#9ca3af; font-size:.85rem; margin-top:2px; }
+  .status { color:#f59e0b; font-size:.85rem; margin-top:2px; }
+  button { border:0; border-radius:10px; padding:10px 16px; font-size:1rem; font-weight:600; cursor:pointer; }
+  .install { background:#f59e0b; color:#111; } .update { background:#10b981; color:#111; } .open { background:#374151; color:#f9fafb; }
+  .msg { text-align:center; color:#9ca3af; padding:24px; }
+</style>
+</head>
+<body>
+<header><h1>App Hub</h1><div class="ver">v<span id="ver"></span></div></header>
+<main id="list"><div class="msg">Loading apps…</div></main>
+<script>
+const REPO = 'glickshulem-stack/apps';
+const hasHub = typeof Hub !== 'undefined';
+document.getElementById('ver').textContent = hasHub ? Hub.hubVersion() : 'web';
+const status = {};
+let catalog = null;
+
+function newer(a, b) { // is a > b ?
+  const x = a.split('.').map(Number), y = (b || '0').split('.').map(Number);
+  for (let i = 0; i < 3; i++) { if ((x[i]||0) !== (y[i]||0)) return (x[i]||0) > (y[i]||0); }
+  return false;
+}
+function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
+function onStatus(id, text) { status[id] = text; render(); }
+
+function render() {
+  if (!catalog) return;
+  const list = document.getElementById('list'); list.innerHTML = '';
+  for (const a of catalog.apps) {
+    const have = hasHub ? Hub.installedVersion(a.package) : '';
+    const row = document.createElement('div'); row.className = 'app';
+    let meta = have ? `Installed v${have}` : 'Not installed';
+    if (have && newer(a.version, have)) meta += ` · v${a.version} available`;
+    else if (!have) meta += ` · v${a.version}`;
+    row.innerHTML = `<div class="icon">${a.icon}</div><div class="info"><div class="name">${a.name}</div><div class="meta">${meta}</div>${status[a.id] ? `<div class="status">${status[a.id]}</div>` : ''}</div>`;
+    const btn = document.createElement('button');
+    if (!have) { btn.className = 'install'; btn.textContent = 'Install'; btn.onclick = () => { onStatus(a.id, 'Starting download…'); Hub.install(a.id, apkUrl(a)); }; }
+    else if (newer(a.version, have)) { btn.className = 'update'; btn.textContent = 'Update'; btn.onclick = () => { onStatus(a.id, 'Starting download…'); Hub.install(a.id, apkUrl(a)); }; }
+    else if (a.package !== 'com.glickshulem.apphub') { btn.className = 'open'; btn.textContent = 'Open'; btn.onclick = () => Hub.open(a.package); }
+    else btn.style.display = 'none';
+    row.appendChild(btn); list.appendChild(row);
+  }
+}
+
+async function refresh() {
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/catalog.json?t=${Date.now()}`, { cache: 'no-store' });
+    catalog = await r.json();
+    try { localStorage.setItem('catalog', JSON.stringify(catalog)); } catch {}
+  } catch {
+    try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
+    if (!catalog) { document.getElementById('list').innerHTML = '<div class="msg">No internet. Connect and reopen App Hub.</div>'; return; }
+  }
+  render();
+}
+refresh();
+</script>
+</body>
+</html>

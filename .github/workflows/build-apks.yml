@@ -1,0 +1,40 @@
+name: Build APKs
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/build-apks.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+      - name: Signing key
+        env: { KEYSTORE_B64: '${{ secrets.KEYSTORE_B64 }}' }
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "Missing KEYSTORE_B64 secret"; exit 1; fi
+          echo "$KEYSTORE_B64" | base64 -d > $RUNNER_TEMP/release.jks
+      - name: Build and release each app whose version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: apps
+        run: |
+          for dir in android/*/; do
+            id=$(basename "$dir")
+            [ -f "$dir/app/build.gradle" ] || continue
+            ver=$(grep -oP "versionName '\K[^']+" "$dir/app/build.gradle")
+            tag="$id-v$ver"
+            if gh release view "$tag" >/dev/null 2>&1; then echo "$tag already released"; continue; fi
+            (cd "$dir" && gradle --no-daemon assembleRelease)
+            cp "$dir/app/build/outputs/apk/release/app-release.apk" "$id.apk"
+            gh release create "$tag" "$id.apk" --title "$id $ver" --notes "$id version $ver"
+          done
