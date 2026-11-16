@@ -1,5 +1,18 @@
 {
   "apps": [
-    { "id": "hub", "name": "App Hub", "icon": "▦", "package": "com.glickshulem.apphub", "version": "0.2.0" }
+    {
+      "id": "hub",
+      "name": "App Hub",
+      "icon": "▦",
+      "package": "com.glickshulem.apphub",
+      "version": "0.2.0"
+    },
+    {
+      "id": "chess",
+      "name": "Chess",
+      "icon": "♞",
+      "package": "com.glickshulem.chess",
+      "version": "0.2.0"
+    }
   ]
 }
