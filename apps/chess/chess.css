@@ -121,3 +121,6 @@ body[data-font="cinzel"] { --display: Cinzel, serif; }
 body[data-font="playfair"] { --display: "Playfair Display", serif; }
 body[data-font="marcellus"] { --display: Marcellus, serif; }
 .brand .name, #status, .dtitle, .act, .setname { font-family: var(--display); }
+
+#board { touch-action:none; }
+.sq svg.pc { will-change:transform; }

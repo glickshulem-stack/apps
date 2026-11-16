@@ -16,7 +16,7 @@
       "icon": "♞",
       "package": "com.glickshulem.chess",
       "version": "0.3.0",
-      "live": "0.11.0",
+      "live": "0.12.0",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Two-player chess on one tablet with full rules, tournament wood board and a clean landscape layout. Playing the computer is coming soon.",
