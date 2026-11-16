@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>App Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f6f7f9; --surface:#fff; --text:#15171c; --muted:#6b7280; --line:#e6e8ec; --accent:#2563eb; --accent2:#1d4ed8; --ok:#16a34a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:Inter,system-ui,Roboto,sans-serif; background:var(--bg); color:var(--text); user-select:none; }
+  .appbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:14px 20px; background:rgba(246,247,249,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .appbar img { width:34px; height:34px; border-radius:9px; }
+  .appbar h1 { margin:0; font-size:1.3rem; font-weight:800; flex:1; }
+  .iconbtn { width:42px; height:42px; border-radius:50%; border:0; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+  .iconbtn:active { background:var(--line); }
+  .iconbtn svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  main { max-width:1100px; margin:0 auto; padding:20px; }
+  .hero { position:relative; overflow:hidden; display:flex; align-items:center; gap:24px; padding:28px; border-radius:24px; color:#f3e2c4; cursor:pointer;
+    background:linear-gradient(120deg,#2b1d12 0%,#4a3422 55%,#6b4a2c 100%); box-shadow:0 12px 30px rgba(43,29,18,.25); }
+  .hero::after { content:''; position:absolute; right:-40px; top:-40px; width:260px; height:260px; opacity:.12;
+    background:conic-gradient(#e6c79a 0 25%, transparent 0 50%, #e6c79a 0 75%, transparent 0) 0 0/65px 65px; transform:rotate(12deg); }
+  .hero img { width:96px; height:96px; filter:drop-shadow(0 6px 12px rgba(0,0,0,.4)); z-index:1; }
+  .hero .k { font-size:.8rem; letter-spacing:.12em; text-transform:uppercase; color:#e6c79a; font-weight:700; }
+  .hero h2 { margin:4px 0 6px; font-size:2rem; font-weight:800; color:#fff3dc; }
+  .hero p { margin:0; color:#e9d5b3; max-width:440px; }
+  .hero .z { z-index:1; flex:1; }
+  h3 { font-size:1.15rem; margin:28px 4px 12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .card { display:flex; align-items:center; gap:16px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:18px; }
+  .card .ic { width:64px; height:64px; border-radius:16px; background:#f1f2f4; display:flex; align-items:center; justify-content:center; flex:none; overflow:hidden; }
+  .card .ic img { width:56px; height:56px; }
+  .info { flex:1; min-width:0; }
+  .name { font-weight:700; font-size:1.05rem; }
+  .sub { color:var(--muted); font-size:.85rem; margin-top:2px; }
+  .meta { color:var(--muted); font-size:.8rem; margin-top:6px; }
+  .status { color:var(--accent); font-size:.8rem; margin-top:4px; font-weight:600; }
+  .btn { border:0; border-radius:999px; padding:10px 20px; font:700 .95rem Inter,sans-serif; cursor:pointer; }
+  .btn.install { background:var(--accent); color:#fff; } .btn.update { background:var(--ok); color:#fff; } .btn.open { background:#eef2ff; color:var(--accent2); }
+  .btn:active { transform:scale(.96); }
+  .msg { text-align:center; color:var(--muted); padding:40px; }
+  .sheet-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:10; align-items:flex-end; justify-content:center; }
+  .sheet-bg.show { display:flex; }
+  @media (min-width:700px) { .sheet-bg { align-items:center; } }
+  .sheet { width:min(520px,100%); background:var(--surface); border-radius:24px 24px 0 0; padding:20px; }
+  @media (min-width:700px) { .sheet { border-radius:24px; } }
+  .sheet h4 { margin:0 0 12px; font-size:1.2rem; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
+  .row span:last-child { color:var(--muted); }
+  .row.click { cursor:pointer; } .row.click span:first-child { color:var(--accent); font-weight:600; }
+</style>
+</head>
+<body>
+<header class="appbar">
+  <img src="../icon.svg" alt="">
+  <h1>App Hub</h1>
+  <button class="iconbtn" id="refresh" aria-label="Check for updates"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+  <button class="iconbtn" id="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
+</header>
+<main>
+  <div id="hero"></div>
+  <h3>Your apps</h3>
+  <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
+</main>
+<div class="sheet-bg" id="sheet"><div class="sheet">
+  <h4>Settings</h4>
+  <div class="row"><span>App Hub version</span><span id="s-ver"></span></div>
+  <div class="row"><span>Apps available</span><span id="s-count"></span></div>
+  <div class="row click" id="s-check"><span>Check for updates now</span><span id="s-last"></span></div>
+  <div class="row"><span>Source</span><span>GitHub</span></div>
+  <div class="row click" id="s-close"><span>Close</span><span></span></div>
+</div></div>
+<script>
+const REPO = 'glickshulem-stack/apps';
+const hasHub = typeof Hub !== 'undefined';
+const hubVer = hasHub ? Hub.hubVersion() : 'web';
+const status = {}; let catalog = null, lastCheck = null;
+const $ = id => document.getElementById(id);
+
+function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
+function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
+function onStatus(id, text) { status[id] = text; render(); }
+function act(a) { onStatus(a.id, 'Starting download…'); Hub.install(a.id, apkUrl(a)); }
+
+function button(a, have) {
+  const b = document.createElement('button'); b.className = 'btn';
+  if (!hasHub) { b.className += ' open'; b.textContent = 'Open'; b.onclick = () => location.href = '../' + (a.webPath || ''); return a.webPath ? b : null; }
+  if (!have) { b.className += ' install'; b.textContent = 'Install'; b.onclick = () => act(a); }
+  else if (newer(a.version, have)) { b.className += ' update'; b.textContent = 'Update'; b.onclick = () => act(a); }
+  else if (a.package !== 'com.glickshulem.apphub') { b.className += ' open'; b.textContent = 'Open'; b.onclick = () => Hub.open(a.package); }
+  else return null;
+  return b;
+}
+
+function render() {
+  if (!catalog) return;
+  const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
+  const feat = apps[0];
+  $('hero').innerHTML = feat ? `<div class="hero"><img src="../${feat.iconUrl}" alt=""><div class="z"><div class="k">Featured</div><h2>${feat.name}</h2><p>${feat.description || feat.tagline || ''}</p></div></div>` : '';
+  const list = $('list'); list.innerHTML = '';
+  for (const a of [...apps, hub]) {
+    if (!a) continue;
+    const have = hasHub ? Hub.installedVersion(a.package) : '';
+    const shown = a.live || a.version;
+    let meta = have ? `Installed · v${a.live || have}` : `v${shown}`;
+    if (have && newer(a.version, have)) meta = `Update available · v${a.version}`;
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<div class="ic"><img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div><div class="meta">${meta}</div>${status[a.id] ? `<div class="status">${status[a.id]}</div>` : ''}</div>`;
+    const b = button(a, have); if (b) card.appendChild(b);
+    list.appendChild(card);
+  }
+  $('s-ver').textContent = 'v' + hubVer; $('s-count').textContent = apps.length;
+  $('s-last').textContent = lastCheck ? 'Checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+}
+
+async function refresh() {
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/catalog.json?t=${Date.now()}`, { cache:'no-store' });
+    catalog = await r.json(); lastCheck = new Date();
+    try { localStorage.setItem('catalog', JSON.stringify(catalog)); } catch {}
+  } catch {
+    try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
+    if (!catalog) { $('list').innerHTML = '<div class="msg">No internet. Connect and reopen App Hub.</div>'; return; }
+  }
+  render();
+}
+$('refresh').onclick = refresh;
+$('settings').onclick = () => $('sheet').classList.add('show');
+$('s-close').onclick = () => $('sheet').classList.remove('show');
+$('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('show'); };
+$('s-check').onclick = refresh;
+window.refresh = refresh;
+refresh();
+</script>
+</body>
+</html>

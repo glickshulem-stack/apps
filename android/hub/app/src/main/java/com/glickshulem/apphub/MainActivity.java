@@ -11,6 +11,9 @@ import android.provider.Settings;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
 import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends Activity {
+    private static final String SITE = "https://glickshulem-stack.github.io/apps/";
     private WebView web;
 
     @Override
@@ -28,8 +32,18 @@ public class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         web.addJavascriptInterface(new Bridge(), "Hub");
-        web.loadUrl("file:///android_asset/index.html");
+        web.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                // Only our own pages may load inside App Hub (they can use the install bridge).
+                return !r.getUrl().toString().startsWith(SITE);
+            }
+            @Override public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
+                if (r.isForMainFrame()) v.loadUrl("file:///android_asset/index.html");
+            }
+        });
+        web.loadUrl(SITE + "hub/");
         setContentView(web);
     }
 
