@@ -76,3 +76,13 @@ body[data-theme="ivory"] { --page: radial-gradient(ellipse at 50% 40%, #2a2826 0
 .caprow svg { width:24px; height:24px; margin-right:-6px; }
 .caprow .adv { margin-left:12px; }
 @media (orientation: portrait) { .topbar { order:-1; } .layout { padding-top:8px; } .panel { order:-1; } .panel .status-card, .panel .caps-card, .panel .actions { order:1; } }
+
+/* 0.7.0: board-matching cards and buttons */
+body[data-theme="fide"] .status-card { background:linear-gradient(135deg,#4a3422,#2e2016); border:1px solid #6b4c32; box-shadow:0 6px 18px rgba(0,0,0,.35); }
+body[data-theme="fide"] #status { color:#f3e2c4; }
+body[data-theme="fide"] .caps-card { background:rgba(58,40,26,.55); border:1px solid #4e3826; }
+body[data-theme="fide"] .act { background:linear-gradient(180deg,#5a3f29,#43301f); border:1px solid #7a5838; color:#f3e2c4; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+body[data-theme="fide"] .act:active { background:#3a2a1b; }
+body[data-theme="fide"] #newgame { background:linear-gradient(180deg,#ecd0a4,#c99c64); color:#2e1e10; border:0; }
+body[data-theme="fide"] .iconbtn { background:#43301f; color:#f3e2c4; }
+.caplabel { font-size:.85rem; color:var(--muted); width:84px; flex:none; white-space:nowrap; }
