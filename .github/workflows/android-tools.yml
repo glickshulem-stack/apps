@@ -1,0 +1,29 @@
+name: Android build tools
+# Packs the Android SDK build tools (aapt2, d8, zipalign, apksigner) and android.jar from the
+# GitHub runner into a short-lived artifact, so apps built outside this repo (like Quillsong)
+# can be compiled and signed elsewhere. No source code or keys are involved.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/project-thread-szp6cs']
+    paths: ['.github/workflows/android-tools.yml']
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pack tools
+        run: |
+          SDK=${ANDROID_HOME:-/usr/local/lib/android/sdk}
+          ls $SDK/build-tools $SDK/platforms
+          test -d $SDK/build-tools/35.0.0 || yes | $SDK/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0"
+          test -d $SDK/platforms/android-35 || yes | $SDK/cmdline-tools/latest/bin/sdkmanager "platforms;android-35"
+          mkdir -p out/build-tools out/platforms/android-35
+          cp -a $SDK/build-tools/35.0.0 out/build-tools/
+          cp $SDK/platforms/android-35/android.jar out/platforms/android-35/
+          tar czf android-tools.tgz -C out .
+          ls -la android-tools.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-tools
+          path: android-tools.tgz
+          retention-days: 3
