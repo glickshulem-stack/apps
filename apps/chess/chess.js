@@ -1,4 +1,4 @@
-const VERSION = '0.14.0';
+const VERSION = '0.15.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -164,21 +164,50 @@ function tap(r, c) {
 }
 const sqEl = (r, c) => boardEl.children[flipped ? (7-r)*8 + (7-c) : r*8 + c];
 function doMove(m, animate = true) {
+  const capSq = m.enpassant ? [m.fr, m.tc] : [m.tr, m.tc];
+  const capPiece = S.board[capSq[0]][capSq[1]];
+  const fromRect = sqEl(m.fr, m.fc).getBoundingClientRect(), capRect = sqEl(capSq[0], capSq[1]).getBoundingClientRect();
+  const mover = S.board[m.fr][m.fc];
+  const rookFrom = m.castle ? sqEl(m.tr, m.castle === 'K' ? 7 : 0).getBoundingClientRect() : null;
   history.push(S); S = apply(S, m);
   const k = posKey(S); S.positions[k] = (S.positions[k]||0) + 1;
   selected = null; legalForSel = []; save(); render();
+  if (capPiece) flyOff(capPiece, capRect, animate ? 220 : 0);
   if (animate) {
-    slide(m.fr, m.fc, m.tr, m.tc);
-    if (m.castle === 'K') slide(m.tr, 7, m.tr, 5);
-    if (m.castle === 'Q') slide(m.tr, 0, m.tr, 3);
+    glide(mover.c, m.promo || mover.t, fromRect, m.tr, m.tc);
+    if (m.castle) glide(mover.c, 'r', rookFrom, m.tr, m.castle === 'K' ? 5 : 3);
   }
 }
-function slide(fr, fc, tr, tc) {
-  const from = sqEl(fr, fc).getBoundingClientRect(), to = sqEl(tr, tc), pc = to.querySelector('svg.pc');
-  if (!pc) return;
-  const t = to.getBoundingClientRect();
-  pc.style.transition = 'none'; pc.style.transform = `translate(${from.left - t.left}px, ${from.top - t.top}px)`; pc.style.zIndex = 5;
-  requestAnimationFrame(() => requestAnimationFrame(() => { pc.style.transition = 'transform .18s cubic-bezier(.3,.7,.4,1)'; pc.style.transform = ''; }));
+// Animations use a floating copy of the piece above the board.
+function ghost(c, t, rect) {
+  const g = document.createElement('div'); g.className = 'ghost';
+  g.style.left = rect.left + 'px'; g.style.top = rect.top + 'px'; g.style.width = rect.width + 'px'; g.style.height = rect.height + 'px';
+  g.innerHTML = piece(c, t, '');
+  document.body.appendChild(g); return g;
+}
+function glide(c, t, fromRect, tr, tc) {
+  const sq = sqEl(tr, tc), real = sq.querySelector('svg.pc'), to = sq.getBoundingClientRect();
+  if (!real || !fromRect) return;
+  real.style.visibility = 'hidden';
+  const g = ghost(c, t, fromRect);
+  const dx = to.left - fromRect.left, dy = to.top - fromRect.top, lift = Math.min(40, Math.hypot(dx, dy) * .12);
+  const anim = g.animate([
+    { transform: 'translate(0,0) scale(1)', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.25))' },
+    { transform: `translate(${dx*.5}px, ${dy*.5 - lift}px) scale(1.12)`, filter: 'drop-shadow(0 12px 10px rgba(0,0,0,.35))', offset: .5 },
+    { transform: `translate(${dx}px, ${dy}px) scale(1)`, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.25))' }
+  ], { duration: 340, easing: 'cubic-bezier(.4,0,.2,1)' });
+  anim.onfinish = () => { g.remove(); real.style.visibility = ''; };
+}
+function flyOff(p, rect, delay) {
+  const g = ghost(p.c, p.t, rect);
+  // Black pieces fly off to the right and up, white pieces to the left and down.
+  const dir = p.c === 'b' ? 1 : -1;
+  const dx = dir * (window.innerWidth * .55), dy = -dir * (window.innerHeight * .35);
+  g.animate([
+    { transform: 'translate(0,0) rotate(0) scale(1)', opacity: 1 },
+    { transform: `translate(${dx*.25}px, ${dy*.25 - 60}px) rotate(${dir*180}deg) scale(1.15)`, opacity: 1, offset: .3 },
+    { transform: `translate(${dx}px, ${dy}px) rotate(${dir*540}deg) scale(.6)`, opacity: 0 }
+  ], { duration: 750, delay, easing: 'cubic-bezier(.3,.1,.6,1)', fill: 'both' }).onfinish = () => g.remove();
 }
 
 // ---- tap and drag on the board ----

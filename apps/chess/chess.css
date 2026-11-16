@@ -142,3 +142,5 @@ body[data-font="marcellus"] { --display: Marcellus, serif; }
 #moves .mv.cur { background:#e6c79a; color:#2e1e10; font-weight:700; }
 #moves .empty { grid-column:1/-1; color:#c9a880; text-align:center; padding:20px 0; font-style:italic; }
 @media (orientation: portrait) { .moves-card { max-height:160px; } }
+.ghost { position:fixed; z-index:60; pointer-events:none; }
+.ghost svg { width:100%; height:100%; display:block; }
