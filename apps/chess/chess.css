@@ -104,3 +104,13 @@ body[data-bg="caramel"] { --page: url("data:image/svg+xml,%3Csvg xmlns='http://w
 body[data-bg="saddle"] { --page: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E"), radial-gradient(1000px 700px at 35% 45%, #bf8650 0%, #a06a3a 55%, #7a4e28 100%); }
 body[data-bg="honey"] { --page: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E"), radial-gradient(1000px 700px at 35% 45%, #cc9a5e 0%, #b07e46 55%, #8a5e30 100%); }
 body[data-bg="camel"] { --page: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E"), radial-gradient(1000px 700px at 35% 45%, #d2ab7e 0%, #b98f62 55%, #946c44 100%); }
+
+.topbar { gap:8px; }
+.slabel { align-self:flex-start; color:var(--muted); font-size:.85rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
+#setchoices { display:flex; gap:12px; }
+.setopt { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; border-radius:14px; border:2px solid transparent; background:#3a2a1c; color:#f3e2c4; cursor:pointer; font:600 1rem Inter,sans-serif; }
+.setopt.on { border-color:#e6c79a; background:#4e3826; }
+.setprev { display:grid; grid-template-columns:1fr 1fr; width:110px; height:110px; background:#e6c79a; border-radius:8px; overflow:hidden; }
+.setprev svg { width:55px; height:55px; }
+.setprev svg:nth-child(2), .setprev svg:nth-child(3) { background:#9a6a3e; }
+body[data-theme="fide"] .dialog { background:#2e2016; border-color:#6b4c32; }

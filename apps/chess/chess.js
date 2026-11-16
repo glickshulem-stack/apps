@@ -1,12 +1,15 @@
-const VERSION = '0.9.0';
+const VERSION = '0.10.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; }
 
 // Board: board[r][c], r=0 is rank 8. Piece = {t:'p|n|b|r|q|k', c:'w|b'} or null.
-let PSET = new URLSearchParams(location.search).get('pieces') || 'standard';
-let PFX = new URLSearchParams(location.search).get('fx') || '';
-const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"${PFX ? ` filter="url(#${PFX})"` : ''}/></svg>`;
+// Piece sets offered in Settings. Add more here later.
+const SETS = [['maestro','Maestro'],['merida','Merida'],['alpha','Alpha']];
+let PSET = 'maestro';
+try { const v = localStorage.getItem('gambit-pieces'); if (SETS.some(x => x[0] === v)) PSET = v; } catch {}
+{ const q = new URLSearchParams(location.search).get('pieces'); if (q) PSET = q; }
+const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
 const VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
@@ -174,3 +177,17 @@ document.getElementById('no').onclick = () => document.getElementById('confirm')
 
 if (!load()) newGame(); else render();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('../../sw.js', {scope:'../../'}).catch(()=>{});
+
+// Settings
+function renderSettings() {
+  const box = document.getElementById('setchoices'); box.innerHTML = '';
+  for (const [id, name] of SETS) {
+    const b = document.createElement('button'); b.className = 'setopt' + (id === PSET ? ' on' : '');
+    const u = (c,t) => `<svg viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${id}.svg#${c}${t}"/></svg>`;
+    b.innerHTML = `<div class="setprev">${u('w','k')}${u('w','n')}${u('b','q')}${u('b','n')}</div><div class="setname">${name}</div>`;
+    b.onclick = () => { PSET = id; try { localStorage.setItem('gambit-pieces', id); } catch {} renderSettings(); render(); };
+    box.appendChild(b);
+  }
+}
+document.getElementById('opensettings').onclick = () => { renderSettings(); document.getElementById('settings').classList.add('show'); };
+document.getElementById('closesettings').onclick = () => document.getElementById('settings').classList.remove('show');

@@ -12,28 +12,6 @@
 <link rel="stylesheet" href="chess.css">
 </head>
 <body data-theme="fide" data-bg="saddle">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <filter id="bevel" x="-10%" y="-10%" width="120%" height="130%">
-    <feGaussianBlur in="SourceAlpha" stdDeviation="0.9" result="blur"/>
-    <feSpecularLighting in="blur" surfaceScale="3" specularConstant="0.9" specularExponent="18" lighting-color="#fff6e0" result="spec"><fePointLight x="-20" y="-30" z="40"/></feSpecularLighting>
-    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
-    <feDiffuseLighting in="blur" surfaceScale="3" diffuseConstant="1" lighting-color="#ffffff" result="diff"><feDistantLight azimuth="225" elevation="50"/></feDiffuseLighting>
-    <feComposite in="diff" in2="SourceAlpha" operator="in" result="diffIn"/>
-    <feBlend in="SourceGraphic" in2="diffIn" mode="multiply" result="shaded"/>
-    <feComposite in="specIn" in2="shaded" operator="arithmetic" k2="0.55" k3="1" result="lit"/>
-    <feDropShadow in="lit" dx="0.6" dy="1.4" stdDeviation="0.9" flood-color="#000" flood-opacity="0.45"/>
-  </filter>
-  <filter id="bevel2" x="-10%" y="-10%" width="120%" height="130%">
-    <feGaussianBlur in="SourceAlpha" stdDeviation="1.3" result="blur"/>
-    <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1.2" specularExponent="22" lighting-color="#fff2d0" result="spec"><fePointLight x="-20" y="-30" z="35"/></feSpecularLighting>
-    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
-    <feDiffuseLighting in="blur" surfaceScale="5" diffuseConstant="1.05" lighting-color="#ffffff" result="diff"><feDistantLight azimuth="225" elevation="45"/></feDiffuseLighting>
-    <feComposite in="diff" in2="SourceAlpha" operator="in" result="diffIn"/>
-    <feBlend in="SourceGraphic" in2="diffIn" mode="multiply" result="shaded"/>
-    <feComposite in="specIn" in2="shaded" operator="arithmetic" k2="0.8" k3="1" result="lit"/>
-    <feDropShadow in="lit" dx="1" dy="2" stdDeviation="1.2" flood-color="#000" flood-opacity="0.55"/>
-  </filter>
-</defs></svg>
 <div class="layout">
   <section class="play">
     <div id="board"></div>
@@ -41,6 +19,7 @@
   <aside class="panel">
     <header class="topbar">
       <a href="../../" class="iconbtn" id="back" aria-label="Back to apps">‹</a>
+      <button class="iconbtn" id="opensettings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
       <div class="brand"><img src="logo.svg" alt=""><span class="name">Gambit</span><span class="ver">v<span id="ver"></span></span></div>
     </header>
     <div class="status-card"><div class="turn-dot" id="turn-dot"></div><div id="status"></div></div>
@@ -52,6 +31,7 @@
   </aside>
 </div>
 <div id="promo" class="overlay"><div class="dialog"><div class="dtitle">Promote pawn to</div><div id="promo-choices"></div></div></div>
+<div id="settings" class="overlay"><div class="dialog"><div class="dtitle">Settings</div><div class="slabel">Pieces</div><div id="setchoices"></div><button class="act primary" id="closesettings">Done</button></div></div>
 <div id="confirm" class="overlay"><div class="dialog"><div class="dtitle">Start a new game?</div><div class="drow"><button class="act ghost" id="no">Cancel</button><button class="act primary" id="yes">New game</button></div></div></div>
 <script src="chess.js"></script>
 </body>
