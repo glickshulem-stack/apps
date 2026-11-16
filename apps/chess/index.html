@@ -23,6 +23,7 @@
       <div class="brand"><img src="logo.svg" alt=""><span class="name">Gambit</span><span class="ver">v<span id="ver"></span></span></div>
     </header>
     <div class="status-card"><div class="turn-dot" id="turn-dot"></div><div id="status"></div></div>
+    <div class="clock-card" id="clocks" hidden><div class="clk" id="clk-w"><span class="cname">White</span><span class="ctime"></span></div><div class="clk" id="clk-b"><span class="cname">Black</span><span class="ctime"></span></div></div>
     <div class="moves-card"><div id="moves"></div></div>
     <div class="actions">
       <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
@@ -33,7 +34,7 @@
 </div>
 <div id="promo" class="overlay"><div class="dialog"><div class="dtitle">Promote pawn to</div><div id="promo-choices"></div></div></div>
 <div id="settings" class="overlay"><div class="dialog"><div class="dtitle">Settings</div><div class="slabel">Pieces</div><div id="setchoices"></div><button class="act primary" id="closesettings">Done</button></div></div>
-<div id="confirm" class="overlay"><div class="dialog"><div class="dtitle">Start a new game?</div><div class="drow"><button class="act ghost" id="no">Cancel</button><button class="act primary" id="yes">New game</button></div></div></div>
+<div id="confirm" class="overlay"><div class="dialog"><div class="dtitle">New game</div><div class="slabel">Clock</div><div id="timechoices"></div><div class="drow"><button class="act ghost" id="no">Cancel</button><button class="act primary" id="yes">Start</button></div></div></div>
 <div id="win" class="overlay"><canvas id="confetti"></canvas><div class="dialog wincard"><div class="winrays"></div><div id="winpiece"></div><div class="winsub">Checkmate</div><div id="wintitle"></div><div class="drow"><button class="act ghost" id="winlook">See board</button><button class="act primary" id="winnew">New game</button></div></div></div>
 <script src="chess.js"></script>
 </body>

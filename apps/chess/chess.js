@@ -1,4 +1,4 @@
-const VERSION = '0.16.1';
+const VERSION = '0.17.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -12,6 +12,10 @@ try { const v = localStorage.getItem('gambit-pieces'); if (SETS.some(x => x[0] =
 const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
 const VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
 let viewIdx = null;
+// Choices are [minutes, seconds added after each move]. null = no clock.
+const TIMES = [null, [1,0], [3,2], [5,0], [10,0], [15,10], [30,0]];
+let timeCtl = null, clock = null, lastTick = performance.now(), pickTime;
+try { const v = JSON.parse(localStorage.getItem('gambit-time')); if (v === null || TIMES.some(t => t && t[0]===v[0] && t[1]===v[1])) timeCtl = v; } catch {}
 let S, history, flipped = false, selected = null, legalForSel = [];
 
 function initial() {
@@ -103,6 +107,7 @@ function insufficient(b) {
   return false;
 }
 function result(s) {
+  if (s === S && clock?.flag) return `${clock.flag==='w' ? 'Black' : 'White'} wins on time`;
   const name = s.turn==='w' ? 'White' : 'Black', other = s.turn==='w' ? 'Black' : 'White';
   if (allLegal(s).length === 0) return inCheck(s, s.turn) ? `Checkmate! ${other} wins` : 'Stalemate. It\'s a draw';
   if (s.half >= 100) return 'Draw by the 50-move rule';
@@ -115,9 +120,9 @@ function result(s) {
 const boardEl = document.getElementById('board'), statusEl = document.getElementById('status');
 const UNDO_LIMIT = 3;
 let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
-function newGame() { viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); }
-function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos})); } catch {} }
-function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; return true; } } catch {} return false; }
+function newGame() { clock = timeCtl ? { base: timeCtl[0], inc: timeCtl[1], w: timeCtl[0]*60000, b: timeCtl[0]*60000, flag: null } : null; viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); }
+function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos, clock})); } catch {} }
+function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; clock = d.clock || null; return true; } } catch {} return false; }
 
 function render() {
   boardEl.innerHTML = '';
@@ -142,9 +147,9 @@ function render() {
   statusEl.classList.toggle('over', !!over);
   { const who = opp(S.turn), left = undos[who], btn = document.getElementById('undo');
     btn.querySelector('span').innerHTML = `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
-    btn.disabled = !history.length || left <= 0;
+    btn.disabled = !history.length || left <= 0 || !!clock?.flag;
     btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
-  renderMoves();
+  renderMoves(); renderClock();
   if (viewIdx != null) { statusEl.textContent = `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`; statusEl.classList.remove('over'); return; }
   statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
 }
@@ -168,6 +173,7 @@ function doMove(m, animate = true) {
   const fromRect = sqEl(m.fr, m.fc).getBoundingClientRect(), capRect = sqEl(capSq[0], capSq[1]).getBoundingClientRect();
   const mover = S.board[m.fr][m.fc];
   const rookFrom = m.castle ? sqEl(m.tr, m.castle === 'K' ? 7 : 0).getBoundingClientRect() : null;
+  if (clock && history.length) clock[S.turn] += clock.inc * 1000;
   history.push(S); S = apply(S, m);
   const k = posKey(S); S.positions[k] = (S.positions[k]||0) + 1;
   selected = null; legalForSel = []; save(); render();
@@ -177,6 +183,7 @@ function doMove(m, animate = true) {
     if (m.castle) glide(mover.c, 'r', rookFrom, m.tr, m.castle === 'K' ? 5 : 3);
   }
   if (result(S)?.startsWith('Checkmate')) setTimeout(celebrate, 450);
+  lastTick = performance.now();
 }
 
 // ---- win celebration ----
@@ -189,6 +196,7 @@ function celebrate() {
   setTimeout(() => {
     const ov = document.getElementById('win');
     document.getElementById('winpiece').innerHTML = piece(winner, 'k', '');
+    document.querySelector('.winsub').textContent = clock?.flag ? 'On time' : 'Checkmate';
     document.getElementById('wintitle').textContent = (winner === 'w' ? 'White' : 'Black') + ' wins';
     ov.classList.add('show'); confetti();
   }, 950);
@@ -307,7 +315,7 @@ document.getElementById('undo').onclick = () => {
   undos[who]--; viewIdx = null; S = history.pop(); selected = null; legalForSel = []; save(); render();
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
-document.getElementById('newgame').onclick = () => document.getElementById('confirm').classList.add('show');
+document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
 document.getElementById('yes').onclick = () => { document.getElementById('confirm').classList.remove('show'); newGame(); };
 document.getElementById('no').onclick = () => document.getElementById('confirm').classList.remove('show');
 
@@ -367,3 +375,50 @@ function renderMoves() {
   el.querySelectorAll('.mv').forEach(x => x.onclick = () => { const j = +x.dataset.i; viewIdx = j === sans.length-1 ? null : j; selected = null; legalForSel = []; render(); });
   if (viewIdx == null) el.scrollTop = el.scrollHeight;
 }
+
+// ---- chess clocks ----
+const tlabel = t => !t ? 'No clock' : t[1] ? `${t[0]} | ${t[1]}` : `${t[0]} min`;
+function renderTimes() {
+  const box = document.getElementById('timechoices'); box.innerHTML = '';
+  pickTime = timeCtl;
+  for (const t of TIMES) {
+    const b = document.createElement('button');
+    b.className = 'timeopt' + (JSON.stringify(t) === JSON.stringify(pickTime) ? ' on' : '');
+    b.textContent = tlabel(t);
+    b.onclick = () => { pickTime = t; box.querySelectorAll('.timeopt').forEach(x => x.classList.toggle('on', x === b)); };
+    box.appendChild(b);
+  }
+}
+{ const yes = document.getElementById('yes'), old = yes.onclick;
+  yes.onclick = () => { timeCtl = pickTime === undefined ? timeCtl : pickTime; try { localStorage.setItem('gambit-time', JSON.stringify(timeCtl)); } catch {} old(); }; }
+function fmt(ms) {
+  ms = Math.max(0, ms);
+  if (ms < 10000) return `0:0${Math.floor(ms/1000)}.${Math.floor(ms%1000/100)}`;
+  const s = Math.ceil(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+function renderClock() {
+  const box = document.getElementById('clocks');
+  box.hidden = !clock; if (!clock) return;
+  const running = history.length > 0 && !result(S);
+  for (const c of ['w','b']) {
+    const el = document.getElementById('clk-' + c);
+    el.querySelector('.ctime').textContent = fmt(clock[c]);
+    el.classList.toggle('on', running && S.turn === c);
+    el.classList.toggle('low', clock[c] < 20000);
+    el.classList.toggle('flag', clock.flag === c);
+  }
+}
+// The clock starts after White's first move and only runs while Gambit is open on screen.
+setInterval(() => {
+  const now = performance.now(), dt = now - lastTick; lastTick = now;
+  if (!clock || !history.length || result(S) || document.hidden) return;
+  clock[S.turn] -= dt;
+  if (clock[S.turn] <= 0) {
+    clock[S.turn] = 0; clock.flag = S.turn; selected = null; legalForSel = [];
+    save(); render(); setTimeout(celebrate, 200); return;
+  }
+  renderClock();
+  if (Math.floor(clock[S.turn]/1000) % 5 === 0) save();
+}, 100);
+document.addEventListener('visibilitychange', () => { lastTick = performance.now(); save(); });
+render();

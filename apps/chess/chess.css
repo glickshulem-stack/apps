@@ -163,4 +163,21 @@ body[data-font="marcellus"] { --display: Marcellus, serif; }
 @keyframes winpop { from { transform:scale(.6) translateY(30px); opacity:0; } to { transform:none; opacity:1; } }
 @keyframes winspin { to { transform:rotate(360deg); } }
 @keyframes winfloat { 50% { transform:translateY(-6px); } }
-body[data-theme="fide"] #winnew { background:linear-gradient(180deg,#ecd0a4,#c99c64); color:#2e1e10; border:0; }
+body[data-theme="fide"] #winnew, body[data-theme="fide"] #yes { background:linear-gradient(180deg,#ecd0a4,#c99c64); color:#2e1e10; border:0; }
+
+/* 0.17.0: chess clocks */
+.clock-card { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.clock-card[hidden] { display:none; }
+.clk { display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 8px; border-radius:14px; background:rgba(46,32,22,.55); border:1px solid #6b4c32; color:#c9a880; transition:background .2s, color .2s, box-shadow .2s; }
+.clk .cname { font:600 .75rem Inter,sans-serif; text-transform:uppercase; letter-spacing:.12em; }
+.clk .ctime { font:700 2rem Inter,sans-serif; font-variant-numeric:tabular-nums; color:#f3e2c4; }
+.clk.on { background:linear-gradient(180deg,#ecd0a4,#c99c64); border-color:#ecd0a4; box-shadow:0 0 18px rgba(236,208,164,.45); color:#5a3f29; }
+.clk.on .ctime { color:#2e1e10; }
+.clk.low .ctime { color:#e05a4a; }
+.clk.on.low { background:linear-gradient(180deg,#f0c2a8,#c9765a); }
+.clk.on.low .ctime { color:#3a0e08; }
+.clk.flag { background:#5a1a14; border-color:#a03a2a; }
+#timechoices { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; align-self:stretch; }
+#timechoices .timeopt:first-child { grid-column:1 / -1; }
+.timeopt { padding:12px 10px; border-radius:12px; border:2px solid transparent; background:#3a2a1c; color:#f3e2c4; font:600 1rem var(--display); cursor:pointer; white-space:nowrap; }
+.timeopt.on { border-color:#e6c79a; background:#4e3826; }
