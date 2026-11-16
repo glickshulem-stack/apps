@@ -8,7 +8,7 @@
       "version": "0.4.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
-      "live": "0.4.1"
+      "live": "0.4.2"
     },
     {
       "id": "chess",
@@ -19,7 +19,7 @@
       "live": "0.21.1",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
-      "description": "Two-player chess on one tablet with full rules, tournament wood board and a clean landscape layout. Playing the computer is coming soon.",
+      "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
       "category": "Board games",
       "webPath": "apps/chess/"
     },
@@ -32,7 +32,8 @@
       "iconUrl": "apps/quillsong/icon.svg",
       "tagline": "Made by Su",
       "category": "Apps",
-      "description": "Quillsong, version 1.7.3."
+      "description": "Quillsong, version 1.7.3.",
+      "hero": "linear-gradient(120deg,#2a1e15 0%,#3b2a1e 55%,#5a4230 100%)"
     }
   ]
 }

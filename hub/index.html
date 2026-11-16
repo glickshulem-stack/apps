@@ -26,6 +26,15 @@
   .hero h2 { margin:4px 0 6px; font-size:2rem; font-weight:800; color:#fff3dc; }
   .hero p { margin:0; color:#e9d5b3; max-width:440px; }
   .hero .z { z-index:1; flex:1; }
+  /* featured carousel: every app gets a slide, slides change by themselves and can be swiped */
+  .carousel { position:relative; }
+  .track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; border-radius:24px; scroll-behavior:smooth; }
+  .track::-webkit-scrollbar { display:none; }
+  .track .hero { flex:0 0 100%; scroll-snap-align:start; box-sizing:border-box; }
+  .hero:not([data-id="chess"])::after { display:none; }
+  .dots { display:flex; justify-content:center; gap:8px; margin-top:12px; }
+  .dots button { width:9px; height:9px; padding:0; border:0; border-radius:5px; background:#d6cbbb; cursor:pointer; transition:width .25s, background .25s; }
+  .dots button.on { width:26px; background:#8a6236; }
   h3 { font-size:1.15rem; margin:28px 4px 12px; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
   .card { display:flex; align-items:center; gap:16px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:18px; }
@@ -95,11 +104,30 @@ function button(a, have) {
   return b;
 }
 
+// Featured: one slide per app, built only when the app list changes so it doesn't jump back while you watch.
+let featKey = '', featTimer = null, featIdx = 0;
+function renderFeatured(apps) {
+  const key = JSON.stringify(apps.map(a => [a.id, a.name, a.description, a.tagline, a.iconUrl, a.hero]));
+  if (key === featKey) return; featKey = key;
+  const box = $('hero');
+  if (!apps.length) { box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="carousel"><div class="track">${apps.map(a => `<div class="hero" data-id="${a.id}"${a.hero ? ` style="background:${a.hero}"` : ''}><img src="../${a.iconUrl}" alt=""><div class="z"><div class="k">Featured</div><h2>${a.name}</h2><p>${a.description || a.tagline || ''}</p></div></div>`).join('')}</div>${apps.length > 1 ? `<div class="dots">${apps.map((a, i) => `<button aria-label="${a.name}" data-i="${i}"></button>`).join('')}</div>` : ''}</div>`;
+  const track = box.querySelector('.track'), dots = [...box.querySelectorAll('.dots button')];
+  const go = i => { featIdx = (i + apps.length) % apps.length; track.scrollTo({ left: featIdx * track.clientWidth }); mark(); };
+  const mark = () => dots.forEach((d, i) => d.classList.toggle('on', i === featIdx));
+  const restart = () => { clearInterval(featTimer); if (apps.length > 1) featTimer = setInterval(() => go(featIdx + 1), 5000); };
+  dots.forEach(d => d.onclick = () => { go(+d.dataset.i); restart(); });
+  let t; track.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { featIdx = Math.round(track.scrollLeft / track.clientWidth); mark(); }, 120); });
+  track.addEventListener('pointerdown', restart);
+  // tapping a slide jumps to that app in the list below
+  track.querySelectorAll('.hero').forEach(h => h.onclick = () => document.querySelector(`.card[data-id="${h.dataset.id}"]`)?.scrollIntoView({ behavior:'smooth', block:'center' }));
+  featIdx = Math.min(featIdx, apps.length - 1); go(featIdx); restart();
+}
+
 function render() {
   if (!catalog) return;
   const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
-  const feat = apps[0];
-  $('hero').innerHTML = feat ? `<div class="hero"><img src="../${feat.iconUrl}" alt=""><div class="z"><div class="k">Featured</div><h2>${feat.name}</h2><p>${feat.description || feat.tagline || ''}</p></div></div>` : '';
+  renderFeatured(apps);
   const list = $('list'); list.innerHTML = '';
   for (const a of apps) {
     if (!a) continue;
@@ -107,7 +135,7 @@ function render() {
     const shown = a.live || a.version;
     let meta = have ? `Installed · v${a.live || have}` : `v${shown}`;
     if (have && newer(a.version, have)) meta = `Update available · v${a.version}`;
-    const card = document.createElement('div'); card.className = 'card';
+    const card = document.createElement('div'); card.className = 'card'; card.dataset.id = a.id;
     card.innerHTML = `<div class="ic"><img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div><div class="meta">${meta}</div>${status[a.id] ? `<div class="status">${status[a.id]}</div>` : ''}</div>`;
     const b = button(a, have); if (b) card.appendChild(b);
     list.appendChild(card);
