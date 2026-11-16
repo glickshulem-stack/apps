@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION on every release so phones and tablets pick up the update.
-const CACHE_VERSION = 'hub-0.1.1';
+const CACHE_VERSION = 'hub-0.1.2';
 const FILES = [
   './', 'index.html', 'apps.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
   'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css',

@@ -1,4 +1,5 @@
-const VERSION = '0.1.0';
+const VERSION = '0.3.0';
+if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 
 // Board: board[r][c], r=0 is rank 8. Piece = {t:'p|n|b|r|q|k', c:'w|b'} or null.
