@@ -1,8 +1,8 @@
 // Bump CACHE_VERSION on every release so phones and tablets pick up the update.
-const CACHE_VERSION = 'hub-0.1.16';
+const CACHE_VERSION = 'hub-0.1.17';
 const FILES = [
   './', 'index.html', 'apps.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css', 'apps/chess/pieces/standard.svg', 'apps/chess/pieces/staunty.svg', 'apps/chess/pieces/royal.svg', 'apps/chess/pieces/regal.svg', 'apps/chess/pieces/merida.svg', 'apps/chess/pieces/alpha.svg', 'apps/chess/pieces/california.svg', 'apps/chess/pieces/maestro.svg', 'apps/chess/logo.svg',
+  'apps/chess/', 'apps/chess/index.html', 'apps/chess/chess.js', 'apps/chess/chess.css', 'apps/chess/pieces/standard.svg', 'apps/chess/pieces/staunty.svg', 'apps/chess/pieces/royal.svg', 'apps/chess/pieces/regal.svg', 'apps/chess/pieces/merida.svg', 'apps/chess/pieces/alpha.svg', 'apps/chess/pieces/california.svg', 'apps/chess/pieces/maestro.svg', 'apps/chess/pieces/tatiana.svg', 'apps/chess/pieces/cardinal.svg', 'apps/chess/pieces/companion.svg', 'apps/chess/pieces/leipzig.svg', 'apps/chess/logo.svg',
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
