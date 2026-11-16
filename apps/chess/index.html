@@ -3,27 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#1f2937">
-<title>Chess</title>
-<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="theme-color" content="#0b1120">
+<title>Gambit</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="chess.css">
 </head>
 <body>
-<div class="top">
-  <a href="../../" class="btn" id="back">‹ Apps</a>
-  <div class="title">Chess <span class="ver">v<span id="ver"></span></span></div>
-  <button id="newgame" class="btn">New game</button>
+<header class="topbar">
+  <a href="../../" class="iconbtn" id="back" aria-label="Back to apps">‹</a>
+  <div class="brand"><img src="logo.svg" alt=""><span class="name">Gambit</span><span class="ver">v<span id="ver"></span></span></div>
+  <span class="spacer"></span>
+</header>
+<div class="layout">
+  <section class="play">
+    <div class="player" id="player-top"></div>
+    <div id="board"></div>
+    <div class="player" id="player-bottom"></div>
+  </section>
+  <aside class="panel">
+    <div class="status-card"><div class="turn-dot" id="turn-dot"></div><div id="status"></div></div>
+    <div class="actions">
+      <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
+      <button id="undo" class="act"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>
+      <button id="flip" class="act"><svg viewBox="0 0 24 24"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg><span>Flip</span></button>
+    </div>
+  </aside>
 </div>
-<div id="captured-top" class="captured"></div>
-<div id="board"></div>
-<div id="captured-bottom" class="captured"></div>
-<div id="status"></div>
-<div class="bottom">
-  <button id="undo" class="btn">Undo</button>
-  <button id="flip" class="btn">Flip board</button>
-</div>
-<div id="promo" class="overlay"><div class="dialog"><div>Promote to:</div><div id="promo-choices"></div></div></div>
-<div id="confirm" class="overlay"><div class="dialog"><div>Start a new game?</div><div><button class="btn" id="yes">Yes</button> <button class="btn" id="no">No</button></div></div></div>
+<div id="promo" class="overlay"><div class="dialog"><div class="dtitle">Promote pawn to</div><div id="promo-choices"></div></div></div>
+<div id="confirm" class="overlay"><div class="dialog"><div class="dtitle">Start a new game?</div><div class="drow"><button class="act ghost" id="no">Cancel</button><button class="act primary" id="yes">New game</button></div></div></div>
 <script src="chess.js"></script>
 </body>
 </html>

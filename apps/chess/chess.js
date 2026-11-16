@@ -1,9 +1,9 @@
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 
 // Board: board[r][c], r=0 is rank 8. Piece = {t:'p|n|b|r|q|k', c:'w|b'} or null.
-const GLYPH = { k:'♚\uFE0E', q:'♛\uFE0E', r:'♜\uFE0E', b:'♝\uFE0E', n:'♞\uFE0E', p:'♟\uFE0E' };
+const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use href="pieces.svg#${c}${t}"/></svg>`;
 const VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
@@ -123,15 +123,24 @@ function render() {
     const mv = legalForSel.find(m => m.tr===r && m.tc===c);
     if (mv) d.classList.add(S.board[r][c] || mv.enpassant ? 'capture' : 'move');
     const p = S.board[r][c];
-    if (p) d.innerHTML = `<span class="pc ${p.c}">${GLYPH[p.t]}</span>`;
+    if (p) d.innerHTML = piece(p.c, p.t);
     if (i===7) d.insertAdjacentHTML('beforeend', `<span class="coord f">${'abcdefgh'[c]}</span>`);
     if (j===0) d.insertAdjacentHTML('beforeend', `<span class="coord r">${8-r}</span>`);
     d.onclick = () => tap(r, c);
     boardEl.appendChild(d);
   }
-  const capHtml = col => S.captured[col].slice().sort((a,b)=>VALUE[b]-VALUE[a]).map(t => `<span class="pc ${opp(col)}">${GLYPH[t]}</span>`).join('');
-  document.getElementById(flipped ? 'captured-bottom' : 'captured-top').innerHTML = capHtml('b');
-  document.getElementById(flipped ? 'captured-top' : 'captured-bottom').innerHTML = capHtml('w');
+  const mat = col => S.captured[col].reduce((a,t)=>a+VALUE[t],0);
+  const bar = col => {
+    const caps = S.captured[col].slice().sort((a,b)=>VALUE[b]-VALUE[a]).map(t => piece(opp(col), t, '')).join('');
+    const diff = mat(col) - mat(opp(col));
+    return `<div class="avatar ${col}">${piece(col,'k','')}</div><div class="pname">${col==='w'?'White':'Black'}</div><div class="caps">${caps}${diff>0?`<span class="adv">+${diff}</span>`:''}</div>`;
+  };
+  const top = document.getElementById('player-top'), bot = document.getElementById('player-bottom');
+  const topCol = flipped ? 'w' : 'b', botCol = opp(topCol);
+  top.innerHTML = bar(topCol); bot.innerHTML = bar(botCol);
+  top.classList.toggle('active', !over && S.turn===topCol); bot.classList.toggle('active', !over && S.turn===botCol);
+  document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
+  statusEl.classList.toggle('over', !!over);
   statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
 }
 
@@ -157,7 +166,7 @@ function askPromo(moves) {
   box.innerHTML = '';
   for (const t of ['q','r','b','n']) {
     const btn = document.createElement('button');
-    btn.innerHTML = `<span class="pc ${S.turn}">${GLYPH[t]}</span>`;
+    btn.innerHTML = piece(S.turn, t, '');
     btn.onclick = () => { ov.classList.remove('show'); doMove(moves.find(m => m.promo===t)); };
     box.appendChild(btn);
   }

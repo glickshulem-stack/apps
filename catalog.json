@@ -9,7 +9,7 @@
     },
     {
       "id": "chess",
-      "name": "Chess",
+      "name": "Gambit",
       "icon": "♞",
       "package": "com.glickshulem.chess",
       "version": "0.3.0"
