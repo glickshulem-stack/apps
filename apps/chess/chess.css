@@ -225,3 +225,12 @@ body.tinted svg.cw { filter:url(#tintw); }
 body.tinted svg.cb { filter:url(#tintb); }
 body.tinted .sq svg.pc.cw { filter:url(#tintw) drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
 body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+
+/* 0.22.0: hint button and arrow */
+.play { position:relative; }
+#arrows { position:absolute; pointer-events:none; z-index:5; overflow:visible; }
+.actions { grid-template-columns:repeat(6,1fr) !important; }
+#newgame { grid-column:1 / -1 !important; }
+#undo, #hint, #flip { grid-column:span 2; }
+.actions.solo #undo, .actions.solo #hint { grid-column:span 3; }
+#hint.busy span::after { content:'…'; }

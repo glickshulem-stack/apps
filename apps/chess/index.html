@@ -16,6 +16,7 @@
 <div class="layout">
   <section class="play">
     <div id="board"></div>
+    <svg id="arrows" viewBox="0 0 8 8" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8b84a"/></marker></defs><line id="hintline" x1="0" y1="0" x2="0" y2="0" stroke="#e8b84a" stroke-width=".2" stroke-linecap="round" marker-end="url(#ah)" opacity=".9"/></svg>
   </section>
   <aside class="panel">
     <header class="topbar">
@@ -29,6 +30,7 @@
     <div class="actions">
       <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
       <button id="undo" class="act"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>
+      <button id="hint" class="act"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/></svg><span>Hint</span></button>
       <button id="flip" class="act"><svg viewBox="0 0 24 24"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg><span>Flip</span></button>
     </div>
   </aside>

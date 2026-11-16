@@ -1,4 +1,4 @@
-const VERSION = '0.21.1';
+const VERSION = '0.22.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -60,6 +60,7 @@ const LEVELS = [
   { name:'Master',   skill:20, ms:1500,           think:[2.5, 5] } ];
 let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
 try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeof v.cpu === 'boolean') setup = v; } catch {}
+let hintMove = null, hintBusy = false;
 let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
@@ -166,7 +167,7 @@ const boardEl = document.getElementById('board'), statusEl = document.getElement
 const UNDO_LIMIT = 3;
 let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
 function newGame() {
-  cancelThink();
+  cancelThink(); hintMove = null;
   mode = setup.cpu ? { cpu:true, level:setup.level, human: setup.color === 'r' ? (Math.random() < .5 ? 'w' : 'b') : setup.color } : { cpu:false };
   if (mode.cpu) flipped = mode.human === 'b';
   clock = timeCtl ? { base: timeCtl[0], inc: timeCtl[1], w: timeCtl[0]*60000, b: timeCtl[0]*60000, flag: null } : null; viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); maybeCpu(); }
@@ -199,9 +200,10 @@ function render() {
     btn.disabled = history.length < undoPlies() || left <= 0 || !!clock?.flag;
     document.getElementById('flip').hidden = mode.cpu; document.querySelector('.actions').classList.toggle('solo', mode.cpu);
     btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
-  renderMoves(); renderClock();
+  renderMoves(); renderClock(); drawHint();
+  { const h = document.getElementById('hint'); h.disabled = !!result(S) || cpuTurn() || viewIdx != null; h.classList.toggle('busy', hintBusy); }
   if (viewIdx != null) { statusEl.textContent = `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`; statusEl.classList.remove('over'); return; }
-  statusEl.textContent = over || (mode.cpu ? (S.turn === mode.human ? 'Your move' : 'Computer is thinking…') : `${S.turn==='w' ? 'White' : 'Black'} to move`) + (chk ? ' (check!)' : '');
+  statusEl.textContent = over || (hintMove && !cpuTurn() ? `Hint: ${hintMove.san}` : '') || (mode.cpu ? (S.turn === mode.human ? 'Your move' : 'Computer is thinking…') : `${S.turn==='w' ? 'White' : 'Black'} to move`) + (chk ? ' (check!)' : '');
 }
 
 function tap(r, c) {
@@ -224,6 +226,7 @@ function doMove(m, animate = true) {
   const mover = S.board[m.fr][m.fc];
   const rookFrom = m.castle ? sqEl(m.tr, m.castle === 'K' ? 7 : 0).getBoundingClientRect() : null;
   if (clock && history.length) clock[S.turn] += clock.inc * 1000;
+  hintMove = null; if (hintBusy) { hintBusy = false; cancelThink(); }
   history.push(S); S = apply(S, m);
   const k = posKey(S); S.positions[k] = (S.positions[k]||0) + 1;
   selected = null; legalForSel = []; save(); render();
@@ -364,7 +367,7 @@ document.getElementById('undo').onclick = () => {
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;
   cancelThink();
-  undos[who]--; viewIdx = null; for (let i = 0; i < n; i++) S = history.pop(); selected = null; legalForSel = []; save(); render();
+  hintMove = null; undos[who]--; viewIdx = null; for (let i = 0; i < n; i++) S = history.pop(); selected = null; legalForSel = []; save(); render();
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
@@ -575,3 +578,35 @@ function renderSetup() {
   chipRow('levelchoices', LEVELS.map((L, i) => [i + 1, `<b>${i + 1}</b><small>${L.name}</small>`]), v => pickSetup.level === v, v => pickSetup.level = v);
   chipRow('colorchoices', [['w', piece('w', 'k', 'ci') + 'White'], ['r', '<span class="ci rnd">?</span>Random'], ['b', piece('b', 'k', 'ci') + 'Black']], v => pickSetup.color === v, v => pickSetup.color = v);
 }
+
+// ---- hints: ask the engine for the best move and show it with a gold arrow ----
+function drawHint() {
+  const svg = document.getElementById('arrows'), line = document.getElementById('hintline');
+  const b = boardEl.getBoundingClientRect(), pr = boardEl.parentElement.getBoundingClientRect(), bw = boardEl.clientWidth, bh = boardEl.clientHeight;
+  // cover exactly the squares (inside the board's border)
+  svg.style.left = (b.left - pr.left + boardEl.clientLeft) + 'px'; svg.style.top = (b.top - pr.top + boardEl.clientTop) + 'px';
+  svg.style.width = bw + 'px'; svg.style.height = bh + 'px';
+  const m = viewIdx == null ? hintMove : null;
+  svg.style.display = m ? '' : 'none'; if (!m) return;
+  const X = c => (flipped ? 7 - c : c) + .5, Y = r => (flipped ? 7 - r : r) + .5;
+  const x1 = X(m.fc), y1 = Y(m.fr), x2 = X(m.tc), y2 = Y(m.tr), len = Math.hypot(x2 - x1, y2 - y1), k = (len - .32) / len;
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x1 + (x2 - x1) * k); line.setAttribute('y2', y1 + (y2 - y1) * k);
+}
+addEventListener('resize', drawHint);
+document.getElementById('hint').onclick = () => {
+  if (hintBusy || result(S) || cpuTurn()) return;
+  if (hintMove) { hintMove = null; render(); return; }   // tap again to hide the hint
+  hintBusy = true; render();
+  const pos = S, legal = allLegal(S), eng = getEngine();
+  onBest = uci => {
+    hintBusy = false;
+    if (pos !== S || !uci || uci === '(none)') { render(); return; }
+    const F = 'abcdefgh', fc = F.indexOf(uci[0]), fr = 8 - +uci[1], tc = F.indexOf(uci[2]), tr = 8 - +uci[3], pr = uci[4];
+    const m = legal.find(m => m.fr === fr && m.fc === fc && m.tr === tr && m.tc === tc && (!pr || m.promo === pr));
+    if (m) hintMove = { ...m, san: san(S, m) };
+    render();
+  };
+  eng.postMessage('setoption name Skill Level value 20');
+  eng.postMessage('position fen ' + fen(S));
+  searching = true; eng.postMessage('go movetime 800');
+};
