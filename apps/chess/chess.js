@@ -1,6 +1,7 @@
-const VERSION = '0.4.2';
+const VERSION = '0.5.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
+{ const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; }
 
 // Board: board[r][c], r=0 is rank 8. Piece = {t:'p|n|b|r|q|k', c:'w|b'} or null.
 const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use href="pieces.svg#${c}${t}"/></svg>`;
