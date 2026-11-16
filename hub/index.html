@@ -48,6 +48,7 @@
   .sheet h4 { margin:0 0 12px; font-size:1.2rem; }
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
+  .iconbtn.dot { position:relative; } .iconbtn.dot::after { content:''; position:absolute; top:8px; right:8px; width:9px; height:9px; border-radius:50%; background:#ef4444; }
   .row.click { cursor:pointer; } .row.click span:first-child { color:var(--accent); font-weight:600; }
 </style>
 </head>
@@ -66,6 +67,7 @@
 <div class="sheet-bg" id="sheet"><div class="sheet">
   <h4>Settings</h4>
   <div class="row"><span>App Hub version</span><span id="s-ver"></span></div>
+  <div class="row click" id="s-upd" style="display:none"><span>Update App Hub</span><span id="s-updv"></span></div>
   <div class="row"><span>Apps available</span><span id="s-count"></span></div>
   <div class="row click" id="s-check"><span>Check for updates now</span><span id="s-last"></span></div>
   <div class="row"><span>Source</span><span>GitHub</span></div>
@@ -99,7 +101,7 @@ function render() {
   const feat = apps[0];
   $('hero').innerHTML = feat ? `<div class="hero"><img src="../${feat.iconUrl}" alt=""><div class="z"><div class="k">Featured</div><h2>${feat.name}</h2><p>${feat.description || feat.tagline || ''}</p></div></div>` : '';
   const list = $('list'); list.innerHTML = '';
-  for (const a of [...apps, hub]) {
+  for (const a of apps) {
     if (!a) continue;
     const have = hasHub ? Hub.installedVersion(a.package) : '';
     const shown = a.live || a.version;
@@ -110,7 +112,11 @@ function render() {
     const b = button(a, have); if (b) card.appendChild(b);
     list.appendChild(card);
   }
-  $('s-ver').textContent = 'v' + hubVer; $('s-count').textContent = apps.length;
+  $('s-ver').textContent = 'v' + hubVer;
+  const hubUpd = hasHub && hub && newer(hub.version, hubVer);
+  $('s-upd').style.display = hubUpd ? '' : 'none';
+  if (hubUpd) { $('s-updv').textContent = status.hub || ('v' + hub.version + ' available'); $('s-upd').onclick = () => act(hub); }
+  $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
   $('s-last').textContent = lastCheck ? 'Checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
 }
 
