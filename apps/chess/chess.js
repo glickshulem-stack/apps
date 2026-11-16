@@ -1,4 +1,4 @@
-const VERSION = '0.17.0';
+const VERSION = '0.18.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -7,6 +7,17 @@ document.getElementById('ver').textContent = VERSION;
 // Piece sets offered in Settings. Add more here later.
 const SETS = [['maestro','Maestro'],['merida','Merida'],['alpha','Alpha']];
 let PSET = 'maestro';
+// Board colors offered in Settings: [id, name, light square, dark square]. Same board style, different colors.
+const BOARDS = [['fide','Tournament','#e6c79a','#9a6a3e'],['maple','Maple','#f0d9b5','#b58863'],['cherry','Cherry','#f0d2c0','#a0523d'],
+  ['mahogany','Mahogany','#e9c9a6','#6e3b24'],['burgundy','Burgundy','#f1dcc6','#8c3b3b'],['stone','Stone','#ece6da','#7d746c']];
+let BOARD = 'fide';
+try { const v = localStorage.getItem('gambit-board'); if (BOARDS.some(x => x[0] === v)) BOARD = v; } catch {}
+{ const q = new URLSearchParams(location.search).get('board'); if (q) BOARD = q; }
+function applyBoard() {
+  const b = BOARDS.find(x => x[0] === BOARD) || BOARDS[0], st = document.body.style;
+  st.setProperty('--light', b[2]); st.setProperty('--dark', b[3]); st.setProperty('--cl', b[3]); st.setProperty('--cd', b[2]);
+}
+applyBoard();
 try { const v = localStorage.getItem('gambit-pieces'); if (SETS.some(x => x[0] === v)) PSET = v; } catch {}
 { const q = new URLSearchParams(location.search).get('pieces'); if (q) PSET = q; }
 const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
@@ -331,6 +342,14 @@ function renderSettings() {
     b.innerHTML = `<div class="setprev">${u('w','k')}${u('w','n')}${u('b','q')}${u('b','n')}</div><div class="setname">${name}</div>`;
     b.onclick = () => { PSET = id; try { localStorage.setItem('gambit-pieces', id); } catch {} renderSettings(); render(); };
     box.appendChild(b);
+  }
+  const bb = document.getElementById('boardchoices'); bb.innerHTML = '';
+  for (const [id, name, l, d] of BOARDS) {
+    const b = document.createElement('button'); b.className = 'boardopt' + (id === BOARD ? ' on' : '');
+    let cells = ''; for (let i = 0; i < 16; i++) cells += `<i style="background:${(i + (i >> 2)) % 2 ? d : l}"></i>`;
+    b.innerHTML = `<div class="boardprev">${cells}</div><div class="setname">${name}</div>`;
+    b.onclick = () => { BOARD = id; try { localStorage.setItem('gambit-board', id); } catch {} applyBoard(); renderSettings(); };
+    bb.appendChild(b);
   }
 }
 document.getElementById('opensettings').onclick = () => { renderSettings(); document.getElementById('settings').classList.add('show'); };

@@ -110,9 +110,9 @@ body[data-bg="camel"] { --page: url("data:image/svg+xml,%3Csvg xmlns='http://www
 #setchoices { display:flex; gap:12px; }
 .setopt { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; border-radius:14px; border:2px solid transparent; background:#3a2a1c; color:#f3e2c4; cursor:pointer; font:600 1rem Inter,sans-serif; }
 .setopt.on { border-color:#e6c79a; background:#4e3826; }
-.setprev { display:grid; grid-template-columns:1fr 1fr; width:110px; height:110px; background:#e6c79a; border-radius:8px; overflow:hidden; }
+.setprev { display:grid; grid-template-columns:1fr 1fr; width:110px; height:110px; background:var(--light); border-radius:8px; overflow:hidden; }
 .setprev svg { width:55px; height:55px; }
-.setprev svg:nth-child(2), .setprev svg:nth-child(3) { background:#9a6a3e; }
+.setprev svg:nth-child(2), .setprev svg:nth-child(3) { background:var(--dark); }
 body[data-theme="fide"] .dialog { background:#2e2016; border-color:#6b4c32; }
 
 /* fonts */
@@ -181,3 +181,11 @@ body[data-theme="fide"] #winnew, body[data-theme="fide"] #yes { background:linea
 #timechoices .timeopt:first-child { grid-column:1 / -1; }
 .timeopt { padding:12px 10px; border-radius:12px; border:2px solid transparent; background:#3a2a1c; color:#f3e2c4; font:600 1rem var(--display); cursor:pointer; white-space:nowrap; }
 .timeopt.on { border-color:#e6c79a; background:#4e3826; }
+
+/* 0.18.0: board colors */
+#boardchoices { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; align-self:stretch; }
+.boardopt { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; border-radius:12px; border:2px solid transparent; background:#3a2a1c; color:#f3e2c4; cursor:pointer; font:600 .8rem Inter,sans-serif; }
+.boardopt.on { border-color:#e6c79a; background:#4e3826; }
+.boardprev { display:grid; grid-template-columns:repeat(4,1fr); width:64px; height:64px; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+.boardprev i { display:block; }
+#settings .dialog { max-height:calc(100vh - 24px); overflow-y:auto; }
