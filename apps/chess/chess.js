@@ -1,4 +1,4 @@
-const VERSION = '0.18.0';
+const VERSION = '0.19.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -27,6 +27,14 @@ let viewIdx = null;
 const TIMES = [null, [1,0], [3,2], [5,0], [10,0], [15,10], [30,0]];
 let timeCtl = null, clock = null, lastTick = performance.now(), pickTime;
 try { const v = JSON.parse(localStorage.getItem('gambit-time')); if (v === null || TIMES.some(t => t && t[0]===v[0] && t[1]===v[1])) timeCtl = v; } catch {}
+// Opponent: two players on one device, or the computer. setup = what the New game dialog picks.
+const LEVELS = [
+  { name:'Beginner', skill:0,  depth:1, rand:.35 }, { name:'Easy',   skill:3,  depth:2, rand:.15 },
+  { name:'Medium',   skill:7,  depth:5, rand:.05 }, { name:'Hard',   skill:11, ms:400 },
+  { name:'Expert',   skill:16, ms:800 },            { name:'Master', skill:20, ms:1500 } ];
+let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
+try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeof v.cpu === 'boolean') setup = v; } catch {}
+let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
 function initial() {
@@ -131,9 +139,13 @@ function result(s) {
 const boardEl = document.getElementById('board'), statusEl = document.getElementById('status');
 const UNDO_LIMIT = 3;
 let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
-function newGame() { clock = timeCtl ? { base: timeCtl[0], inc: timeCtl[1], w: timeCtl[0]*60000, b: timeCtl[0]*60000, flag: null } : null; viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); }
-function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos, clock})); } catch {} }
-function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; clock = d.clock || null; return true; } } catch {} return false; }
+function newGame() {
+  cancelThink();
+  mode = setup.cpu ? { cpu:true, level:setup.level, human: setup.color === 'r' ? (Math.random() < .5 ? 'w' : 'b') : setup.color } : { cpu:false };
+  if (mode.cpu) flipped = mode.human === 'b';
+  clock = timeCtl ? { base: timeCtl[0], inc: timeCtl[1], w: timeCtl[0]*60000, b: timeCtl[0]*60000, flag: null } : null; viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); maybeCpu(); }
+function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos, clock, mode})); } catch {} }
+function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; clock = d.clock || null; mode = d.mode || { cpu:false }; return true; } } catch {} return false; }
 
 function render() {
   boardEl.innerHTML = '';
@@ -156,17 +168,18 @@ function render() {
   const mat = col => S.captured[col].reduce((a,t)=>a+VALUE[t],0);
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
-  { const who = opp(S.turn), left = undos[who], btn = document.getElementById('undo');
-    btn.querySelector('span').innerHTML = `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
-    btn.disabled = !history.length || left <= 0 || !!clock?.flag;
+  { const who = mode.cpu ? mode.human : opp(S.turn), left = undos[who], btn = document.getElementById('undo');
+    btn.querySelector('span').innerHTML = mode.cpu ? `Undo<small class="ucount">${left} left</small>` : `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
+    btn.disabled = history.length < undoPlies() || left <= 0 || !!clock?.flag;
+    document.getElementById('flip').hidden = mode.cpu; document.querySelector('.actions').classList.toggle('solo', mode.cpu);
     btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
   renderMoves(); renderClock();
   if (viewIdx != null) { statusEl.textContent = `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`; statusEl.classList.remove('over'); return; }
-  statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
+  statusEl.textContent = over || (mode.cpu ? (S.turn === mode.human ? 'Your move' : 'Computer is thinking…') : `${S.turn==='w' ? 'White' : 'Black'} to move`) + (chk ? ' (check!)' : '');
 }
 
 function tap(r, c) {
-  if (result(S)) return;
+  if (result(S) || cpuTurn()) return;
   const mv = legalForSel.filter(m => m.tr===r && m.tc===c);
   if (mv.length) {
     if (mv.length > 1) return askPromo(mv);
@@ -195,6 +208,7 @@ function doMove(m, animate = true) {
   }
   if (result(S)?.startsWith('Checkmate')) setTimeout(celebrate, 450);
   lastTick = performance.now();
+  setTimeout(maybeCpu, 30);
 }
 
 // ---- win celebration ----
@@ -208,7 +222,7 @@ function celebrate() {
     const ov = document.getElementById('win');
     document.getElementById('winpiece').innerHTML = piece(winner, 'k', '');
     document.querySelector('.winsub').textContent = clock?.flag ? 'On time' : 'Checkmate';
-    document.getElementById('wintitle').textContent = (winner === 'w' ? 'White' : 'Black') + ' wins';
+    document.getElementById('wintitle').textContent = mode.cpu ? (winner === mode.human ? 'You win' : 'Computer wins') : (winner === 'w' ? 'White' : 'Black') + ' wins';
     ov.classList.add('show'); confetti();
   }, 950);
 }
@@ -279,7 +293,7 @@ function squareAt(x, y) {
 }
 boardEl.addEventListener('pointerdown', e => {
   if (viewIdx != null) { viewIdx = null; render(); return; }
-  const sq = squareAt(e.clientX, e.clientY); if (!sq || result(S)) return;
+  const sq = squareAt(e.clientX, e.clientY); if (!sq || result(S) || cpuTurn()) return;
   const [r, c] = sq, p = S.board[r][c];
   const wasSelected = selected && selected[0]===r && selected[1]===c;
   if (p && p.c === S.turn && !legalForSel.some(m => m.tr===r && m.tc===c)) {
@@ -320,17 +334,18 @@ function askPromo(moves) {
   ov.classList.add('show');
 }
 document.getElementById('undo').onclick = () => {
-  if (!history.length) return;
-  const who = opp(S.turn); // the player who made the last move takes it back
+  const n = undoPlies(); if (history.length < n) return;
+  const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;
-  undos[who]--; viewIdx = null; S = history.pop(); selected = null; legalForSel = []; save(); render();
+  cancelThink();
+  undos[who]--; viewIdx = null; for (let i = 0; i < n; i++) S = history.pop(); selected = null; legalForSel = []; save(); render();
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
 document.getElementById('yes').onclick = () => { document.getElementById('confirm').classList.remove('show'); newGame(); };
 document.getElementById('no').onclick = () => document.getElementById('confirm').classList.remove('show');
 
-if (!load()) newGame(); else render();
+if (!load()) newGame(); else { render(); setTimeout(maybeCpu, 300); }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('../../sw.js', {scope:'../../'}).catch(()=>{});
 
 // Settings
@@ -398,6 +413,7 @@ function renderMoves() {
 // ---- chess clocks ----
 const tlabel = t => !t ? 'No clock' : t[1] ? `${t[0]} | ${t[1]}` : `${t[0]} min`;
 function renderTimes() {
+  renderSetup();
   const box = document.getElementById('timechoices'); box.innerHTML = '';
   pickTime = timeCtl;
   for (const t of TIMES) {
@@ -409,7 +425,7 @@ function renderTimes() {
   }
 }
 { const yes = document.getElementById('yes'), old = yes.onclick;
-  yes.onclick = () => { timeCtl = pickTime === undefined ? timeCtl : pickTime; try { localStorage.setItem('gambit-time', JSON.stringify(timeCtl)); } catch {} old(); }; }
+  yes.onclick = () => { setup = { ...pickSetup }; try { localStorage.setItem('gambit-setup', JSON.stringify(setup)); } catch {} timeCtl = pickTime === undefined ? timeCtl : pickTime; try { localStorage.setItem('gambit-time', JSON.stringify(timeCtl)); } catch {} old(); }; }
 function fmt(ms) {
   ms = Math.max(0, ms);
   if (ms < 10000) return `0:0${Math.floor(ms/1000)}.${Math.floor(ms%1000/100)}`;
@@ -441,3 +457,67 @@ setInterval(() => {
 }, 100);
 document.addEventListener('visibilitychange', () => { lastTick = performance.now(); save(); });
 render();
+
+// ---- play against the computer (Stockfish engine in engine/) ----
+function cpuTurn() { return mode.cpu && S.turn !== mode.human; }
+function undoPlies() { return mode.cpu ? (S.turn === mode.human ? 2 : 1) : 1; }
+function fen(s) {
+  const rows = s.board.map(row => { let o = '', e = 0; for (const p of row) { if (!p) { e++; continue; } if (e) { o += e; e = 0; } o += p.c === 'w' ? p.t.toUpperCase() : p.t; } return o + (e || ''); });
+  const cs = (s.castle.wK ? 'K' : '') + (s.castle.wQ ? 'Q' : '') + (s.castle.bK ? 'k' : '') + (s.castle.bQ ? 'q' : '') || '-';
+  const ep = s.ep ? 'abcdefgh'[s.ep[1]] + (8 - s.ep[0]) : '-';
+  return `${rows.join('/')} ${s.turn} ${cs} ${ep} ${s.half} ${Math.floor(history.length / 2) + 1}`;
+}
+function getEngine() {
+  if (engine) return engine;
+  engine = new Worker('engine/stockfish.js');
+  engine.onmessage = e => {
+    const line = typeof e.data === 'string' ? e.data : '';
+    if (!line.startsWith('bestmove')) return;
+    searching = false;
+    if (ignoreBest > 0) { ignoreBest--; return; }
+    const f = onBest; onBest = null; if (f) f(line.split(' ')[1]);
+  };
+  engine.postMessage('uci'); engine.postMessage('isready');
+  return engine;
+}
+function cancelThink() {
+  thinkId++; onBest = null; cpuBusy = false;
+  if (searching && engine) { ignoreBest++; searching = false; engine.postMessage('stop'); }
+}
+function maybeCpu() {
+  if (!cpuTurn() || result(S) || onBest || cpuBusy) return;
+  const id = ++thinkId, L = LEVELS[mode.level - 1] || LEVELS[1], legal = allLegal(S), t0 = performance.now();
+  cpuBusy = true;
+  const play = m => setTimeout(() => {
+    cpuBusy = false;
+    if (id !== thinkId || !m || !cpuTurn() || result(S)) return;
+    viewIdx = null; doMove(m);
+  }, Math.max(0, 650 - (performance.now() - t0)));
+  // lower levels sometimes play a random move, so they can be beaten
+  if (Math.random() < (L.rand || 0)) return play(legal[Math.floor(Math.random() * legal.length)]);
+  const eng = getEngine();
+  onBest = uci => {
+    if (!uci || uci === '(none)') { cpuBusy = false; return; }
+    const F = 'abcdefgh', fc = F.indexOf(uci[0]), fr = 8 - +uci[1], tc = F.indexOf(uci[2]), tr = 8 - +uci[3], pr = uci[4];
+    play(legal.find(m => m.fr === fr && m.fc === fc && m.tr === tr && m.tc === tc && (!pr || m.promo === pr)) || legal[0]);
+  };
+  eng.postMessage(`setoption name Skill Level value ${L.skill}`);
+  eng.postMessage('position fen ' + fen(S));
+  searching = true;
+  eng.postMessage(L.depth ? `go depth ${L.depth}` : `go movetime ${L.ms}`);
+}
+
+// New game dialog: opponent, level and color
+function chipRow(boxId, items, isOn, onPick) {
+  const box = document.getElementById(boxId); box.innerHTML = '';
+  for (const [val, html] of items) {
+    const b = document.createElement('button'); b.className = 'timeopt' + (isOn(val) ? ' on' : ''); b.innerHTML = html;
+    b.onclick = () => { onPick(val); renderSetup(); }; box.appendChild(b);
+  }
+}
+function renderSetup() {
+  chipRow('oppchoices', [[false, 'Two players'], [true, 'Computer']], v => pickSetup.cpu === v, v => pickSetup.cpu = v);
+  document.getElementById('cpuopts').hidden = !pickSetup.cpu;
+  chipRow('levelchoices', LEVELS.map((L, i) => [i + 1, `<b>${i + 1}</b><small>${L.name}</small>`]), v => pickSetup.level === v, v => pickSetup.level = v);
+  chipRow('colorchoices', [['w', piece('w', 'k', 'ci') + 'White'], ['r', '<span class="ci rnd">?</span>Random'], ['b', piece('b', 'k', 'ci') + 'Black']], v => pickSetup.color === v, v => pickSetup.color = v);
+}
