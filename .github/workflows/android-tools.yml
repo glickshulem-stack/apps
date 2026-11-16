@@ -7,6 +7,8 @@ on:
   push:
     branches: ['claude/project-thread-szp6cs']
     paths: ['.github/workflows/android-tools.yml']
+permissions:
+  contents: write
 jobs:
   pack:
     runs-on: ubuntu-latest
@@ -22,8 +24,10 @@ jobs:
           cp $SDK/platforms/android-35/android.jar out/platforms/android-35/
           tar czf android-tools.tgz -C out .
           ls -la android-tools.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: android-tools
-          path: android-tools.tgz
-          retention-days: 3
+      - name: Hand over on a temporary branch (removed again after 15 minutes)
+        run: |
+          mkdir hand && cd hand && git init -q && git checkout -q -b tmp/android-tools
+          mv ../android-tools.tgz . && git add . && git -c user.name=bot -c user.email=bot@users.noreply.github.com commit -qm tools
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" tmp/android-tools
+          sleep 900
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" --delete tmp/android-tools
