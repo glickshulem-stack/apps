@@ -1,4 +1,4 @@
-# Su's Apps
+# App Hub
 
 An installable web app hub (PWA). Open the GitHub Pages link on a phone or tablet and choose "Add to Home screen" / "Install". It updates itself on every push.
 

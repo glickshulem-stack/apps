@@ -1,6 +1,6 @@
 {
-  "name": "Su's Apps",
-  "short_name": "Su's Apps",
+  "name": "App Hub",
+  "short_name": "App Hub",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
