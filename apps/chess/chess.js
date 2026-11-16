@@ -1,4 +1,4 @@
-const VERSION = '0.7.0';
+const VERSION = '0.7.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; }
@@ -131,11 +131,6 @@ function render() {
     boardEl.appendChild(d);
   }
   const mat = col => S.captured[col].reduce((a,t)=>a+VALUE[t],0);
-  for (const col of ['w','b']) {
-    const caps = S.captured[col].slice().sort((a,b)=>VALUE[b]-VALUE[a]).map(t => piece(opp(col), t, '')).join('');
-    const diff = mat(col) - mat(opp(col));
-    document.getElementById('caps-'+col).innerHTML = `<span class="caplabel">${col==='w'?'White took':'Black took'}</span>` + caps + (diff>0 ? `<span class="adv">${col==='w'?'White':'Black'} ahead by ${diff}</span>` : '');
-  }
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
   statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
