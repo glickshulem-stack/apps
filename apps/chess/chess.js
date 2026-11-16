@@ -1,4 +1,4 @@
-const VERSION = '0.20.0';
+const VERSION = '0.20.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -43,10 +43,15 @@ const TIMES = [null, [1,0], [3,2], [5,0], [10,0], [15,10], [30,0]];
 let timeCtl = null, clock = null, lastTick = performance.now(), pickTime;
 try { const v = JSON.parse(localStorage.getItem('gambit-time')); if (v === null || TIMES.some(t => t && t[0]===v[0] && t[1]===v[1])) timeCtl = v; } catch {}
 // Opponent: two players on one device, or the computer. setup = what the New game dialog picks.
+// Beginner and Easy use a simple built-in player that misses a lot; Medium and up use the Stockfish engine.
+// think = how long the computer pretends to think, in seconds [min, max].
 const LEVELS = [
-  { name:'Beginner', skill:0,  depth:1, rand:.35 }, { name:'Easy',   skill:3,  depth:2, rand:.15 },
-  { name:'Medium',   skill:7,  depth:5, rand:.05 }, { name:'Hard',   skill:11, ms:400 },
-  { name:'Expert',   skill:16, ms:800 },            { name:'Master', skill:20, ms:1500 } ];
+  { name:'Beginner', simple:'beginner', think:[1, 2] },
+  { name:'Easy',     simple:'easy',     think:[1.2, 2.5] },
+  { name:'Medium',   skill:0,  depth:2, rand:.12, think:[1.5, 3] },
+  { name:'Hard',     skill:5,  depth:5,           think:[1.8, 3.5] },
+  { name:'Expert',   skill:12, ms:500,            think:[2, 4] },
+  { name:'Master',   skill:20, ms:1500,           think:[2.5, 5] } ];
 let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
 try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeof v.cpu === 'boolean') setup = v; } catch {}
 let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
@@ -507,8 +512,12 @@ function maybeCpu() {
     cpuBusy = false;
     if (id !== thinkId || !m || !cpuTurn() || result(S)) return;
     viewIdx = null; doMove(m);
-  }, Math.max(0, 650 - (performance.now() - t0)));
-  // lower levels sometimes play a random move, so they can be beaten
+  }, Math.max(0, wait - (performance.now() - t0)));
+  // a quick reply looks natural early in the game and when there is only one move
+  const [lo, hi] = L.think, early = history.length < 4 || legal.length === 1;
+  const wait = (early ? lo * .6 : lo + Math.random() * (hi - lo)) * 1000;
+  if (L.simple) return play(simpleMove(legal, L.simple));
+  // Medium sometimes plays a random move, so it can be beaten
   if (Math.random() < (L.rand || 0)) return play(legal[Math.floor(Math.random() * legal.length)]);
   const eng = getEngine();
   onBest = uci => {
@@ -520,6 +529,30 @@ function maybeCpu() {
   eng.postMessage('position fen ' + fen(S));
   searching = true;
   eng.postMessage(L.depth ? `go depth ${L.depth}` : `go movetime ${L.ms}`);
+}
+
+// A weak, human-like player for the two lowest levels: it only looks one move ahead.
+function capValue(s, m) { const p = m.enpassant ? { t:'p' } : s.board[m.tr][m.tc]; return (p ? VALUE[p.t] : 0) + (m.promo ? VALUE[m.promo] - 1 : 0); }
+function simpleMove(legal, kind) {
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  if (kind === 'beginner') {
+    // mostly random; sometimes grabs the biggest piece it can take, without checking if it's protected
+    if (Math.random() < .55) return pick(legal);
+    const best = Math.max(...legal.map(m => capValue(S, m)));
+    return best > 0 ? pick(legal.filter(m => capValue(S, m) === best)) : pick(legal);
+  }
+  // easy: takes free pieces and avoids losing its own most of the time, but misses a lot
+  if (Math.random() < .25) return pick(legal);
+  let bestScore = -1e9, bestMoves = [];
+  for (const m of legal) {
+    const after = apply(S, m), replies = allLegal(after);
+    let score = capValue(S, m);
+    if (!replies.length) score += inCheck(after, after.turn) ? 1000 : 0;
+    else score -= Math.max(0, ...replies.map(r => capValue(after, r))) * .9;
+    score += Math.random() * 1.2;
+    if (score > bestScore + .01) { bestScore = score; bestMoves = [m]; } else if (Math.abs(score - bestScore) <= .01) bestMoves.push(m);
+  }
+  return pick(bestMoves);
 }
 
 // New game dialog: opponent, level and color
