@@ -12,19 +12,17 @@
 <link rel="stylesheet" href="chess.css">
 </head>
 <body data-theme="fide">
-<header class="topbar">
-  <a href="../../" class="iconbtn" id="back" aria-label="Back to apps">‹</a>
-  <div class="brand"><img src="logo.svg" alt=""><span class="name">Gambit</span><span class="ver">v<span id="ver"></span></span></div>
-  <span class="spacer"></span>
-</header>
 <div class="layout">
   <section class="play">
-    <div class="player" id="player-top"></div>
     <div id="board"></div>
-    <div class="player" id="player-bottom"></div>
   </section>
   <aside class="panel">
+    <header class="topbar">
+      <a href="../../" class="iconbtn" id="back" aria-label="Back to apps">‹</a>
+      <div class="brand"><img src="logo.svg" alt=""><span class="name">Gambit</span><span class="ver">v<span id="ver"></span></span></div>
+    </header>
     <div class="status-card"><div class="turn-dot" id="turn-dot"></div><div id="status"></div></div>
+    <div class="caps-card"><div class="caprow" id="caps-w"></div><div class="caprow" id="caps-b"></div></div>
     <div class="actions">
       <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
       <button id="undo" class="act"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>

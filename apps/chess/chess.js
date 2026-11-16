@@ -1,4 +1,4 @@
-const VERSION = '0.5.1';
+const VERSION = '0.6.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; }
@@ -131,15 +131,11 @@ function render() {
     boardEl.appendChild(d);
   }
   const mat = col => S.captured[col].reduce((a,t)=>a+VALUE[t],0);
-  const bar = col => {
+  for (const col of ['w','b']) {
     const caps = S.captured[col].slice().sort((a,b)=>VALUE[b]-VALUE[a]).map(t => piece(opp(col), t, '')).join('');
     const diff = mat(col) - mat(opp(col));
-    return `<div class="avatar ${col}">${piece(col,'k','')}</div><div class="pname">${col==='w'?'White':'Black'}</div><div class="caps">${caps}${diff>0?`<span class="adv">+${diff}</span>`:''}</div>`;
-  };
-  const top = document.getElementById('player-top'), bot = document.getElementById('player-bottom');
-  const topCol = flipped ? 'w' : 'b', botCol = opp(topCol);
-  top.innerHTML = bar(topCol); bot.innerHTML = bar(botCol);
-  top.classList.toggle('active', !over && S.turn===topCol); bot.classList.toggle('active', !over && S.turn===botCol);
+    document.getElementById('caps-'+col).innerHTML = caps + (diff>0 ? `<span class="adv">+${diff}</span>` : '');
+  }
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
   statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
