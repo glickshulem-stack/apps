@@ -219,3 +219,9 @@ body { --p1:#4a3422; --p2:#2e2016; --p3:#6b4c32; --b1:#5a3f29; --b2:#43301f; --b
 #boardchoices { grid-template-columns:repeat(7,minmax(0,1fr)); }
 .boardopt { padding:8px 4px; font-size:.72rem; }
 .boardopt .setname { white-space:nowrap; }
+
+/* 0.21.0: piece colors matched to the board */
+body.tinted svg.cw { filter:url(#tintw); }
+body.tinted svg.cb { filter:url(#tintb); }
+body.tinted .sq svg.pc.cw { filter:url(#tintw) drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,.3)); }

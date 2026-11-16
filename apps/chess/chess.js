@@ -1,4 +1,4 @@
-const VERSION = '0.20.1';
+const VERSION = '0.21.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -19,9 +19,9 @@ const BOARDS = [
   { id:'maple', name:'Maple', l:'#f0d9b5', d:'#b58863', page:leather('#b4743f','#94592c','#6e3f1d'), ui:BROWN },
   { id:'mahogany', name:'Mahogany', l:'#e9c9a6', d:'#6e3b24', page:leather('#8e4630','#6e2e1e','#481a0e'), ui:panel('#4a2218','#2c120c','#6e3626','#c99a88') },
   { id:'stone', name:'Stone', l:'#ece6da', d:'#7d746c', page:leather('#8a847b','#6a655e','#45423d'), ui:panel('#3e3b37','#252321','#5a5650','#b5aea4') },
-  { id:'emerald', name:'Emerald', l:marble('green-l','#e6e9de'), d:marble('green-d','#1e4a3a'), cl:'#1e4a3a', cd:'#e6e9de', page:leather('#2f5e4b','#1f4436','#11281f'), ui:panel('#1f3d31','#11251d','#355e4c','#a9c4b6') },
-  { id:'royal', name:'Royal Blue', l:marble('blue-l','#e9ecf2'), d:marble('blue-d','#1f3b7c'), cl:'#1f3b7c', cd:'#e9ecf2', page:leather('#33569c','#22407c','#142650'), ui:panel('#20345f','#121e3a','#36508a','#a9b8d8') },
-  { id:'amethyst', name:'Amethyst', l:marble('purple-l','#eee8f1'), d:marble('purple-d','#4a2a6e'), cl:'#4a2a6e', cd:'#eee8f1', page:leather('#5e3a82','#452a62','#28173c'), ui:panel('#3a2452','#221432','#5a3c78','#c2aed6') },
+  { id:'emerald', name:'Emerald', pw:['#2a2216','#7a6a4a','#cdbf9e','#efe4c8','#fffaea'], pb:['#2a1608','#9a5e26','#c4884a','#e3b878','#f7ddb0'], l:marble('green-l','#e6e9de'), d:marble('green-d','#1e4a3a'), cl:'#1e4a3a', cd:'#e6e9de', page:leather('#2f5e4b','#1f4436','#11281f'), ui:panel('#1f3d31','#11251d','#355e4c','#a9c4b6') },
+  { id:'royal', name:'Royal Blue', pw:['#1b2233','#56627a','#9ea9bd','#c9d0dc','#e4e8ef'], pb:['#4a3000','#c9962e','#e8c25a','#f7e3a0','#fff8e0'], l:marble('blue-l','#e9ecf2'), d:marble('blue-d','#1f3b7c'), cl:'#1f3b7c', cd:'#e9ecf2', page:leather('#33569c','#22407c','#142650'), ui:panel('#20345f','#121e3a','#36508a','#a9b8d8') },
+  { id:'amethyst', name:'Amethyst', pw:['#2a1f2e','#6e5a75','#bfaec6','#ecdfe8','#fff4f8'], pb:['#3a1810','#c07860','#e0a088','#f4cbb8','#fff0e8'], l:marble('purple-l','#eee8f1'), d:marble('purple-d','#4a2a6e'), cl:'#4a2a6e', cd:'#eee8f1', page:leather('#5e3a82','#452a62','#28173c'), ui:panel('#3a2452','#221432','#5a3c78','#c2aed6') },
 ];
 let BOARD = 'fide';
 try { const v = localStorage.getItem('gambit-board'); if (BOARDS.some(x => x.id === v)) BOARD = v; } catch {}
@@ -31,11 +31,17 @@ function applyBoard() {
   st.setProperty('--light', b.l); st.setProperty('--dark', b.d); st.setProperty('--cl', b.cl || b.d); st.setProperty('--cd', b.cd || b.l);
   st.setProperty('--page', b.page);
   for (const [k, v] of Object.entries(b.ui)) st.setProperty('--' + k, v);
+  // piece colors that match the board (classic black and white when a board has none)
+  document.body.classList.toggle('tinted', !!b.pw);
+  if (b.pw) for (const [side, cols] of [['w', b.pw], ['b', b.pb]]) {
+    const rgb = cols.map(h => [1, 3, 5].map(i => (parseInt(h.slice(i, i + 2), 16) / 255).toFixed(3)));
+    ['R', 'G', 'B'].forEach((ch, k) => document.getElementById(`tint${side}${ch}`).setAttribute('tableValues', rgb.map(x => x[k]).join(' ')));
+  }
 }
 applyBoard();
 try { const v = localStorage.getItem('gambit-pieces'); if (SETS.some(x => x[0] === v)) PSET = v; } catch {}
 { const q = new URLSearchParams(location.search).get('pieces'); if (q) PSET = q; }
-const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
+const piece = (c, t, cls='pc') => `<svg class="${cls} c${c}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
 const VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
 let viewIdx = null;
 // Choices are [minutes, seconds added after each move]. null = no clock.
@@ -373,7 +379,7 @@ function renderSettings() {
   const box = document.getElementById('setchoices'); box.innerHTML = '';
   for (const [id, name] of SETS) {
     const b = document.createElement('button'); b.className = 'setopt' + (id === PSET ? ' on' : '');
-    const u = (c,t) => `<svg viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${id}.svg#${c}${t}"/></svg>`;
+    const u = (c,t) => `<svg class="c${c}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${id}.svg#${c}${t}"/></svg>`;
     b.innerHTML = `<div class="setprev">${u('w','k')}${u('w','n')}${u('b','q')}${u('b','n')}</div><div class="setname">${name}</div>`;
     b.onclick = () => { PSET = id; try { localStorage.setItem('gambit-pieces', id); } catch {} renderSettings(); render(); };
     box.appendChild(b);
