@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1f2937">
+<title>Chess</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="stylesheet" href="chess.css">
+</head>
+<body>
+<div class="top">
+  <a href="../../" class="btn">‹ Apps</a>
+  <div class="title">Chess <span class="ver">v<span id="ver"></span></span></div>
+  <button id="newgame" class="btn">New game</button>
+</div>
+<div id="captured-top" class="captured"></div>
+<div id="board"></div>
+<div id="captured-bottom" class="captured"></div>
+<div id="status"></div>
+<div class="bottom">
+  <button id="undo" class="btn">Undo</button>
+  <button id="flip" class="btn">Flip board</button>
+</div>
+<div id="promo" class="overlay"><div class="dialog"><div>Promote to:</div><div id="promo-choices"></div></div></div>
+<div id="confirm" class="overlay"><div class="dialog"><div>Start a new game?</div><div><button class="btn" id="yes">Yes</button> <button class="btn" id="no">No</button></div></div></div>
+<script src="chess.js"></script>
+</body>
+</html>
