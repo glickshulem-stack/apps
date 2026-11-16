@@ -114,3 +114,10 @@ body[data-bg="camel"] { --page: url("data:image/svg+xml,%3Csvg xmlns='http://www
 .setprev svg { width:55px; height:55px; }
 .setprev svg:nth-child(2), .setprev svg:nth-child(3) { background:#9a6a3e; }
 body[data-theme="fide"] .dialog { background:#2e2016; border-color:#6b4c32; }
+
+/* fonts */
+:root { --display: Outfit, Inter, sans-serif; }
+body[data-font="cinzel"] { --display: Cinzel, serif; }
+body[data-font="playfair"] { --display: "Playfair Display", serif; }
+body[data-font="marcellus"] { --display: Marcellus, serif; }
+.brand .name, #status, .dtitle, .act, .setname { font-family: var(--display); }
