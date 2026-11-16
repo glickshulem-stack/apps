@@ -1,4 +1,4 @@
-const VERSION = '0.10.0';
+const VERSION = '0.11.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
