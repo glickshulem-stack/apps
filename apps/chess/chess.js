@@ -1,4 +1,4 @@
-const VERSION = '0.4.0';
+const VERSION = '0.4.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 

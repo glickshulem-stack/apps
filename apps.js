@@ -1,5 +1,5 @@
 // The list of apps in the hub. Add a new app here.
-const HUB_VERSION = '0.1.3';
+const HUB_VERSION = '0.1.4';
 const APPS = [
-  { name: 'Gambit', icon: '♞', version: '0.4.0', path: 'apps/chess/' },
+  { name: 'Gambit', icon: '♞', version: '0.4.1', path: 'apps/chess/' },
 ];
