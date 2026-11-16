@@ -1,4 +1,4 @@
-const VERSION = '0.13.2';
+const VERSION = '0.14.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -11,6 +11,7 @@ try { const v = localStorage.getItem('gambit-pieces'); if (SETS.some(x => x[0] =
 { const q = new URLSearchParams(location.search).get('pieces'); if (q) PSET = q; }
 const piece = (c, t, cls='pc') => `<svg class="${cls}" viewBox="0 0 40 40"><use width="40" height="40" href="pieces/${PSET}.svg#${c}${t}"/></svg>`;
 const VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
+let viewIdx = null;
 let S, history, flipped = false, selected = null, legalForSel = [];
 
 function initial() {
@@ -114,23 +115,24 @@ function result(s) {
 const boardEl = document.getElementById('board'), statusEl = document.getElementById('status');
 const UNDO_LIMIT = 3;
 let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
-function newGame() { S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); }
+function newGame() { viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); }
 function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos})); } catch {} }
 function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; return true; } } catch {} return false; }
 
 function render() {
   boardEl.innerHTML = '';
-  const over = result(S), chk = !over && inCheck(S, S.turn) ? kingPos(S.board, S.turn) : (over?.startsWith('Checkmate') ? kingPos(S.board, S.turn) : null);
+  const D = viewIdx == null ? S : [...history, S][viewIdx + 1];
+  const over = result(S), dover = result(D), chk = !dover && inCheck(D, D.turn) ? kingPos(D.board, D.turn) : (dover?.startsWith('Checkmate') ? kingPos(D.board, D.turn) : null);
   for (let i=0;i<8;i++) for (let j=0;j<8;j++) {
     const r = flipped ? 7-i : i, c = flipped ? 7-j : j;
     const d = document.createElement('div');
     d.className = 'sq ' + ((r+c)%2 ? 'dark' : 'light'); d.style.backgroundPosition = `${(c*37+r*11)%100}% ${(r*53+c*7)%100}%`;
-    const L = S.last; if (L && ((L.fr===r&&L.fc===c)||(L.tr===r&&L.tc===c))) d.classList.add('last');
+    const L = D.last; if (L && ((L.fr===r&&L.fc===c)||(L.tr===r&&L.tc===c))) d.classList.add('last');
     if (selected && selected[0]===r && selected[1]===c) d.classList.add('sel');
     if (chk && chk[0]===r && chk[1]===c) d.classList.add('check');
     const mv = legalForSel.find(m => m.tr===r && m.tc===c);
-    if (mv) d.classList.add(S.board[r][c] || mv.enpassant ? 'capture' : 'move');
-    const p = S.board[r][c];
+    if (mv) d.classList.add(D.board[r][c] || mv.enpassant ? 'capture' : 'move');
+    const p = D.board[r][c];
     if (p) d.innerHTML = piece(p.c, p.t);
     if (i===7) d.insertAdjacentHTML('beforeend', `<span class="coord f">${'abcdefgh'[c]}</span>`);
     if (j===0) d.insertAdjacentHTML('beforeend', `<span class="coord r">${8-r}</span>`);
@@ -143,6 +145,8 @@ function render() {
     btn.querySelector('span').innerHTML = `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
     btn.disabled = !history.length || left <= 0;
     btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
+  renderMoves();
+  if (viewIdx != null) { statusEl.textContent = `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`; statusEl.classList.remove('over'); return; }
   statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
 }
 
@@ -185,6 +189,7 @@ function squareAt(x, y) {
   return flipped ? [7-i, 7-j] : [i, j];
 }
 boardEl.addEventListener('pointerdown', e => {
+  if (viewIdx != null) { viewIdx = null; render(); return; }
   const sq = squareAt(e.clientX, e.clientY); if (!sq || result(S)) return;
   const [r, c] = sq, p = S.board[r][c];
   const wasSelected = selected && selected[0]===r && selected[1]===c;
@@ -229,7 +234,7 @@ document.getElementById('undo').onclick = () => {
   if (!history.length) return;
   const who = opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;
-  undos[who]--; S = history.pop(); selected = null; legalForSel = []; save(); render();
+  undos[who]--; viewIdx = null; S = history.pop(); selected = null; legalForSel = []; save(); render();
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => document.getElementById('confirm').classList.add('show');
@@ -252,3 +257,43 @@ function renderSettings() {
 }
 document.getElementById('opensettings').onclick = () => { renderSettings(); document.getElementById('settings').classList.add('show'); };
 document.getElementById('closesettings').onclick = () => document.getElementById('settings').classList.remove('show');
+
+// ---- move list (standard chess notation) ----
+function san(pre, m) {
+  const p = pre.board[m.fr][m.fc], F = 'abcdefgh';
+  let out;
+  if (m.castle) out = m.castle === 'K' ? 'O-O' : 'O-O-O';
+  else {
+    const cap = pre.board[m.tr][m.tc] || m.enpassant, dest = F[m.tc] + (8 - m.tr);
+    if (p.t === 'p') out = (cap ? F[m.fc] + 'x' : '') + dest + (m.promo ? '=' + m.promo.toUpperCase() : '');
+    else {
+      const others = allLegal(pre).filter(o => o.tr===m.tr && o.tc===m.tc && (o.fr!==m.fr || o.fc!==m.fc) && pre.board[o.fr][o.fc].t===p.t);
+      let dis = '';
+      if (others.length) { if (!others.some(o => o.fc===m.fc)) dis = F[m.fc]; else if (!others.some(o => o.fr===m.fr)) dis = String(8-m.fr); else dis = F[m.fc] + (8-m.fr); }
+      out = p.t.toUpperCase() + dis + (cap ? 'x' : '') + dest;
+    }
+  }
+  const post = apply(pre, m);
+  if (inCheck(post, post.turn)) out += allLegal(post).length ? '+' : '#';
+  return out;
+}
+function renderMoves() {
+  const el = document.getElementById('moves'); if (!el) return;
+  const all = [...history, S];
+  if (!el._cache) el._cache = [];
+  const sans = [];
+  for (let i = 0; i < history.length; i++) {
+    const key = JSON.stringify(all[i+1].last) + i;
+    if (el._cache[i]?.key !== key) el._cache[i] = { key, s: san(all[i], all[i+1].last) };
+    sans.push(el._cache[i].s);
+  }
+  el._cache.length = sans.length;
+  let h = '';
+  for (let i = 0; i < sans.length; i += 2) {
+    const cell = j => j < sans.length ? `<span class="mv${(viewIdx ?? sans.length-1) === j ? ' cur' : ''}" data-i="${j}">${sans[j]}</span>` : '<span></span>';
+    h += `<span class="num">${i/2+1}.</span>${cell(i)}${cell(i+1)}`;
+  }
+  el.innerHTML = h || '<span class="empty">Moves will appear here</span>';
+  el.querySelectorAll('.mv').forEach(x => x.onclick = () => { const j = +x.dataset.i; viewIdx = j === sans.length-1 ? null : j; selected = null; legalForSel = []; render(); });
+  if (viewIdx == null) el.scrollTop = el.scrollHeight;
+}
