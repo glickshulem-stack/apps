@@ -1,4 +1,4 @@
-const VERSION = '0.7.1';
+const VERSION = '0.8.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; }

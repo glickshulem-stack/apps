@@ -86,3 +86,11 @@ body[data-theme="fide"] .act:active { background:#3a2a1b; }
 body[data-theme="fide"] #newgame { background:linear-gradient(180deg,#ecd0a4,#c99c64); color:#2e1e10; border:0; }
 body[data-theme="fide"] .iconbtn { background:#43301f; color:#f3e2c4; }
 .caplabel { font-size:.85rem; color:var(--muted); width:84px; flex:none; white-space:nowrap; }
+
+/* 0.8.0: neater button layout */
+.actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#newgame { grid-column:1 / -1; padding:18px; font-size:1.1rem; }
+.act { flex-direction:column; gap:6px; padding:16px 10px; border-radius:16px; font-size:.95rem; }
+#newgame { flex-direction:row; }
+.act svg { width:24px; height:24px; }
+@media (orientation: landscape) { .actions { grid-template-columns:1fr 1fr; margin-top:auto; } .panel { gap:16px; } }
