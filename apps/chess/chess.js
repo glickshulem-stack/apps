@@ -1,4 +1,4 @@
-const VERSION = '0.12.0';
+const VERSION = '0.13.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -112,9 +112,11 @@ function result(s) {
 
 // ---------- UI ----------
 const boardEl = document.getElementById('board'), statusEl = document.getElementById('status');
-function newGame() { S = initial(); S.positions[posKey(S)] = 1; history = []; selected = null; legalForSel = []; save(); render(); }
-function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped})); } catch {} }
-function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; return true; } } catch {} return false; }
+const UNDO_LIMIT = 3;
+let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
+function newGame() { S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); }
+function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos})); } catch {} }
+function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; return true; } } catch {} return false; }
 
 function render() {
   boardEl.innerHTML = '';
@@ -137,6 +139,10 @@ function render() {
   const mat = col => S.captured[col].reduce((a,t)=>a+VALUE[t],0);
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
+  { const who = opp(S.turn), left = undos[who], btn = document.getElementById('undo');
+    btn.querySelector('span').innerHTML = `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
+    btn.disabled = !history.length || left <= 0;
+    btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
   statusEl.textContent = over || `${S.turn==='w' ? 'White' : 'Black'} to move${chk ? ' (check!)' : ''}`;
 }
 
@@ -250,7 +256,12 @@ function askPromo(moves) {
   }
   ov.classList.add('show');
 }
-document.getElementById('undo').onclick = () => { if (history.length) { S = history.pop(); selected = null; legalForSel = []; save(); render(); } };
+document.getElementById('undo').onclick = () => {
+  if (!history.length) return;
+  const who = opp(S.turn); // the player who made the last move takes it back
+  if (undos[who] <= 0) return;
+  undos[who]--; S = history.pop(); selected = null; legalForSel = []; save(); render();
+};
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => document.getElementById('confirm').classList.add('show');
 document.getElementById('yes').onclick = () => { document.getElementById('confirm').classList.remove('show'); newGame(); };

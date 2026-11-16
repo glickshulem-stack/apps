@@ -124,3 +124,7 @@ body[data-font="marcellus"] { --display: Marcellus, serif; }
 
 #board { touch-action:none; }
 .sq svg.pc { will-change:transform; }
+
+.act:disabled { opacity:.45; cursor:default; }
+.ucount { display:block; font-family:Inter,sans-serif; font-size:.7rem; opacity:.75; margin-top:2px; text-transform:none; }
+#undo span { text-align:center; }
