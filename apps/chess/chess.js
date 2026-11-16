@@ -117,7 +117,7 @@ function render() {
   for (let i=0;i<8;i++) for (let j=0;j<8;j++) {
     const r = flipped ? 7-i : i, c = flipped ? 7-j : j;
     const d = document.createElement('div');
-    d.className = 'sq ' + ((r+c)%2 ? 'dark' : 'light');
+    d.className = 'sq ' + ((r+c)%2 ? 'dark' : 'light'); d.style.backgroundPosition = `${(c*37+r*11)%100}% ${(r*53+c*7)%100}%`;
     const L = S.last; if (L && ((L.fr===r&&L.fc===c)||(L.tr===r&&L.tc===c))) d.classList.add('last');
     if (selected && selected[0]===r && selected[1]===c) d.classList.add('sel');
     if (chk && chk[0]===r && chk[1]===c) d.classList.add('check');
