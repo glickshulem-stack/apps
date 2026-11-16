@@ -1,4 +1,4 @@
-const VERSION = '0.15.0';
+const VERSION = '0.16.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -177,10 +177,52 @@ function doMove(m, animate = true) {
     glide(mover.c, m.promo || mover.t, fromRect, m.tr, m.tc);
     if (m.castle) glide(mover.c, 'r', rookFrom, m.tr, m.castle === 'K' ? 5 : 3);
   }
+  if (result(S)?.startsWith('Checkmate')) setTimeout(celebrate, 450);
 }
+
+// ---- win celebration ----
+function celebrate() {
+  const winner = opp(S.turn), loser = S.turn, kp = kingPos(S.board, loser);
+  // the beaten king topples over
+  const ksq = kp && sqEl(kp[0], kp[1]), kpc = ksq && ksq.querySelector('svg.pc');
+  if (kpc) kpc.animate([{ transform:'rotate(0)' }, { transform:'rotate(-14deg)', offset:.3 }, { transform:'rotate(90deg) translate(18%, 10%)' }],
+    { duration:900, easing:'cubic-bezier(.5,0,.75,0)', fill:'forwards' });
+  setTimeout(() => {
+    const ov = document.getElementById('win');
+    document.getElementById('winpiece').innerHTML = piece(winner, 'k', '');
+    document.getElementById('wintitle').textContent = (winner === 'w' ? 'White' : 'Black') + ' wins';
+    ov.classList.add('show'); confetti();
+  }, 950);
+}
+function confetti() {
+  const cv = document.getElementById('confetti'), ctx = cv.getContext('2d'), dpr = window.devicePixelRatio || 1, W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cols = ['#f6dc8e','#e3b74f','#b88a2c','#fff4d6','#f3e2c4','#c9a227'];
+  // gold confetti bursts up from both lower corners
+  const bits = Array.from({length:180}, (_, i) => {
+    const left = i % 2 === 0, a = -Math.PI/2 + (left ? .55 : -.55) + (Math.random() - .5) * .7, v = 11 + Math.random() * 10;
+    return { x: left ? -10 : W + 10, y: H * .85, vx: Math.sin(a + Math.PI/2) * v * (left ? 1 : 1), vy: -Math.abs(Math.cos(a + Math.PI/2) * v) - 6,
+      w: 6 + Math.random() * 7, h: 3 + Math.random() * 5, r: Math.random() * 6, vr: (Math.random() - .5) * .35, c: cols[i % cols.length], d: Math.random() * 25 };
+  });
+  bits.forEach(b => { b.vx = (b.x < 0 ? 1 : -1) * (4 + Math.random() * 9); });
+  let t = 0;
+  (function frame() {
+    ctx.clearRect(0, 0, W, H); t++;
+    for (const b of bits) {
+      if (t < b.d) continue;
+      b.vy += .25; b.vx *= .99; b.vy *= .985; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.scale(1, Math.cos(t * .12 + b.d));
+      ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); ctx.restore();
+    }
+    if (t < 300 && document.getElementById('win').classList.contains('show')) requestAnimationFrame(frame);
+    else ctx.clearRect(0, 0, W, H);
+  })();
+}
+document.getElementById('winlook').onclick = () => document.getElementById('win').classList.remove('show');
+document.getElementById('winnew').onclick = () => { document.getElementById('win').classList.remove('show'); newGame(); };
 // Animations use a floating copy of the piece above the board.
 function ghost(c, t, rect) {
-  const g = document.createElement('div'); g.className = 'ghost';
+  const g = document.createElement('div'); g.className = 'flyghost';
   g.style.left = rect.left + 'px'; g.style.top = rect.top + 'px'; g.style.width = rect.width + 'px'; g.style.height = rect.height + 'px';
   g.innerHTML = piece(c, t, '');
   document.body.appendChild(g); return g;
