@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#f6f7f9; --surface:#fff; --text:#15171c; --muted:#6b7280; --line:#e6e8ec; --accent:#2563eb; --accent2:#1d4ed8; --ok:#16a34a; }
+  :root { --bg:#f6f7f9; --surface:#fff; --text:#15171c; --muted:#6b7280; --line:#e6e8ec; --accent:#2563eb; --accent2:#1d4ed8; --gold:#a8742a; --gold2:#8a5d1f; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; font-family:Inter,system-ui,Roboto,sans-serif; background:var(--bg); color:var(--text); user-select:none; }
   .appbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:14px 20px; background:rgba(246,247,249,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
@@ -46,8 +46,16 @@
   .meta { color:var(--muted); font-size:.8rem; margin-top:6px; }
   .status { color:var(--accent); font-size:.8rem; margin-top:4px; font-weight:600; }
   .btn { border:0; border-radius:999px; padding:10px 20px; font:700 .95rem Inter,sans-serif; cursor:pointer; }
-  .btn.install { background:var(--accent); color:#fff; } .btn.update { background:var(--ok); color:#fff; } .btn.open { background:#eef2ff; color:var(--accent2); }
+  .btn.install { background:var(--accent); color:#fff; } .btn.update { background:var(--gold); color:#fff; } .btn.open { background:#eef2ff; color:var(--accent2); }
   .btn:active { transform:scale(.96); }
+  .status.done { color:var(--gold2); }
+  .status.warn { color:#b45309; }
+  .bar { height:8px; border-radius:4px; background:#e8eaef; overflow:hidden; margin-top:8px; }
+  .bar i { display:block; height:100%; width:0; border-radius:4px; background:linear-gradient(90deg,var(--accent),#5b8cff); transition:width .4s; }
+  .bar.wait i { width:35%; animation:slide 1.2s ease-in-out infinite; }
+  @keyframes slide { from { transform:translateX(-100%); } to { transform:translateX(300%); } }
+  .sheet .bar { margin:0 4px 10px; }
+  .sheet .status { margin:-6px 4px 12px; }
   .msg { text-align:center; color:var(--muted); padding:40px; }
   .sheet-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:10; align-items:flex-end; justify-content:center; }
   .sheet-bg.show { display:flex; }
@@ -77,6 +85,7 @@
   <h4>Settings</h4>
   <div class="row"><span>App Hub version</span><span id="s-ver"></span></div>
   <div class="row click" id="s-upd" style="display:none"><span>Update App Hub</span><span id="s-updv"></span></div>
+  <div id="s-upd-x"></div>
   <div class="row"><span>Apps available</span><span id="s-count"></span></div>
   <div class="row click" id="s-check"><span>Check for updates now</span><span id="s-last"></span></div>
   <div class="row"><span>Source</span><span>GitHub</span></div>
@@ -91,18 +100,67 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-function onStatus(id, text) { status[id] = text; render(); }
-function act(a) { onStatus(a.id, 'Starting download…'); Hub.install(a.id, apkUrl(a)); }
+const PAGE_VER = '0.5.0';
+// App Hub 0.5.0+ keeps downloads and reports progress. Older App Hub only has Hub.install + onStatus.
+const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
+const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
+let ticker = null;
+
+function onStatus(id, text) { status[id] = text; render(); }          // old App Hub
+function hubEvent(id, what) { if (flow[id]) flow[id].phase = what; else flow[id] = { phase: what }; render(); }
+function job(id) { try { const s = Hub.job(id); return s ? JSON.parse(s) : null; } catch { return null; } }
+function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB'; }
+function act(a) {
+  flow[a.id] = { version: a.version, phase: 'start' };
+  if (kept2) { if (Hub.kept(a.id) === a.version) Hub.installKept(a.id); else Hub.download(a.id, apkUrl(a), a.version); }
+  else { status[a.id] = 'Starting download…'; Hub.install(a.id, apkUrl(a)); }
+  render();
+}
+// App Hub came back to the front (e.g. the Android install screen closed)
+function onHubResume() { for (const id in flow) if (flow[id].phase === 'installer') flow[id].phase = 'back'; }
+
+/* What an app's card should show right now: a button (or none), a status line, and maybe a progress bar. */
+function stateOf(a, have) {
+  const need = !have || newer(a.version, have), f = flow[a.id];
+  const btn = (label, cls, fn) => ({ label, cls, fn });
+  const get = need ? btn(have ? 'Update' : 'Install', have ? 'update' : 'install', () => act(a)) : null;
+  const open = a.package !== 'com.glickshulem.apphub' ? btn('Open', 'open', () => Hub.open(a.package)) : null;
+  if (f && f.version && have && !newer(f.version, have))
+    return { btn: open, status: `✓ ${have ? 'Updated' : 'Installed'} to v${f.version}`, cls: 'done' };
+  if (!kept2) {   // old App Hub: text status only, bar parsed from it
+    const t = status[a.id] || '', m = t.match(/Downloading (\d+)%/);
+    if (m) return { btn: null, status: `Downloading… ${m[1]}%`, pct: +m[1] };
+    if (t === 'Starting download…') return { btn: null, status: t, pct: -1 };
+    return { btn: need ? get : open, status: t };
+  }
+  if (!need) return { btn: open, status: '' };
+  const j = job(a.id);
+  if (j && j.state === 'downloading' && j.version === a.version) {
+    const pct = j.total ? Math.floor(j.done * 100 / j.total) : -1;
+    return { btn: null, pct, status: j.total ? `Downloading… ${pct}%  ·  ${mb(j.done)} of ${mb(j.total)}` : (j.done ? `Downloading… ${mb(j.done)}` : 'Starting download…') };
+  }
+  if (Hub.kept(a.id) === a.version) {
+    const b = btn('Install', 'install', () => act(a));
+    if (f && f.phase === 'permission') return { btn: b, status: 'Turn on "Allow from this source" for App Hub, then come back. It installs right after.', cls: 'warn' };
+    if (f && f.phase === 'installer') return { btn: null, status: 'Downloaded ✓  Now tap Install on the Android screen.' };
+    if (f && f.phase === 'back') return { btn: b, status: 'Not installed yet. The download is saved, so tap Install whenever you\'re ready.' };
+    return { btn: b, status: 'Downloaded and saved ✓  Tap Install when you\'re ready.' };
+  }
+  if (j && j.state === 'failed' && j.version === a.version)
+    return { btn: btn('Try again', 'update', () => act(a)), status: 'Download stopped. Check the internet, then tap Try again. It carries on where it stopped.', cls: 'warn' };
+  return { btn: get, status: '' };
+}
 
 function button(a, have) {
-  const b = document.createElement('button'); b.className = 'btn';
-  if (!hasHub) { b.className += ' open'; b.textContent = 'Open'; b.onclick = () => location.href = '../' + (a.webPath || ''); return a.webPath ? b : null; }
-  if (!have) { b.className += ' install'; b.textContent = 'Install'; b.onclick = () => act(a); }
-  else if (newer(a.version, have)) { b.className += ' update'; b.textContent = 'Update'; b.onclick = () => act(a); }
-  else if (a.package !== 'com.glickshulem.apphub') { b.className += ' open'; b.textContent = 'Open'; b.onclick = () => Hub.open(a.package); }
-  else return null;
-  return b;
+  if (!hasHub) {
+    if (!a.webPath) return null;
+    const b = document.createElement('button'); b.className = 'btn open'; b.textContent = 'Open';
+    b.onclick = () => location.href = '../' + a.webPath; return b;
+  }
+  const s = stateOf(a, have).btn; if (!s) return null;
+  const b = document.createElement('button'); b.className = 'btn ' + s.cls; b.textContent = s.label; b.onclick = s.fn; return b;
 }
+function barHtml(st) { return st && st.pct != null ? `<div class="bar${st.pct < 0 ? ' wait' : ''}"><i style="${st.pct >= 0 ? `width:${st.pct}%` : ''}"></i></div>` : ''; }
 
 // Featured: one slide per app, built only when the app list changes so it doesn't jump back while you watch.
 let featKey = '', featTimer = null, featIdx = 0;
@@ -128,22 +186,33 @@ function render() {
   if (!catalog) return;
   const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
   renderFeatured(apps);
-  const list = $('list'); list.innerHTML = '';
+  const list = $('list'); list.innerHTML = ''; let busy = false;
   for (const a of apps) {
     if (!a) continue;
     const have = hasHub ? Hub.installedVersion(a.package) : '';
     const shown = a.live || a.version;
     let meta = have ? `Installed · v${a.live || have}` : `v${shown}`;
     if (have && newer(a.version, have)) meta = `Update available · v${a.version}`;
+    const st = hasHub ? stateOf(a, have) : null; if (st && st.pct != null) busy = true;
     const card = document.createElement('div'); card.className = 'card'; card.dataset.id = a.id;
-    card.innerHTML = `<div class="ic"><img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div><div class="meta">${meta}</div>${status[a.id] ? `<div class="status">${status[a.id]}</div>` : ''}</div>`;
+    card.innerHTML = `<div class="ic"><img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div><div class="meta">${meta}</div>${barHtml(st)}${st && st.status ? `<div class="status ${st.cls || ''}">${st.status}</div>` : ''}</div>`;
     const b = button(a, have); if (b) card.appendChild(b);
     list.appendChild(card);
   }
-  $('s-ver').textContent = 'v' + hubVer;
+  $('s-ver').textContent = 'v' + hubVer + (hubVer === PAGE_VER ? '' : ' · page ' + PAGE_VER);
   const hubUpd = hasHub && hub && newer(hub.version, hubVer);
   $('s-upd').style.display = hubUpd ? '' : 'none';
-  if (hubUpd) { $('s-updv').textContent = status.hub || ('v' + hub.version + ' available'); $('s-upd').onclick = () => act(hub); }
+  const hs = hubUpd ? stateOf(hub, hubVer) : null;
+  $('s-upd-x').innerHTML = hs ? barHtml(hs) + (hs.status ? `<div class="status ${hs.cls || ''}">${hs.status}</div>` : '') : '';
+  if (hubUpd) {
+    $('s-updv').textContent = hs.btn ? hs.btn.label + ' v' + hub.version : '';
+    $('s-upd').querySelector('span').textContent = hs.btn && hs.btn.label === 'Install' ? 'Install App Hub update' : 'Update App Hub';
+    $('s-upd').onclick = () => hs.btn && hs.btn.fn();
+  }
+  if (hs && hs.pct != null) busy = true;
+  // while something is downloading, refresh the progress twice a second
+  if (busy && !ticker) ticker = setInterval(render, 500);
+  if (!busy && ticker) { clearInterval(ticker); ticker = null; }
   $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
   $('s-last').textContent = lastCheck ? 'Checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
 }
@@ -164,7 +233,7 @@ $('settings').onclick = () => $('sheet').classList.add('show');
 $('s-close').onclick = () => $('sheet').classList.remove('show');
 $('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('show'); };
 $('s-check').onclick = refresh;
-window.refresh = refresh;
+window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHubResume;
 refresh();
 </script>
 </body>
