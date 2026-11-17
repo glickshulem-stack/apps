@@ -28,11 +28,11 @@
       "name": "Quillsong",
       "icon": "✒",
       "package": "com.su.quillsong",
-      "version": "1.8.1",
+      "version": "1.9.0",
       "iconUrl": "apps/quillsong/icon.svg",
       "tagline": "Made by Su",
       "category": "Apps",
-      "description": "Quillsong, version 1.8.1.",
+      "description": "Quillsong, version 1.9.0.",
       "hero": "linear-gradient(120deg,#2a1e15 0%,#3b2a1e 55%,#5a4230 100%)"
     }
   ]
