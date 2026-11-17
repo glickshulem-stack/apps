@@ -1,0 +1,30 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.glickshulem.studio'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.glickshulem.studio'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('KEYSTORE_FILE') ?: 'none')
+            storePassword System.getenv('KEYSTORE_PASSWORD')
+            keyAlias System.getenv('KEY_ALIAS')
+            keyPassword System.getenv('KEYSTORE_PASSWORD')
+        }
+    }
+    buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    // jump3r has one helper class that needs javax.sound (not on Android); we never use it.
+    lint { checkReleaseBuilds false; abortOnError false }
+}
+dependencies {
+    implementation 'androidx.media3:media3-transformer:1.4.1'
+    implementation 'androidx.media3:media3-effect:1.4.1'
+    implementation 'androidx.media3:media3-common:1.4.1'
+    implementation 'de.sciss:jump3r:1.0.5'
+}

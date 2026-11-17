@@ -1,0 +1,21 @@
+name: Check APKs compile
+# Test-builds Android apps on work branches (no signing, no release), so mistakes show before they reach main.
+on:
+  push:
+    branches: ['claude/**']
+    paths: ['android/**', '.github/workflows/check-apks.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+      - name: Build each app (debug)
+        run: |
+          for dir in android/*/; do
+            [ -f "$dir/app/build.gradle" ] || continue
+            echo "::group::$dir"; (cd "$dir" && gradle --no-daemon assembleDebug); echo "::endgroup::"
+          done

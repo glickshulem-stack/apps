@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#121110">
+<title>Aurum Studio</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<div class="layout">
+  <section class="stage">
+    <div class="screen" id="screen">
+      <video id="video" playsinline preload="auto"></video>
+      <div class="empty" id="empty">
+        <img src="icon.svg" alt="">
+        <p>Open a video from your tablet to start.</p>
+        <button class="btn gold big" data-open>Open video</button>
+      </div>
+    </div>
+    <div class="transport" id="transport" hidden>
+      <button class="round" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playicon"><path d="M8 5l11 7-11 7z"/></svg></button>
+      <div class="time"><span id="now">0:00.0</span><span class="dim"> / <span id="total">0:00.0</span></span></div>
+      <div class="spacer"></div>
+      <button class="chip" id="setstart">⟦ Start here</button>
+      <button class="chip" id="setend">End here ⟧</button>
+    </div>
+    <div class="timeline" id="timeline" hidden>
+      <canvas id="thumbs"></canvas>
+      <div class="shade" id="shadeL"></div><div class="shade" id="shadeR"></div>
+      <div class="sel" id="sel"><div class="handle l" id="hl"><i></i></div><div class="handle r" id="hr"><i></i></div></div>
+      <div class="playhead" id="playhead"></div>
+    </div>
+  </section>
+  <aside class="panel">
+    <header class="brand">
+      <a href="../../" class="back" aria-label="Back to apps">‹</a>
+      <img src="icon.svg" alt="">
+      <div><div class="name">Aurum Studio</div><div class="ver">v<span id="ver"></span></div></div>
+    </header>
+    <div class="card" id="filecard">
+      <div class="label">Your video</div>
+      <div class="fname" id="fname">Nothing open yet</div>
+      <button class="btn line" data-open>Open video</button>
+    </div>
+    <div class="card" id="partcard" hidden>
+      <div class="label">Part to keep</div>
+      <div class="row"><span>Start</span><b id="vstart">0:00.0</b></div>
+      <div class="row"><span>End</span><b id="vend">0:00.0</b></div>
+      <div class="row"><span>Length</span><b id="vlen">0:00.0</b></div>
+      <button class="link" id="resetpart">Keep the whole video</button>
+    </div>
+    <div class="save" id="savecard" hidden>
+      <button class="btn gold" id="savevideo"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 10l4-3v10l-4-3"/></svg>Save video</button>
+      <button class="btn dark" id="savemp3"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Save as MP3</button>
+    </div>
+  </aside>
+</div>
+<input type="file" id="file" accept="video/*" hidden>
+<div class="overlay" id="job" hidden>
+  <div class="dialog">
+    <div class="dtitle" id="jtitle">Saving…</div>
+    <div class="jmsg" id="jmsg"></div>
+    <div class="bar"><i id="jbar"></i></div>
+    <div class="jbtns" id="jworking"><button class="btn line" id="jcancel">Stop</button></div>
+    <div class="jbtns" id="jdone" hidden>
+      <button class="btn gold" id="jopen">Open</button>
+      <button class="btn line" id="jshare">Share</button>
+      <button class="btn line" id="jclose">Done</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="studio.js"></script>
+</body>
+</html>
