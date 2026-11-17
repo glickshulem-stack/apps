@@ -24,6 +24,20 @@
       "webPath": "apps/chess/"
     },
     {
+      "id": "studio",
+      "name": "Aurum Studio",
+      "icon": "▶",
+      "package": "com.glickshulem.studio",
+      "version": "0.1.0",
+      "live": "0.1.0",
+      "iconUrl": "apps/studio/icon.svg",
+      "tagline": "Cut videos, save the sound as MP3",
+      "category": "Video & audio",
+      "description": "Open a video from your tablet, choose the part to keep, and save it as a new video or as an MP3.",
+      "webPath": "apps/studio/",
+      "hero": "linear-gradient(120deg,#16130f 0%,#2a2219 55%,#4a3a22 100%)"
+    },
+    {
       "id": "quillsong",
       "name": "Quillsong",
       "icon": "✒",
