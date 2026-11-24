@@ -1,6 +1,6 @@
 // Aurum Studio: open a video, choose the part to keep, save it as a video or as an MP3.
 // The screen runs here (web, updates without reinstall); the tablet app does the saving through window.Studio.
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const FOLDER = 'Aurum Studio';
 const $ = id => document.getElementById(id);
 const native = typeof window.Studio !== 'undefined';

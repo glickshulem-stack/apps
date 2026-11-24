@@ -2,7 +2,7 @@ name: Build APKs
 on:
   push:
     branches: [main]
-    paths: ['android/**', '.github/workflows/build-apks.yml']
+    paths: ['android/**', 'apps/**', '.github/workflows/build-apks.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -30,7 +30,11 @@ jobs:
           for dir in android/*/; do
             id=$(basename "$dir")
             [ -f "$dir/app/build.gradle" ] || continue
-            ver=$(grep -oP "versionName '\K[^']+" "$dir/app/build.gradle")
+            ver=$(grep -oP "versionName '\K[^']+" "$dir/app/build.gradle" || true)
+            # Whole-package apps take their version from their web files (def webVersionFile = '...').
+            src=$(grep -oP "def webVersionFile = '\K[^']+" "$dir/app/build.gradle" || true)
+            if [ -n "$src" ]; then ver=$(grep -oP "const VERSION = '\K[^']+" "$dir/app/$src"); fi
+            if [ -z "$ver" ]; then echo "No version for $id"; continue; fi
             tag="$id-v$ver"
             if gh release view "$tag" >/dev/null 2>&1; then echo "$tag already released"; continue; fi
             (cd "$dir" && gradle --no-daemon assembleRelease)
