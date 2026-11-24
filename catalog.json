@@ -96,5 +96,13 @@
       "date": "2026-11-17",
       "text": "Voice power and Prepare ahead settings for a cooler tablet"
     }
+  ],
+  "removed": [
+    {
+      "id": "chess",
+      "name": "Gambit",
+      "package": "com.glickshulem.chess",
+      "iconUrl": "apps/chess/logo.svg"
+    }
   ]
 }

@@ -186,7 +186,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -266,6 +266,10 @@ async function load(quiet) {
   try {
     const [s, c, u] = await Promise.all([readFile('studio.json'), readFile('catalog.json'), me ? me : gh('https://api.github.com/user')]);
     studio = s.data; catalog = c.data; me = u;
+    // An older copy of this page (an open tab, or a cached one) must not change Play Hub: load the newest Studio first.
+    // Claude raises studio.json "studioPage" whenever this page changes.
+    const want = studio.studioPage, older = (x, y) => { const p = v => String(v).split('.').map(Number); const [a, b] = [p(x), p(y)]; for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
+    if (want && older(VERSION, want)) { location.replace(location.pathname + '?v=' + encodeURIComponent(want)); return; }
     $('who').innerHTML = `Signed in as <b>${esc(me.name || me.login)}</b>`;
     render();
     if (!quiet) return true;

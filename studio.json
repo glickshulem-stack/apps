@@ -46,5 +46,6 @@
       "private": true,
       "note": "Drag apps onto Play Hub to publish; open APKs from Files"
     }
-  ]
+  ],
+  "studioPage": "0.3.1"
 }
