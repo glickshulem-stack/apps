@@ -1,4 +1,4 @@
-const VERSION = '0.23.0';
+const VERSION = '0.23.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -185,7 +185,9 @@ function render() {
     if (selected && selected[0]===r && selected[1]===c) d.classList.add('sel');
     if (chk && chk[0]===r && chk[1]===c) d.classList.add('check');
     const mv = legalForSel.find(m => m.tr===r && m.tc===c);
-    if (mv) d.classList.add(D.board[r][c] || mv.enpassant ? 'capture' : 'move');
+    if (mv) d.classList.add(D.board[r][c] ? 'capture' : 'move');
+    // en passant: also ring the pawn that gets taken (beside the moving pawn)
+    else if (legalForSel.some(m => m.enpassant && m.fr===r && m.tc===c)) d.classList.add('capture');
     const p = D.board[r][c];
     if (p) d.innerHTML = piece(p.c, p.t);
     if (i===7) d.insertAdjacentHTML('beforeend', `<span class="coord f">${'abcdefgh'[c]}</span>`);
@@ -211,9 +213,14 @@ function render() {
   statusEl.textContent = over || (hintMove && !cpuTurn() ? `Hint: ${hintMove.san}` : '') || (mode.cpu ? (S.turn === mode.human ? 'Your move' : 'Computer is thinking…') : `${S.turn==='w' ? 'White' : 'Black'} to move`) + (chk ? ' (check!)' : '');
 }
 
+// Moves that land on (r,c). For en passant, tapping the pawn being taken also counts.
+function movesTo(r, c) {
+  const mv = legalForSel.filter(m => m.tr===r && m.tc===c);
+  return mv.length ? mv : legalForSel.filter(m => m.enpassant && m.fr===r && m.tc===c);
+}
 function tap(r, c) {
   if (result(S) || cpuTurn()) return;
-  const mv = legalForSel.filter(m => m.tr===r && m.tc===c);
+  const mv = movesTo(r, c);
   if (mv.length) {
     if (mv.length > 1) return askPromo(mv);
     return doMove(mv[0]);
@@ -350,7 +357,7 @@ boardEl.addEventListener('pointerup', e => {
   const d = drag; drag = null;
   const sq = squareAt(e.clientX, e.clientY);
   if (d.moved) {
-    const mv = sq ? legalForSel.filter(m => m.tr===sq[0] && m.tc===sq[1]) : [];
+    const mv = sq ? movesTo(sq[0], sq[1]) : [];
     if (mv.length > 1) { render(); return askPromo(mv); }
     if (mv.length) return doMove(mv[0], false);
     render();
