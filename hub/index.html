@@ -5,67 +5,108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>App Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#f6f7f9; --surface:#fff; --text:#15171c; --muted:#6b7280; --line:#e6e8ec; --accent:#2563eb; --accent2:#1d4ed8; --gold:#a8742a; --gold2:#8a5d1f; }
+  /* Two looks: Ivory (light) and Noir (dark). Gold accents everywhere, never green. */
+  :root { --bg:#f6efe2; --bg2:#efe4cf; --surface:#fffcf6; --surface2:#f8f0e1; --text:#1f1810; --muted:#7a6a55; --line:#e6d8bd;
+    --gold:#b8862f; --gold2:#8a5d1f; --goldhi:#f3d58f; --glow:rgba(201,163,90,.28); --shadow:0 10px 30px rgba(74,52,24,.12); --bar:rgba(246,239,226,.86); }
+  :root[data-theme="noir"] { --bg:#120f0b; --bg2:#1b1611; --surface:#1d1813; --surface2:#262019; --text:#f4e8d2; --muted:#b09d80; --line:#3a2f22;
+    --gold:#d4a64a; --gold2:#e6c07a; --goldhi:#f6dc9c; --glow:rgba(212,166,74,.18); --shadow:0 14px 34px rgba(0,0,0,.45); --bar:rgba(18,15,11,.86); }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; font-family:Inter,system-ui,Roboto,sans-serif; background:var(--bg); color:var(--text); user-select:none; }
-  .appbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:14px 20px; background:rgba(246,247,249,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
-  .appbar img { width:34px; height:34px; border-radius:9px; }
-  .appbar h1 { margin:0; font-size:1.3rem; font-weight:800; flex:1; }
-  .iconbtn { width:42px; height:42px; border-radius:50%; border:0; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
-  .iconbtn:active { background:var(--line); }
-  .iconbtn svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  main { max-width:1100px; margin:0 auto; padding:20px; }
-  .hero { position:relative; overflow:hidden; display:flex; align-items:center; gap:24px; padding:28px; border-radius:24px; color:#f3e2c4; cursor:pointer;
-    background:linear-gradient(120deg,#2b1d12 0%,#4a3422 55%,#6b4a2c 100%); box-shadow:0 12px 30px rgba(43,29,18,.25); }
-  .hero::after { content:''; position:absolute; right:-40px; top:-40px; width:260px; height:260px; opacity:.12;
+  body { margin:0; font-family:Inter,system-ui,Roboto,sans-serif; color:var(--text); user-select:none; min-height:100vh;
+    background:radial-gradient(1200px 500px at 85% -10%, var(--glow), transparent 60%), radial-gradient(900px 500px at -10% 110%, var(--glow), transparent 60%), linear-gradient(180deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .serif { font-family:Cinzel,Georgia,serif; }
+  .goldtext { background:linear-gradient(100deg,#9a6a22 0%,#e8c272 35%,#b8862f 55%,#f3d58f 75%,#9a6a22 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .appbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:12px 24px; background:var(--bar); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .appbar::after { content:''; position:absolute; left:0; right:0; bottom:-1px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:.7; }
+  .appbar img { width:38px; height:38px; border-radius:10px; box-shadow:0 0 0 1px var(--gold), 0 4px 12px var(--glow); }
+  .appbar h1 { margin:0; font:700 1.45rem/1 Cinzel,Georgia,serif; letter-spacing:.06em; flex:1; }
+  .iconbtn { width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--gold2); box-shadow:var(--shadow); }
+  .iconbtn:active { transform:scale(.94); }
+  .iconbtn svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  main { max-width:1180px; margin:0 auto; padding:22px 24px 40px; }
+  /* greeting + summary chips */
+  .welcome { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:4px 4px 18px; }
+  .welcome .d { color:var(--muted); font-size:.85rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600; }
+  .welcome h2 { margin:4px 0 0; font:700 2rem/1.15 Cinzel,Georgia,serif; }
+  .chips { display:flex; gap:10px; flex-wrap:wrap; }
+  .chip { display:flex; align-items:center; gap:8px; padding:9px 14px; border-radius:999px; background:var(--surface); border:1px solid var(--line); font-size:.88rem; font-weight:600; box-shadow:var(--shadow); }
+  .chip b { color:var(--gold2); }
+  .chip i { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,var(--goldhi),var(--gold)); box-shadow:0 0 8px var(--gold); }
+  /* featured carousel */
+  .hero { position:relative; overflow:hidden; display:flex; align-items:center; gap:30px; padding:34px 40px; min-height:230px; border-radius:26px; color:#f3e2c4; cursor:pointer;
+    background:linear-gradient(120deg,#2b1d12 0%,#4a3422 55%,#6b4a2c 100%); }
+  .hero::before { content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; box-shadow:inset 0 0 0 1px rgba(230,199,122,.45), inset 0 0 0 6px rgba(0,0,0,.12), inset 0 0 0 7px rgba(230,199,122,.18); }
+  .hero::after { content:''; position:absolute; right:-40px; top:-40px; width:300px; height:300px; opacity:.12;
     background:conic-gradient(#e6c79a 0 25%, transparent 0 50%, #e6c79a 0 75%, transparent 0) 0 0/65px 65px; transform:rotate(12deg); }
-  .hero img { width:96px; height:96px; filter:drop-shadow(0 6px 12px rgba(0,0,0,.4)); z-index:1; }
-  .hero .k { font-size:.8rem; letter-spacing:.12em; text-transform:uppercase; color:#e6c79a; font-weight:700; }
-  .hero h2 { margin:4px 0 6px; font-size:2rem; font-weight:800; color:#fff3dc; }
-  .hero p { margin:0; color:#e9d5b3; max-width:440px; }
+  .hero .halo { position:relative; z-index:1; flex:none; width:150px; height:150px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle, rgba(243,213,143,.35), transparent 68%); }
+  .hero img { width:118px; height:118px; filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)); }
+  .hero .k { display:inline-flex; align-items:center; gap:8px; font-size:.75rem; letter-spacing:.2em; text-transform:uppercase; color:#e6c79a; font-weight:700; }
+  .hero .k::before { content:'✦'; font-size:.9rem; }
+  .hero h2 { margin:6px 0 8px; font:700 2.5rem/1.1 Cinzel,Georgia,serif; color:#fff3dc; }
+  .hero p { margin:0 0 18px; color:#e9d5b3; max-width:520px; line-height:1.5; }
   .hero .z { z-index:1; flex:1; }
-  /* featured carousel: every app gets a slide, slides change by themselves and can be swiped */
+  .hero .cta { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:999px; font-weight:700; color:#2a1d10; background:linear-gradient(135deg,#f6dc9c,#c9993f); box-shadow:0 6px 16px rgba(0,0,0,.3); }
   .carousel { position:relative; }
-  .track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; border-radius:24px; scroll-behavior:smooth; }
+  .track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; border-radius:26px; scroll-behavior:smooth; box-shadow:0 18px 40px rgba(43,29,18,.28); }
   .track::-webkit-scrollbar { display:none; }
-  .track .hero { flex:0 0 100%; scroll-snap-align:start; box-sizing:border-box; }
+  .track .hero { flex:0 0 100%; scroll-snap-align:start; }
   .hero:not([data-id="chess"])::after { display:none; }
-  .dots { display:flex; justify-content:center; gap:8px; margin-top:12px; }
-  .dots button { width:9px; height:9px; padding:0; border:0; border-radius:5px; background:#d6cbbb; cursor:pointer; transition:width .25s, background .25s; }
-  .dots button.on { width:26px; background:#8a6236; }
-  h3 { font-size:1.15rem; margin:28px 4px 12px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
-  .card { display:flex; align-items:center; gap:16px; padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:18px; }
-  .card .ic { width:64px; height:64px; border-radius:16px; background:#f1f2f4; display:flex; align-items:center; justify-content:center; flex:none; overflow:hidden; }
-  .card .ic img { width:56px; height:56px; }
-  .info { flex:1; min-width:0; }
-  .name { font-weight:700; font-size:1.05rem; }
-  .sub { color:var(--muted); font-size:.85rem; margin-top:2px; }
-  .meta { color:var(--muted); font-size:.8rem; margin-top:6px; }
-  .status { color:var(--accent); font-size:.8rem; margin-top:4px; font-weight:600; }
-  .btn { border:0; border-radius:999px; padding:10px 20px; font:700 .95rem Inter,sans-serif; cursor:pointer; }
-  .btn.install { background:var(--accent); color:#fff; } .btn.update { background:var(--gold); color:#fff; } .btn.open { background:#eef2ff; color:var(--accent2); }
+  .dots { display:flex; justify-content:center; gap:8px; margin-top:14px; }
+  .dots button { width:9px; height:9px; padding:0; border:0; border-radius:5px; background:var(--line); cursor:pointer; transition:width .25s, background .25s; }
+  .dots button.on { width:28px; background:linear-gradient(90deg,var(--goldhi),var(--gold)); }
+  /* section titles with a gold rule */
+  h3 { display:flex; align-items:center; gap:14px; margin:30px 4px 14px; font:700 1.15rem Cinzel,Georgia,serif; letter-spacing:.05em; }
+  h3::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); opacity:.6; }
+  /* app tiles */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; }
+  .card { position:relative; display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:22px; overflow:hidden; box-shadow:var(--shadow); transition:transform .2s; }
+  .card:active { transform:scale(.99); }
+  .cover { position:relative; height:118px; display:flex; align-items:center; justify-content:center; background:linear-gradient(120deg,#2b1d12 0%,#4a3422 55%,#6b4a2c 100%); }
+  .cover::after { content:''; position:absolute; inset:auto 0 0 0; height:2px; background:linear-gradient(90deg,transparent,#e6c79a,transparent); }
+  .cover .cat { position:absolute; top:12px; left:14px; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; font-weight:700; color:#e6c79a; }
+  .cover img { width:84px; height:84px; filter:drop-shadow(0 8px 14px rgba(0,0,0,.45)); }
+  .info { padding:16px 18px 18px; display:flex; flex-direction:column; flex:1; }
+  .name { font:700 1.2rem Cinzel,Georgia,serif; letter-spacing:.02em; }
+  .sub { color:var(--muted); font-size:.9rem; margin-top:4px; line-height:1.4; }
+  .foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; padding-top:14px; }
+  .meta { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:.78rem; font-weight:600; padding:5px 10px; border-radius:999px; background:var(--surface2); border:1px solid var(--line); }
+  .meta.up { color:var(--gold2); border-color:var(--gold); }
+  .status { color:var(--gold2); font-size:.82rem; margin-top:8px; font-weight:600; }
+  .btn { border:0; border-radius:999px; padding:10px 24px; font:700 .95rem Inter,sans-serif; cursor:pointer; color:#2a1d10; background:linear-gradient(135deg,#f6dc9c,#c9993f); box-shadow:0 4px 12px var(--glow); }
+  .btn.open { background:transparent; color:var(--gold2); box-shadow:inset 0 0 0 1.5px var(--gold); }
+  .btn.update { animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 6px var(--glow); } }
   .btn:active { transform:scale(.96); }
   .status.done { color:var(--gold2); }
   .status.warn { color:#b45309; }
-  .bar { height:8px; border-radius:4px; background:#e8eaef; overflow:hidden; margin-top:8px; }
-  .bar i { display:block; height:100%; width:0; border-radius:4px; background:linear-gradient(90deg,var(--accent),#5b8cff); transition:width .4s; }
+  .bar { height:8px; border-radius:4px; background:var(--surface2); overflow:hidden; margin-top:10px; }
+  .bar i { display:block; height:100%; width:0; border-radius:4px; background:linear-gradient(90deg,var(--gold),var(--goldhi)); transition:width .4s; }
   .bar.wait i { width:35%; animation:slide 1.2s ease-in-out infinite; }
   @keyframes slide { from { transform:translateX(-100%); } to { transform:translateX(300%); } }
+  /* what's new list */
+  .news { background:var(--surface); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); padding:6px 22px; }
+  .ni { display:flex; gap:16px; align-items:center; padding:14px 0; border-top:1px solid var(--line); }
+  .ni:first-child { border-top:0; }
+  .ni img { width:42px; height:42px; flex:none; }
+  .ni .t { flex:1; min-width:0; } .ni .t b { font-weight:700; } .ni .t span { display:block; color:var(--muted); font-size:.88rem; margin-top:2px; }
+  .ni .v { font-size:.78rem; font-weight:700; color:var(--gold2); white-space:nowrap; text-align:right; } .ni .v small { display:block; color:var(--muted); font-weight:500; margin-top:2px; }
+  .sig { text-align:center; color:var(--muted); font-size:.8rem; letter-spacing:.18em; text-transform:uppercase; margin-top:36px; }
+  .sig::before, .sig::after { content:'✦'; color:var(--gold); margin:0 10px; }
   .sheet .bar { margin:0 4px 10px; }
   .sheet .status { margin:-6px 4px 12px; }
   .msg { text-align:center; color:var(--muted); padding:40px; }
-  .sheet-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:10; align-items:flex-end; justify-content:center; }
+  .sheet-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10; align-items:flex-end; justify-content:center; }
   .sheet-bg.show { display:flex; }
   @media (min-width:700px) { .sheet-bg { align-items:center; } }
-  .sheet { width:min(520px,100%); background:var(--surface); border-radius:24px 24px 0 0; padding:20px; }
+  .sheet { width:min(520px,100%); background:var(--surface); border:1px solid var(--line); border-radius:24px 24px 0 0; padding:22px; box-shadow:var(--shadow); }
   @media (min-width:700px) { .sheet { border-radius:24px; } }
-  .sheet h4 { margin:0 0 12px; font-size:1.2rem; }
+  .sheet h4 { margin:0 0 12px; font:700 1.3rem Cinzel,Georgia,serif; }
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
-  .iconbtn.dot { position:relative; } .iconbtn.dot::after { content:''; position:absolute; top:8px; right:8px; width:9px; height:9px; border-radius:50%; background:#ef4444; }
+  .iconbtn.dot { position:relative; } .iconbtn.dot::after { content:''; position:absolute; top:6px; right:6px; width:10px; height:10px; border-radius:50%; background:var(--gold); box-shadow:0 0 6px var(--gold); }
+  @media (max-width:640px) { .hero { flex-direction:column; text-align:center; padding:26px 20px; } .hero h2 { font-size:1.9rem; } .welcome h2 { font-size:1.5rem; } main { padding:16px; } }
   /* refresh: the arrow spins while checking, then a toast says what happened */
   #refresh.spin { color:var(--gold); }
   #refresh.spin svg { animation:spin .8s linear infinite; }
@@ -76,26 +117,30 @@
   .toast.show { transform:translate(-50%,0); opacity:1; }
   .toast .ti { width:30px; height:30px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#f3d58f,#b8862f); color:#2a1d10; font-weight:800; }
   .toast small { display:block; font-weight:500; color:#e6c79a; margin-top:2px; }
-  .row.click { cursor:pointer; } .row.click span:first-child { color:var(--accent); font-weight:600; }
+  .row.click { cursor:pointer; } .row.click span:first-child { color:var(--gold2); font-weight:600; }
 </style>
 </head>
 <body>
 <header class="appbar">
   <img src="../icon.svg" alt="">
-  <h1>App Hub</h1>
+  <h1 class="goldtext">App Hub</h1>
   <button class="iconbtn" id="refresh" aria-label="Check for updates"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
   <button class="iconbtn" id="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
 </header>
 <main>
+  <section class="welcome"><div><div class="d" id="w-date"></div><h2 id="w-hi">Welcome</h2></div><div class="chips" id="chips"></div></section>
   <div id="hero"></div>
   <h3>Your apps</h3>
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
+  <div id="news-box"></div>
+  <div class="sig" id="sig">App Hub</div>
 </main>
 <div class="sheet-bg" id="sheet"><div class="sheet">
   <h4>Settings</h4>
   <div class="row"><span>App Hub version</span><span id="s-ver"></span></div>
   <div class="row click" id="s-upd" style="display:none"><span>Update App Hub</span><span id="s-updv"></span></div>
   <div id="s-upd-x"></div>
+  <div class="row click" id="s-theme"><span>Look</span><span id="s-themev"></span></div>
   <div class="row"><span>Apps available</span><span id="s-count"></span></div>
   <div class="row click" id="s-check"><span>Check for updates now</span><span id="s-last"></span></div>
   <div class="row"><span>Source</span><span>GitHub</span></div>
@@ -103,6 +148,11 @@
 </div></div>
 <div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
+// Look: 'ivory' (light) or 'noir' (dark). Saved on this device; ?theme= can override for previews.
+const THEMES = { ivory:'Ivory', noir:'Noir' };
+function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubTheme'); if (THEMES[t]) return t; } catch {} return 'noir'; }
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('hubTheme', t); } catch {} const el = document.getElementById('s-themev'); if (el) el.textContent = THEMES[t]; }
+document.documentElement.dataset.theme = getTheme();
 const REPO = 'glickshulem-stack/apps';
 const hasHub = typeof Hub !== 'undefined';
 const hubVer = hasHub ? Hub.hubVersion() : 'web';
@@ -111,7 +161,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.6.0';
+const PAGE_VER = '0.7.0';
 // App Hub 0.5.0+ keeps downloads and reports progress. Older App Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -180,7 +230,7 @@ function renderFeatured(apps) {
   if (key === featKey) return; featKey = key;
   const box = $('hero');
   if (!apps.length) { box.innerHTML = ''; return; }
-  box.innerHTML = `<div class="carousel"><div class="track">${apps.map(a => `<div class="hero" data-id="${a.id}"${a.hero ? ` style="background:${a.hero}"` : ''}><img src="../${a.iconUrl}" alt=""><div class="z"><div class="k">Featured</div><h2>${a.name}</h2><p>${a.description || a.tagline || ''}</p></div></div>`).join('')}</div>${apps.length > 1 ? `<div class="dots">${apps.map((a, i) => `<button aria-label="${a.name}" data-i="${i}"></button>`).join('')}</div>` : ''}</div>`;
+  box.innerHTML = `<div class="carousel"><div class="track">${apps.map(a => `<div class="hero" data-id="${a.id}"${a.hero ? ` style="background:${a.hero}"` : ''}><div class="halo"><img src="../${a.iconUrl}" alt=""></div><div class="z"><div class="k">Featured${a.category ? ' · ' + a.category : ''}</div><h2>${a.name}</h2><p>${a.description || a.tagline || ''}</p><span class="cta">See app ›</span></div></div>`).join('')}</div>${apps.length > 1 ? `<div class="dots">${apps.map((a, i) => `<button aria-label="${a.name}" data-i="${i}"></button>`).join('')}</div>` : ''}</div>`;
   const track = box.querySelector('.track'), dots = [...box.querySelectorAll('.dots button')];
   const go = i => { featIdx = (i + apps.length) % apps.length; track.scrollTo({ left: featIdx * track.clientWidth }); mark(); };
   const mark = () => dots.forEach((d, i) => d.classList.toggle('on', i === featIdx));
@@ -193,21 +243,40 @@ function renderFeatured(apps) {
   featIdx = Math.min(featIdx, apps.length - 1); go(featIdx); restart();
 }
 
+// Greeting, date and the little summary chips at the top
+function renderTop(apps, inst, ups) {
+  const now = new Date(), h = now.getHours();
+  $('w-date').textContent = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
+  $('w-hi').textContent = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const chip = (txt) => `<span class="chip"><i></i>${txt}</span>`;
+  $('chips').innerHTML = chip(`<b>${apps.length}</b> apps`) + (hasHub ? chip(`<b>${inst}</b> installed`) : '') +
+    chip(ups ? `<b>${ups}</b> update${ups > 1 ? 's' : ''} ready` : 'All up to date');
+  $('sig').textContent = 'App Hub · v' + PAGE_VER;
+}
+// "What's new": the latest notes from catalog.json (field "news": [{ id, version, date, text }])
+function renderNews() {
+  const items = (catalog.news || []).slice(0, 5), byId = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
+  if (!items.length) { $('news-box').innerHTML = ''; return; }
+  const day = d => { try { return new Date(d + 'T12:00').toLocaleDateString([], { month:'short', day:'numeric' }); } catch { return d; } };
+  $('news-box').innerHTML = `<h3>What's new</h3><div class="news">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
+}
+
 function render() {
   if (!catalog) return;
   const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
   renderFeatured(apps);
-  const list = $('list'); list.innerHTML = ''; let busy = false;
+  const list = $('list'); list.innerHTML = ''; let busy = false, inst = 0, ups = 0;
   for (const a of apps) {
     if (!a) continue;
     const have = hasHub ? Hub.installedVersion(a.package) : '';
     const shown = a.live || a.version;
-    let meta = have ? `Installed · v${a.live || have}` : `v${shown}`;
-    if (have && newer(a.version, have)) meta = `Update available · v${a.version}`;
+    let meta = have ? `✓ Installed · v${a.live || have}` : `v${shown}`, up = false;
+    if (have && newer(a.version, have)) { meta = `★ Update · v${a.version}`; up = true; }
     const st = hasHub ? stateOf(a, have) : null; if (st && st.pct != null) busy = true;
     const card = document.createElement('div'); card.className = 'card'; card.dataset.id = a.id;
-    card.innerHTML = `<div class="ic"><img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div><div class="meta">${meta}</div>${barHtml(st)}${st && st.status ? `<div class="status ${st.cls || ''}">${st.status}</div>` : ''}</div>`;
-    const b = button(a, have); if (b) card.appendChild(b);
+    card.innerHTML = `<div class="cover"${a.hero ? ` style="background:${a.hero}"` : ''}>${a.category ? `<span class="cat">${a.category}</span>` : ''}<img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div>${barHtml(st)}${st && st.status ? `<div class="status ${st.cls || ''}">${st.status}</div>` : ''}<div class="foot"><span class="meta${up ? ' up' : ''}">${meta}</span></div></div>`;
+    const b = button(a, have); if (b) card.querySelector('.foot').appendChild(b);
+    if (have) inst++; if (up) ups++;
     list.appendChild(card);
   }
   $('s-ver').textContent = 'v' + hubVer + (hubVer === PAGE_VER ? '' : ' · page ' + PAGE_VER);
@@ -224,6 +293,7 @@ function render() {
   // while something is downloading, refresh the progress twice a second
   if (busy && !ticker) ticker = setInterval(render, 500);
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
+  renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews();
   $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
   $('s-last').textContent = lastCheck ? 'Checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
 }
@@ -289,6 +359,8 @@ $('refresh').onclick = () => refresh(true);
 $('settings').onclick = () => $('sheet').classList.add('show');
 $('s-close').onclick = () => $('sheet').classList.remove('show');
 $('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('show'); };
+$('s-theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'noir' ? 'ivory' : 'noir');
+$('s-themev').textContent = THEMES[getTheme()];
 $('s-check').onclick = () => { $('sheet').classList.remove('show'); refresh(true); };
 window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHubResume;
 refresh();

@@ -8,7 +8,7 @@
       "version": "0.5.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
-      "live": "0.6.0"
+      "live": "0.7.0"
     },
     {
       "id": "chess",
@@ -48,6 +48,44 @@
       "category": "Apps",
       "description": "Quillsong, version 1.9.0.",
       "hero": "linear-gradient(120deg,#2a1e15 0%,#3b2a1e 55%,#5a4230 100%)"
+    }
+  ],
+  "news": [
+    {
+      "id": "hub",
+      "version": "0.7.0",
+      "date": "2026-11-24",
+      "text": "A richer look with gold details, plus this What's new list"
+    },
+    {
+      "id": "hub",
+      "version": "0.6.0",
+      "date": "2026-11-24",
+      "text": "The refresh button spins and tells you what it found"
+    },
+    {
+      "id": "chess",
+      "version": "0.26.0",
+      "date": "2026-11-24",
+      "text": "Draw on the board opens its own gold card with colors, Undo and Clear"
+    },
+    {
+      "id": "chess",
+      "version": "0.25.1",
+      "date": "2026-11-24",
+      "text": "Pieces glide when you step through moves and on Undo"
+    },
+    {
+      "id": "quillsong",
+      "version": "1.9.0",
+      "date": "2026-11-17",
+      "text": "Voice power and Prepare ahead settings for a cooler tablet"
+    },
+    {
+      "id": "studio",
+      "version": "0.1.0",
+      "date": "2026-11-17",
+      "text": "First version: cut videos and save the sound as MP3"
     }
   ]
 }
