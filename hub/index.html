@@ -152,6 +152,8 @@
     padding:14px 22px 14px 16px; border-radius:16px; background:linear-gradient(120deg,#1f160e,#3a2a1a); color:#fff3dc; border:1px solid #c9a35a;
     box-shadow:0 14px 34px rgba(31,22,14,.35); font-weight:600; transform:translate(-50%,140%); opacity:0; transition:transform .35s cubic-bezier(.2,.9,.3,1.2), opacity .25s; }
   .toast.show { transform:translate(-50%,0); opacity:1; }
+  .toast { touch-action:pan-y; cursor:grab; }
+  .toast.drag { transition:none; }
   .toast .ti { width:30px; height:30px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#f3d58f,#b8862f); color:#2a1d10; font-weight:800; }
   .toast small { display:block; font-weight:500; color:#e6c79a; margin-top:2px; }
   .row.click { cursor:pointer; } .row.click span:first-child { color:var(--gold2); font-weight:600; }
@@ -212,7 +214,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.15.0';
+const PAGE_VER = '0.16.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -378,6 +380,22 @@ function render() {
 }
 
 let toastTimer = null;
+// The message can be swiped away sideways (left or right).
+{ const t = document.getElementById('toast'); let x0 = null, dx = 0;
+  const start = x => { if (!t.classList.contains('show')) return; x0 = x; dx = 0; t.classList.add('drag'); clearTimeout(toastTimer); };
+  const move = x => { if (x0 == null) return; dx = x - x0; t.style.transform = `translate(calc(-50% + ${dx}px),0)`; t.style.opacity = Math.max(0, 1 - Math.abs(dx) / 220); };
+  const end = () => {
+    if (x0 == null) return; x0 = null; t.classList.remove('drag');
+    if (Math.abs(dx) > 70) {   // flick it off the side
+      t.style.transform = `translate(calc(-50% + ${dx > 0 ? 120 : -120}vw),0)`; t.style.opacity = 0;
+      setTimeout(() => { t.classList.add('drag'); t.classList.remove('show'); t.style.transform = ''; t.style.opacity = ''; requestAnimationFrame(() => t.classList.remove('drag')); }, 300);
+    } else { t.style.transform = ''; t.style.opacity = ''; toastTimer = setTimeout(() => t.classList.remove('show'), 2500); }
+  };
+  t.addEventListener('touchstart', e => start(e.touches[0].clientX), { passive:true });
+  t.addEventListener('touchmove', e => move(e.touches[0].clientX), { passive:true });
+  t.addEventListener('touchend', end); t.addEventListener('touchcancel', end);
+  t.addEventListener('mousedown', e => { start(e.clientX); const mm = ev => move(ev.clientX), mu = () => { end(); removeEventListener('mousemove', mm); removeEventListener('mouseup', mu); }; addEventListener('mousemove', mm); addEventListener('mouseup', mu); });
+}
 function toast(icon, title, more) {
   $('toast-i').textContent = icon;
   $('toast-t').innerHTML = title + (more ? `<small>${more}</small>` : '');
