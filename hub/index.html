@@ -150,7 +150,7 @@
 <script>
 // Look: 'ivory' (light) or 'noir' (dark). Saved on this device; ?theme= can override for previews.
 const THEMES = { ivory:'Ivory', noir:'Noir' };
-function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubTheme'); if (THEMES[t]) return t; } catch {} return 'ivory'; }
+function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubTheme'); if (THEMES[t]) return t; } catch {} return 'noir'; }
 function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('hubTheme', t); } catch {} const el = document.getElementById('s-themev'); if (el) el.textContent = THEMES[t]; }
 document.documentElement.dataset.theme = getTheme();
 const REPO = 'glickshulem-stack/apps';
