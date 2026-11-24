@@ -8,7 +8,7 @@
       "version": "0.5.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
-      "live": "0.7.0"
+      "live": "0.8.0"
     },
     {
       "id": "chess",
@@ -51,6 +51,18 @@
     }
   ],
   "news": [
+    {
+      "id": "hub",
+      "version": "0.8.0",
+      "date": "2026-11-24",
+      "text": "Settings slides in from the side, with updates, look, versions and this list"
+    },
+    {
+      "id": "chess",
+      "version": "0.26.1",
+      "date": "2026-11-24",
+      "text": "Undo explains why it can't be used when you tap it"
+    },
     {
       "id": "hub",
       "version": "0.7.0",

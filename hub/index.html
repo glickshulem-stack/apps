@@ -92,23 +92,38 @@
   .ni img { width:42px; height:42px; flex:none; }
   .ni .t { flex:1; min-width:0; } .ni .t b { font-weight:700; } .ni .t span { display:block; color:var(--muted); font-size:.88rem; margin-top:2px; }
   .ni .v { font-size:.78rem; font-weight:700; color:var(--gold2); white-space:nowrap; text-align:right; } .ni .v small { display:block; color:var(--muted); font-weight:500; margin-top:2px; }
-  .sig { text-align:center; color:var(--muted); font-size:.8rem; letter-spacing:.18em; text-transform:uppercase; margin-top:36px; }
-  .sig::before, .sig::after { content:'✦'; color:var(--gold); margin:0 10px; }
-  .sheet .bar { margin:0 4px 10px; }
-  .sheet .status { margin:-6px 4px 12px; }
   .msg { text-align:center; color:var(--muted); padding:40px; }
-  .sheet-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:10; align-items:flex-end; justify-content:center; }
-  .sheet-bg.show { display:flex; }
-  @media (min-width:700px) { .sheet-bg { align-items:center; } }
-  .sheet { width:min(520px,100%); background:var(--surface); border:1px solid var(--line); border-radius:24px 24px 0 0; padding:22px; box-shadow:var(--shadow); }
-  @media (min-width:700px) { .sheet { border-radius:24px; } }
-  .sheet h4 { margin:0 0 12px; font:700 1.3rem Cinzel,Georgia,serif; }
+  /* Settings: a panel that slides in from the right; swipe it right (or tap outside, or ✕) to close */
+  .sheet-bg { position:fixed; inset:0; z-index:15; background:rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .3s; }
+  .sheet-bg.show { opacity:1; pointer-events:auto; }
+  .sheet { position:absolute; top:0; right:0; bottom:0; width:min(460px,92vw); overflow-y:auto; overscroll-behavior:contain; background:var(--bg); border-left:1px solid var(--gold);
+    box-shadow:-20px 0 50px rgba(0,0,0,.35); padding:0 22px 30px; transform:translateX(105%); transition:transform .35s cubic-bezier(.2,.8,.2,1); }
+  .sheet-bg.show .sheet { transform:none; }
+  .sheet.drag { transition:none; }
+  .sheet-head { position:sticky; top:0; z-index:1; display:flex; align-items:center; gap:12px; margin:0 -22px 6px; padding:16px 22px; background:var(--bar); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .sheet-head h4 { flex:1; margin:0; font:700 1.45rem Cinzel,Georgia,serif; letter-spacing:.04em; }
+  .sheet h5 { margin:22px 4px 10px; font:700 .78rem Inter,sans-serif; letter-spacing:.18em; text-transform:uppercase; color:var(--gold2); }
+  .box { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:4px 16px; box-shadow:var(--shadow); }
+  .box .row:first-child { border-top:0; }
+  .row small { display:block; color:var(--muted); font-size:.8rem; margin-top:3px; font-weight:400; }
+  .row .vv { font-weight:700; color:var(--gold2) !important; font-size:1.05rem; }
+  .bigbtn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px; border:0; border-radius:16px; cursor:pointer;
+    font:700 1.05rem Inter,sans-serif; color:#2a1d10; background:linear-gradient(135deg,#f6dc9c,#c9993f); box-shadow:0 6px 18px var(--glow); }
+  .bigbtn svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .bigbtn:active { transform:scale(.98); }
+  .last { text-align:center; color:var(--muted); font-size:.82rem; margin-top:8px; }
+  .seg { display:flex; gap:10px; }
+  .seg button { flex:1; padding:12px; border-radius:14px; cursor:pointer; font:700 .95rem Inter,sans-serif; color:var(--text); background:var(--surface); border:1px solid var(--line); }
+  .seg button.on { border-color:var(--gold); box-shadow:inset 0 0 0 1px var(--gold), 0 4px 12px var(--glow); color:var(--gold2); }
+  .seg button i { display:block; height:34px; border-radius:8px; margin-bottom:8px; border:1px solid var(--line); }
+  .sheet .news { padding:2px 16px; } .sheet .ni img { width:36px; height:36px; }
+  .sheet #s-upd-x { padding:0 0 10px; }
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
   .iconbtn.dot { position:relative; } .iconbtn.dot::after { content:''; position:absolute; top:6px; right:6px; width:10px; height:10px; border-radius:50%; background:var(--gold); box-shadow:0 0 6px var(--gold); }
   @media (max-width:640px) { .hero { flex-direction:column; text-align:center; padding:26px 20px; } .hero h2 { font-size:1.9rem; } .welcome h2 { font-size:1.5rem; } main { padding:16px; } }
   /* refresh: the arrow spins while checking, then a toast says what happened */
-  #refresh.spin { color:var(--gold); }
+  #refresh.spin { opacity:.85; }
   #refresh.spin svg { animation:spin .8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .toast { position:fixed; left:50%; bottom:28px; z-index:20; display:flex; align-items:center; gap:12px; max-width:calc(100% - 32px);
@@ -124,7 +139,6 @@
 <header class="appbar">
   <img src="../icon.svg" alt="">
   <h1 class="goldtext">App Hub</h1>
-  <button class="iconbtn" id="refresh" aria-label="Check for updates"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
   <button class="iconbtn" id="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
 </header>
 <main>
@@ -132,26 +146,34 @@
   <div id="hero"></div>
   <h3>Your apps</h3>
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
-  <div id="news-box"></div>
-  <div class="sig" id="sig">App Hub</div>
 </main>
-<div class="sheet-bg" id="sheet"><div class="sheet">
-  <h4>Settings</h4>
-  <div class="row"><span>App Hub version</span><span id="s-ver"></span></div>
-  <div class="row click" id="s-upd" style="display:none"><span>Update App Hub</span><span id="s-updv"></span></div>
-  <div id="s-upd-x"></div>
-  <div class="row click" id="s-theme"><span>Look</span><span id="s-themev"></span></div>
-  <div class="row"><span>Apps available</span><span id="s-count"></span></div>
-  <div class="row click" id="s-check"><span>Check for updates now</span><span id="s-last"></span></div>
-  <div class="row"><span>Source</span><span>GitHub</span></div>
-  <div class="row click" id="s-close"><span>Close</span><span></span></div>
+<div class="sheet-bg" id="sheet"><div class="sheet" id="panel">
+  <div class="sheet-head"><h4 class="goldtext">Settings</h4><button class="iconbtn" id="s-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <h5>Updates</h5>
+  <button class="bigbtn" id="refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Check for updates</button>
+  <div class="last" id="s-last"></div>
+  <div class="box" id="s-upd-box" style="display:none;margin-top:12px"><div class="row click" id="s-upd"><span>Update App Hub</span><span id="s-updv"></span></div><div id="s-upd-x"></div></div>
+  <h5>Look</h5>
+  <div class="seg" id="s-theme"><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
+  <h5>Versions</h5>
+  <div class="box">
+    <div class="row"><span>App Hub app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
+    <div class="row"><span>App Hub page<small>The screen you see. It updates by itself.</small></span><span class="vv" id="s-page"></span></div>
+  </div>
+  <div id="news-box"></div>
+  <h5>About</h5>
+  <div class="box">
+    <div class="row"><span>Apps available</span><span id="s-count"></span></div>
+    <div class="row"><span>Source</span><span>GitHub</span></div>
+  </div>
 </div></div>
 <div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
 // Look: 'ivory' (light) or 'noir' (dark). Saved on this device; ?theme= can override for previews.
 const THEMES = { ivory:'Ivory', noir:'Noir' };
 function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubTheme'); if (THEMES[t]) return t; } catch {} return 'noir'; }
-function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('hubTheme', t); } catch {} const el = document.getElementById('s-themev'); if (el) el.textContent = THEMES[t]; }
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('hubTheme', t); } catch {} markTheme(); }
+function markTheme() { document.querySelectorAll('#s-theme button').forEach(b => b.classList.toggle('on', b.dataset.t === document.documentElement.dataset.theme)); }
 document.documentElement.dataset.theme = getTheme();
 const REPO = 'glickshulem-stack/apps';
 const hasHub = typeof Hub !== 'undefined';
@@ -161,7 +183,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.7.0';
+const PAGE_VER = '0.8.0';
 // App Hub 0.5.0+ keeps downloads and reports progress. Older App Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -251,14 +273,13 @@ function renderTop(apps, inst, ups) {
   const chip = (txt) => `<span class="chip"><i></i>${txt}</span>`;
   $('chips').innerHTML = chip(`<b>${apps.length}</b> apps`) + (hasHub ? chip(`<b>${inst}</b> installed`) : '') +
     chip(ups ? `<b>${ups}</b> update${ups > 1 ? 's' : ''} ready` : 'All up to date');
-  $('sig').textContent = 'App Hub · v' + PAGE_VER;
 }
 // "What's new": the latest notes from catalog.json (field "news": [{ id, version, date, text }])
 function renderNews() {
   const items = (catalog.news || []).slice(0, 5), byId = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
   if (!items.length) { $('news-box').innerHTML = ''; return; }
   const day = d => { try { return new Date(d + 'T12:00').toLocaleDateString([], { month:'short', day:'numeric' }); } catch { return d; } };
-  $('news-box').innerHTML = `<h3>What's new</h3><div class="news">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
+  $('news-box').innerHTML = `<h5>What's new</h5><div class="news box">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
 }
 
 function render() {
@@ -279,9 +300,10 @@ function render() {
     if (have) inst++; if (up) ups++;
     list.appendChild(card);
   }
-  $('s-ver').textContent = 'v' + hubVer + (hubVer === PAGE_VER ? '' : ' · page ' + PAGE_VER);
+  $('s-ver').textContent = hasHub ? 'v' + hubVer : 'Not installed';
+  $('s-page').textContent = 'v' + PAGE_VER;
   const hubUpd = hasHub && hub && newer(hub.version, hubVer);
-  $('s-upd').style.display = hubUpd ? '' : 'none';
+  $('s-upd-box').style.display = hubUpd ? '' : 'none';
   const hs = hubUpd ? stateOf(hub, hubVer) : null;
   $('s-upd-x').innerHTML = hs ? barHtml(hs) + (hs.status ? `<div class="status ${hs.cls || ''}">${hs.status}</div>` : '') : '';
   if (hubUpd) {
@@ -295,7 +317,7 @@ function render() {
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
   renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews();
   $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
-  $('s-last').textContent = lastCheck ? 'Checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+  $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
 }
 
 let toastTimer = null;
@@ -356,12 +378,25 @@ async function refresh(manual) {
   else if (manual) toast('✓', 'Everything is up to date', 'Checked just now · ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
 }
 $('refresh').onclick = () => refresh(true);
-$('settings').onclick = () => $('sheet').classList.add('show');
-$('s-close').onclick = () => $('sheet').classList.remove('show');
-$('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('show'); };
-$('s-theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'noir' ? 'ivory' : 'noir');
-$('s-themev').textContent = THEMES[getTheme()];
-$('s-check').onclick = () => { $('sheet').classList.remove('show'); refresh(true); };
+// Settings panel: opens from the gear; closes with ✕, a tap outside, a swipe to the right, or the Android back button
+const isOpen = () => $('sheet').classList.contains('show');
+function openSettings() { if (isOpen()) return; $('sheet').classList.add('show'); try { history.pushState({ settings:1 }, ''); } catch {} }
+function closeSettings() { if (!isOpen()) return; if (history.state && history.state.settings) history.back(); else $('sheet').classList.remove('show'); }
+addEventListener('popstate', () => $('sheet').classList.remove('show'));
+$('settings').onclick = openSettings;
+$('s-close').onclick = closeSettings;
+$('sheet').onclick = e => { if (e.target.id === 'sheet') closeSettings(); };
+addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+{ const p = $('panel'); let x0 = null, y0 = 0, dx = 0, horiz = null;
+  p.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; horiz = null; }, { passive:true });
+  p.addEventListener('touchmove', e => {
+    if (x0 == null) return; const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+    if (horiz == null && Math.abs(mx) + Math.abs(my) > 10) horiz = Math.abs(mx) > Math.abs(my);
+    if (!horiz) return; dx = Math.max(0, mx); p.classList.add('drag'); p.style.transform = `translateX(${dx}px)`;
+  }, { passive:true });
+  p.addEventListener('touchend', () => { p.classList.remove('drag'); p.style.transform = ''; if (horiz && dx > 90) closeSettings(); x0 = null; }); }
+document.querySelectorAll('#s-theme button').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+markTheme();
 window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHubResume;
 refresh();
 </script>
