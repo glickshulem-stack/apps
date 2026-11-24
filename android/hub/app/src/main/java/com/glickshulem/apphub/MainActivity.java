@@ -2,7 +2,9 @@ package com.glickshulem.apphub;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.app.PendingIntent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -16,6 +18,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceError;
 import androidx.core.content.FileProvider;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -26,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MainActivity extends Activity {
     private static final String SITE = "https://glickshulem-stack.github.io/apps/";
     private WebView web;
+    /** The open Play Hub screen, so install results (which arrive in InstallResult) can reach the page. */
+    static WeakReference<MainActivity> current = new WeakReference<>(null);
 
     /** One running download per app. Lives as long as App Hub's process, so the page can reload without losing it. */
     static class Job {
@@ -40,6 +47,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        current = new WeakReference<>(this);
         web = new WebView(this);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -66,7 +74,7 @@ public class MainActivity extends Activity {
         // Came back from the "allow installs" screen: carry on with the install if it is now allowed.
         if (waitingForPermission != null && canInstall()) {
             String id = waitingForPermission; waitingForPermission = null;
-            openInstaller(id);
+            new Thread(() -> openInstaller(id)).start();   // copying a big app into the installer must not freeze the screen
         }
         if (web != null) web.evaluateJavascript("window.refresh && refresh()", null);
     }
@@ -112,8 +120,65 @@ public class MainActivity extends Activity {
     }
     private boolean canInstall() { return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls(); }
 
-    /** Hand the kept file to Android's installer. Android always asks for one confirm tap; a sideloaded store can't skip that. */
+    /** Install the kept file. Play Hub hands it to Android's package installer itself (like a store does).
+     *  On Android 12+ it asks for no confirm tap when Play Hub is the app's installer (or the app is Play Hub itself);
+     *  otherwise Android shows its usual Install screen once. If anything goes wrong, fall back to the classic Install screen. */
     private void openInstaller(String id) {
+        File f = readyFile(id);
+        if (f == null) { js("window.hubEvent && hubEvent(" + q(id) + ",'missing')"); return; }
+        if (!canInstall()) { classicInstall(id); return; }
+        try { sessionInstall(id, f); }
+        catch (Exception e) { classicInstall(id); }
+    }
+
+    private void sessionInstall(String id, File f) throws Exception {
+        PackageInfo info = getPackageManager().getPackageArchiveInfo(f.getPath(), 0);
+        if (info == null) throw new Exception("broken");
+        PackageInstaller pi = getPackageManager().getPackageInstaller();
+        PackageInstaller.SessionParams sp = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        sp.setAppPackageName(info.packageName);
+        sp.setSize(f.length());
+        if (Build.VERSION.SDK_INT >= 31) sp.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+        int sid = pi.createSession(sp);
+        PackageInstaller.Session session = pi.openSession(sid);
+        try {
+            js("window.hubEvent && hubEvent(" + q(id) + ",'installing')");
+            try (FileInputStream in = new FileInputStream(f); OutputStream out = session.openWrite("base.apk", 0, f.length())) {
+                byte[] buf = new byte[65536]; int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                session.fsync(out);
+            }
+            Intent cb = new Intent(this, InstallResult.class).putExtra("id", id);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+            PendingIntent done = PendingIntent.getBroadcast(this, sid, cb, flags);
+            session.commit(done.getIntentSender());
+        } catch (Exception e) {
+            session.abandon();
+            throw e;
+        } finally {
+            session.close();
+        }
+    }
+
+    /** Called by InstallResult with what Android said about an install. */
+    void installResult(String id, int status, Intent confirm) {
+        if (status == PackageInstaller.STATUS_PENDING_USER_ACTION && confirm != null) {
+            // Android wants one tap this time (e.g. the app was first put on by something else): show its Install screen.
+            js("window.hubEvent && hubEvent(" + q(id) + ",'installer')");
+            confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            runOnUiThread(() -> startActivity(confirm));
+        } else if (status == PackageInstaller.STATUS_SUCCESS) {
+            readyFile(id);   // removes the kept file now that it is installed
+            js("window.hubEvent && hubEvent(" + q(id) + ",'installed')");
+        } else if (status == PackageInstaller.STATUS_FAILURE_ABORTED) {
+            js("window.hubEvent && hubEvent(" + q(id) + ",'back')");
+        } else {
+            js("window.hubEvent && hubEvent(" + q(id) + ",'failed')");
+        }
+    }
+
+    /** The classic way: open Android's Install screen for the kept file (always one confirm tap). */
+    private void classicInstall(String id) {
         File f = readyFile(id);
         if (f == null) { js("window.hubEvent && hubEvent(" + q(id) + ",'missing')"); return; }
         if (!canInstall()) {
@@ -192,7 +257,7 @@ public class MainActivity extends Activity {
             if (i != null) startActivity(i);
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 2; }
+        @JavascriptInterface public int bridge() { return 3; }   // 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed')
         /** Start (or continue) downloading; opens the installer when finished. */
         @JavascriptInterface public void download(String id, String url, String ver) { MainActivity.this.download(id, url, ver, true); }
         /** Open the installer for a download that is already kept. */

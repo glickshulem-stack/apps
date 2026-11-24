@@ -8,7 +8,7 @@
       "version": "0.6.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
-      "live": "0.11.0"
+      "live": "0.12.0"
     },
     {
       "id": "chess",
@@ -51,6 +51,12 @@
     }
   ],
   "news": [
+    {
+      "id": "hub",
+      "version": "0.12.0",
+      "date": "2026-11-24",
+      "text": "Play Hub app 0.7.0 installs updates by itself, no install screen"
+    },
     {
       "id": "hub",
       "version": "0.11.0",
