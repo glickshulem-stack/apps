@@ -1,6 +1,6 @@
 {
-  "name": "App Hub",
-  "short_name": "App Hub",
+  "name": "Play Hub",
+  "short_name": "Play Hub",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
