@@ -195,14 +195,19 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.11.0';
+const PAGE_VER = '0.12.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
 let ticker = null;
 
 function onStatus(id, text) { status[id] = text; render(); }          // old Play Hub
-function hubEvent(id, what) { if (flow[id]) flow[id].phase = what; else flow[id] = { phase: what }; render(); }
+function hubEvent(id, what) {
+  if (flow[id]) flow[id].phase = what; else flow[id] = { phase: what };
+  render();
+  const app = catalog && catalog.apps.find(x => x.id === id);
+  if (what === 'installed' && app) toast('✓', `${app.name} is updated`, 'Installed by Play Hub');
+}
 function job(id) { try { const s = Hub.job(id); return s ? JSON.parse(s) : null; } catch { return null; } }
 function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB'; }
 function act(a) {
@@ -234,10 +239,13 @@ function stateOf(a, have) {
     const pct = j.total ? Math.floor(j.done * 100 / j.total) : -1;
     return { btn: null, pct, status: j.total ? `Downloading… ${pct}%  ·  ${mb(j.done)} of ${mb(j.total)}` : (j.done ? `Downloading… ${mb(j.done)}` : 'Starting download…') };
   }
+  if (f && f.phase === 'installing')
+    return { btn: null, pct: -1, status: a.id === 'hub' ? 'Installing… Play Hub closes for a moment to update itself. Open it again after.' : 'Installing… no need to tap anything.' };
   if (Hub.kept(a.id) === a.version) {
     const b = btn('Install', 'install', () => act(a));
+    if (f && f.phase === 'failed') return { btn: btn('Try again', 'update', () => act(a)), status: 'The install didn\'t finish. Tap Try again.', cls: 'warn' };
     if (f && f.phase === 'permission') return { btn: b, status: 'Turn on "Allow from this source" for Play Hub, then come back. It installs right after.', cls: 'warn' };
-    if (f && f.phase === 'installer') return { btn: null, status: 'Downloaded ✓  Now tap Install on the Android screen.' };
+    if (f && f.phase === 'installer') return { btn: null, status: 'Downloaded ✓  Tap Install on the Android screen (only needed this once).' };
     if (f && f.phase === 'back') return { btn: b, status: 'Not installed yet. The download is saved, so tap Install whenever you\'re ready.' };
     return { btn: b, status: 'Downloaded and saved ✓  Tap Install when you\'re ready.' };
   }
