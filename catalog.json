@@ -42,10 +42,10 @@
       "package": "com.su.quillsong",
       "version": "1.9.0",
       "iconUrl": "apps/quillsong/icon.svg",
-      "tagline": "Made by Su",
-      "category": "Apps",
-      "description": "Quillsong, version 1.9.0.",
-      "hero": "linear-gradient(120deg,#2a1e15 0%,#3b2a1e 55%,#5a4230 100%)"
+      "tagline": "Books that turn like paper and read aloud",
+      "category": "Books",
+      "description": "A book reader with lifelike page turns and two pages side by side on the tablet. Opens PDF, EPUB, Word and text files, and reads them aloud in a natural voice that works offline, even with the screen off, highlighting each word as it goes.",
+      "hero": "linear-gradient(120deg,#1e150d 0%,#3a2716 50%,#6a4a25 100%)"
     }
   ],
   "news": [
