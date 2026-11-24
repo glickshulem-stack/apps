@@ -66,6 +66,16 @@
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
   .iconbtn.dot { position:relative; } .iconbtn.dot::after { content:''; position:absolute; top:8px; right:8px; width:9px; height:9px; border-radius:50%; background:#ef4444; }
+  /* refresh: the arrow spins while checking, then a toast says what happened */
+  #refresh.spin { color:var(--gold); }
+  #refresh.spin svg { animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .toast { position:fixed; left:50%; bottom:28px; z-index:20; display:flex; align-items:center; gap:12px; max-width:calc(100% - 32px);
+    padding:14px 22px 14px 16px; border-radius:16px; background:linear-gradient(120deg,#1f160e,#3a2a1a); color:#fff3dc; border:1px solid #c9a35a;
+    box-shadow:0 14px 34px rgba(31,22,14,.35); font-weight:600; transform:translate(-50%,140%); opacity:0; transition:transform .35s cubic-bezier(.2,.9,.3,1.2), opacity .25s; }
+  .toast.show { transform:translate(-50%,0); opacity:1; }
+  .toast .ti { width:30px; height:30px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#f3d58f,#b8862f); color:#2a1d10; font-weight:800; }
+  .toast small { display:block; font-weight:500; color:#e6c79a; margin-top:2px; }
   .row.click { cursor:pointer; } .row.click span:first-child { color:var(--accent); font-weight:600; }
 </style>
 </head>
@@ -91,6 +101,7 @@
   <div class="row"><span>Source</span><span>GitHub</span></div>
   <div class="row click" id="s-close"><span>Close</span><span></span></div>
 </div></div>
+<div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
 const REPO = 'glickshulem-stack/apps';
 const hasHub = typeof Hub !== 'undefined';
@@ -100,7 +111,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.5.0';
+const PAGE_VER = '0.6.0';
 // App Hub 0.5.0+ keeps downloads and reports progress. Older App Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -217,22 +228,68 @@ function render() {
   $('s-last').textContent = lastCheck ? 'Checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
 }
 
-async function refresh() {
+let toastTimer = null;
+function toast(icon, title, more) {
+  $('toast-i').textContent = icon;
+  $('toast-t').innerHTML = title + (more ? `<small>${more}</small>` : '');
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 3500);
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* What changed since the last check: app updates waiting to install, and apps that got a new version by themselves. */
+function news() {
+  const apps = catalog.apps.filter(a => a.id !== 'hub'), out = { updates: [], fresh: [] };
+  let seen = {}; try { seen = JSON.parse(localStorage.getItem('seenLive') || '{}'); } catch {}
+  const first = !Object.keys(seen).length;
+  for (const a of apps) {
+    const have = hasHub ? Hub.installedVersion(a.package) : '';
+    if (have && newer(a.version, have)) out.updates.push(a.name);
+    const v = a.live || a.version;
+    if (!first && seen[a.id] && newer(v, seen[a.id])) out.fresh.push(`${a.name} is now v${v}`);
+    seen[a.id] = v;
+  }
+  const hub = catalog.apps.find(a => a.id === 'hub');
+  if (hasHub && hub && newer(hub.version, hubVer)) out.updates.push('App Hub');
+  try { localStorage.setItem('seenLive', JSON.stringify(seen)); } catch {}
+  return out;
+}
+
+// manual = Su tapped the refresh button (then we always say something). Automatic checks only speak up when there is news.
+async function refresh(manual) {
+  manual = manual === true;
+  if (manual) { if ($('refresh').classList.contains('spin')) return; $('refresh').classList.add('spin'); }
+  const started = Date.now(); let offline = false;
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/catalog.json?t=${Date.now()}`, { cache:'no-store' });
     catalog = await r.json(); lastCheck = new Date();
     try { localStorage.setItem('catalog', JSON.stringify(catalog)); } catch {}
   } catch {
     try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
-    if (!catalog) { $('list').innerHTML = '<div class="msg">No internet. Connect and reopen App Hub.</div>'; return; }
+    offline = true;
+    if (!catalog) { $('list').innerHTML = '<div class="msg">No internet. Connect and reopen App Hub.</div>'; }
   }
+  if (manual) { await wait(Math.max(0, 900 - (Date.now() - started))); $('refresh').classList.remove('spin'); }
+  if (!catalog) { if (manual) toast('!', 'No internet', 'Connect to Wi-Fi and tap refresh again.'); return; }
   render();
+  if (offline) { if (manual) toast('!', 'No internet', 'Showing your apps from last time.'); return; }
+  // A newer App Hub page is online: load it right away (once per visit, so it can never loop).
+  const hub = catalog.apps.find(a => a.id === 'hub');
+  if (hub && hub.live && newer(hub.live, PAGE_VER) && (() => { try { return sessionStorage.getItem('hubReload'); } catch { return null; } })() !== hub.live) {
+    try { sessionStorage.setItem('hubReload', hub.live); } catch {}
+    toast('↻', 'App Hub updated', `Loading the new look (v${hub.live})…`);
+    setTimeout(() => location.replace('./?v=' + hub.live), 1200); return;
+  }
+  const n = news();
+  if (n.updates.length) toast(n.updates.length, n.updates.length === 1 ? '1 update ready' : `${n.updates.length} updates ready`, n.updates.join(', ') + ' · tap Update on the card');
+  else if (n.fresh.length) toast('★', 'New versions arrived', n.fresh.join(' · '));
+  else if (manual) toast('✓', 'Everything is up to date', 'Checked just now · ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
 }
-$('refresh').onclick = refresh;
+$('refresh').onclick = () => refresh(true);
 $('settings').onclick = () => $('sheet').classList.add('show');
 $('s-close').onclick = () => $('sheet').classList.remove('show');
 $('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('show'); };
-$('s-check').onclick = refresh;
+$('s-check').onclick = () => { $('sheet').classList.remove('show'); refresh(true); };
 window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHubResume;
 refresh();
 </script>
