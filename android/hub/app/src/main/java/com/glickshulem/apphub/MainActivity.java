@@ -257,7 +257,13 @@ public class MainActivity extends Activity {
             if (i != null) startActivity(i);
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 3; }   // 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed')
+        @JavascriptInterface public int bridge() { return 4; }   // 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
+        /** Open Android's "Uninstall this app?" question for an app that was taken off Play Hub. */
+        @JavascriptInterface public void uninstall(String pkg) {
+            if (pkg == null || pkg.isEmpty() || pkg.equals(getPackageName())) return;
+            Intent i = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + pkg));
+            runOnUiThread(() -> { try { startActivity(i); } catch (Exception e) { } });
+        }
         /** Start (or continue) downloading; opens the installer when finished. */
         @JavascriptInterface public void download(String id, String url, String ver) { MainActivity.this.download(id, url, ver, true); }
         /** Open the installer for a download that is already kept. */
