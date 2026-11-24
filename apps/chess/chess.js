@@ -1,4 +1,4 @@
-const VERSION = '0.26.0';
+const VERSION = '0.26.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -210,8 +210,11 @@ function render() {
   statusEl.classList.toggle('over', !!over);
   { const who = mode.cpu ? mode.human : opp(S.turn), left = undos[who], btn = document.getElementById('undo');
     if (ex) { btn.querySelector('span').innerHTML = 'Undo'; btn.disabled = !history.length; btn.title = 'Take back a move you are trying out'; } else {
-    btn.querySelector('span').innerHTML = mode.cpu ? `Undo<small class="ucount">${left} left</small>` : `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
-    btn.disabled = history.length < undoPlies() || left <= 0 || !!clock?.flag;
+    // never greyed out with no reason: it says why, and tapping it explains
+    const why = undoWhy(), cap = history.length < undoPlies() ? 'Nothing to undo yet' : left <= 0 ? 'None left this game'
+      : mode.cpu ? `${left} left` : `White ${undos.w} · Black ${undos.b} left`;
+    btn.querySelector('span').innerHTML = `Undo<small class="ucount">${cap}</small>`;
+    btn.disabled = false; btn.classList.toggle('idle', !!why);
     document.getElementById('flip').hidden = mode.cpu; document.querySelector('.actions').classList.toggle('solo', mode.cpu);
     btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; } }
   renderCoach();
@@ -408,8 +411,26 @@ function askPromo(moves) {
   }
   ov.classList.add('show');
 }
+// Why Undo can't be used right now (null = it can)
+function undoWhy() {
+  if (clock?.flag) return 'The game ended on time, so moves can\'t be taken back';
+  if (history.length < undoPlies()) return mode.cpu ? 'Make your move first. Then Undo can take it back' : 'Make a move first. Then Undo can take it back';
+  const who = mode.cpu ? mode.human : opp(S.turn);
+  if (undos[who] <= 0) return mode.cpu ? 'You\'ve used all 3 undos this game' : `${who === 'w' ? 'White' : 'Black'} has used all 3 undos this game`;
+  return null;
+}
+let toastTimer = 0;
+function toast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  // show it over the side panel, just above the buttons, so it never covers the board
+  const pr = document.querySelector('.panel').getBoundingClientRect(), ar = document.querySelector('.actions').getBoundingClientRect();
+  t.style.left = (pr.left + pr.width / 2) + 'px'; t.style.bottom = (innerHeight - ar.top + 10) + 'px'; t.style.maxWidth = (pr.width - 8) + 'px';
+  t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
 document.getElementById('undo').onclick = () => {
   if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; const m = S.last; S = history.pop(); selected = null; legalForSel = []; render(); slideMove(m, true); return; }
+  { const why = undoWhy(); if (why) return toast(why); }
   const n = undoPlies(); if (history.length < n) return;
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;

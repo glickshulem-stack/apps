@@ -16,7 +16,7 @@
       "icon": "♞",
       "package": "com.glickshulem.chess",
       "version": "0.3.0",
-      "live": "0.26.0",
+      "live": "0.26.1",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
