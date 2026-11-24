@@ -39,10 +39,11 @@
       "name": "Play Hub Studio",
       "icon": "✦",
       "package": "com.glickshulem.hubstudio",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "iconUrl": "studio/icon.svg",
       "tagline": "Where Su makes and publishes apps",
-      "private": true
+      "private": true,
+      "note": "Drag apps onto Play Hub to publish; open APKs from Files"
     }
   ]
 }
