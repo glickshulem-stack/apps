@@ -1,4 +1,4 @@
-const VERSION = '0.23.1';
+const VERSION = '0.23.2';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -50,17 +50,21 @@ let timeCtl = null, clock = null, lastTick = performance.now(), pickTime;
 try { const v = JSON.parse(localStorage.getItem('gambit-time')); if (v === null || TIMES.some(t => t && t[0]===v[0] && t[1]===v[1])) timeCtl = v; } catch {}
 // Opponent: two players on one device, or the computer. setup = what the New game dialog picks.
 // Beginner and Easy use a simple built-in player that misses a lot; Medium and up use the Stockfish engine.
+// Medium and Hard: the engine looks at its top `pv` moves (to `depth`) and the computer picks any move that is at most
+// `margin` centipawns worse than the best one; with chance slip[0] it allows up to slip[1] (a human-like slip).
+// This keeps the strength the same all game long (Stockfish's own Skill Level setting blundered pieces in the middlegame).
 // think = how long the computer pretends to think, in seconds [min, max].
 const LEVELS = [
   { name:'Beginner', simple:'beginner', think:[1, 2] },
   { name:'Easy',     simple:'easy',     think:[1.2, 2.5] },
-  { name:'Medium',   skill:0,  depth:2, rand:.12, think:[1.5, 3] },
-  { name:'Hard',     skill:5,  depth:5,           think:[1.8, 3.5] },
+  { name:'Medium',   depth:5,  pv:6, margin:90, slip:[.15, 200], think:[1.5, 3] },
+  { name:'Hard',     depth:8,  pv:4, margin:40, slip:[.08, 100], think:[1.8, 3.5] },
   { name:'Expert',   skill:12, ms:500,            think:[2, 4] },
   { name:'Master',   skill:20, ms:1500,           think:[2.5, 5] } ];
 let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
 try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeof v.cpu === 'boolean') setup = v; } catch {}
 let hintMove = null, hintBusy = false, review = null, reviewing = false, lastScore = null;
+let pvLines = {};   // multipv number -> { cp, move } from the engine's latest search
 let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
 let S, history, flipped = false, selected = null, legalForSel = [];
 
@@ -514,10 +518,16 @@ function getEngine() {
   engine = new Worker('engine/stockfish.js');
   engine.onmessage = e => {
     const line = typeof e.data === 'string' ? e.data : '';
-    if (line.startsWith('info') && line.includes(' score ')) { const m = line.match(/score (cp|mate) (-?\d+)/); if (m) lastScore = { [m[1]]: +m[2] }; return; }
+    if (line.startsWith('info') && line.includes(' score ')) {
+      const m = line.match(/score (cp|mate) (-?\d+)/), k = +(line.match(/ multipv (\d+)/) || [0, 1])[1], mv = (line.match(/ pv (\S+)/) || [])[1];
+      if (!m) return;
+      if (k === 1) lastScore = { [m[1]]: +m[2] };
+      if (mv && !line.includes('bound')) pvLines[k] = { move: mv, cp: m[1] === 'cp' ? +m[2] : (+m[2] > 0 ? 30000 - +m[2] : -30000 - +m[2]) };
+      return;
+    }
     if (!line.startsWith('bestmove')) return;
     searching = false;
-    if (ignoreBest > 0) { ignoreBest--; return; }
+    if (ignoreBest > 0) { ignoreBest--; pvLines = {}; return; }   // the end of a search we cancelled
     const f = onBest; onBest = null; if (f) f(line.split(' ')[1]);
   };
   engine.postMessage('uci'); engine.postMessage('isready');
@@ -540,18 +550,26 @@ function maybeCpu() {
   const [lo, hi] = L.think, early = history.length < 4 || legal.length === 1;
   const wait = (early ? lo * .6 : lo + Math.random() * (hi - lo)) * 1000;
   if (L.simple) return play(simpleMove(legal, L.simple));
-  // Medium sometimes plays a random move, so it can be beaten
-  if (Math.random() < (L.rand || 0)) return play(legal[Math.floor(Math.random() * legal.length)]);
   const eng = getEngine();
   onBest = uci => {
     if (!uci || uci === '(none)') { cpuBusy = false; return; }
+    if (L.pv) uci = pickNearBest(L) || uci;
     const F = 'abcdefgh', fc = F.indexOf(uci[0]), fr = 8 - +uci[1], tc = F.indexOf(uci[2]), tr = 8 - +uci[3], pr = uci[4];
     play(legal.find(m => m.fr === fr && m.fc === fc && m.tr === tr && m.tc === tc && (!pr || m.promo === pr)) || legal[0]);
   };
-  eng.postMessage(`setoption name Skill Level value ${L.skill}`);
+  eng.postMessage(`setoption name Skill Level value ${L.skill ?? 20}`);
+  eng.postMessage(`setoption name MultiPV value ${L.pv || 1}`);
   eng.postMessage('position fen ' + fen(S));
-  searching = true;
+  searching = true; pvLines = {};
   eng.postMessage(L.depth ? `go depth ${L.depth}` : `go movetime ${L.ms}`);
+}
+
+// Medium/Hard: choose among the engine's top moves that are nearly as good as the best one
+function pickNearBest(L) {
+  const lines = Object.values(pvLines); if (!lines.length) return null;
+  const best = Math.max(...lines.map(l => l.cp)), allow = Math.random() < L.slip[0] ? L.slip[1] : L.margin;
+  const ok = lines.filter(l => best - l.cp <= allow);
+  return ok[Math.floor(Math.random() * ok.length)].move;
 }
 
 // A weak, human-like player for the two lowest levels: it only looks one move ahead.
@@ -620,7 +638,7 @@ document.getElementById('hint').onclick = () => {
     if (m) hintMove = { ...m, san: san(S, m) };
     render();
   };
-  eng.postMessage('setoption name Skill Level value 20');
+  eng.postMessage('setoption name Skill Level value 20'); eng.postMessage('setoption name MultiPV value 1');
   eng.postMessage('position fen ' + fen(S));
   searching = true; eng.postMessage('go movetime 800');
 };
@@ -641,7 +659,7 @@ function startReview() {
   cancelThink(); hintMove = null; viewIdx = null;
   const positions = [...history, S], evals = [], bests = [];
   reviewing = { done: 0, total: positions.length };
-  const eng = getEngine(); eng.postMessage('setoption name Skill Level value 20');
+  const eng = getEngine(); eng.postMessage('setoption name Skill Level value 20'); eng.postMessage('setoption name MultiPV value 1');
   const next = i => {
     if (!reviewing) return;
     reviewing.done = i; render();
