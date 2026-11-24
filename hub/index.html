@@ -140,6 +140,14 @@
   #refresh.spin { opacity:.85; }
   #refresh.spin svg { animation:spin .8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
+  /* pull to refresh: drag down at the top of the page, a gold circle follows, let go to check for updates */
+  html, body { overscroll-behavior-y:contain; }
+  .ptr { position:fixed; left:50%; top:0; z-index:4; width:46px; height:46px; margin-left:-23px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--surface); border:1px solid var(--gold); box-shadow:0 8px 22px rgba(0,0,0,.35); color:var(--gold2); transform:translateY(-60px); opacity:0; pointer-events:none; }
+  .ptr svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .ptr.ready { background:linear-gradient(135deg,#f6dc9c,#c9993f); color:#2a1d10; }
+  .ptr.back { transition:transform .3s, opacity .3s; }
+  .ptr.spin svg { animation:spin .8s linear infinite; }
   .toast { position:fixed; left:50%; bottom:28px; z-index:20; display:flex; align-items:center; gap:12px; max-width:calc(100% - 32px);
     padding:14px 22px 14px 16px; border-radius:16px; background:linear-gradient(120deg,#1f160e,#3a2a1a); color:#fff3dc; border:1px solid #c9a35a;
     box-shadow:0 14px 34px rgba(31,22,14,.35); font-weight:600; transform:translate(-50%,140%); opacity:0; transition:transform .35s cubic-bezier(.2,.9,.3,1.2), opacity .25s; }
@@ -186,6 +194,7 @@
   <div class="sheet-head"><button class="backbtn" id="news-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><h4 class="goldtext" style="text-align:right">What's new</h4></div>
   <div id="news-list"></div>
 </div></div>
+<div class="ptr" id="ptr"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
 <div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
 // Look: 'ivory' (light) or 'noir' (dark). Saved on this device; ?theme= can override for previews.
@@ -203,7 +212,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.14.0';
+const PAGE_VER = '0.15.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -433,6 +442,29 @@ async function refresh(manual) {
   else if (manual) toast('✓', 'Everything is up to date', 'Checked just now · ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}));
 }
 $('refresh').onclick = () => refresh(true);
+// Pull to refresh (like a browser): at the very top, pull down past the line and let go to check for updates.
+{ const ptr = $('ptr'), LINE = 90; let y0 = null, x0 = 0, pull = 0, active = false;
+  const show = (d, rot) => { ptr.style.opacity = Math.min(1, d / 50); ptr.style.transform = `translateY(${Math.min(d, 130) - 60}px)`; ptr.querySelector('svg').style.transform = `rotate(${rot}deg)`; };
+  const hide = () => { ptr.classList.add('back'); ptr.classList.remove('ready', 'spin'); ptr.style.opacity = 0; ptr.style.transform = 'translateY(-60px)'; ptr.querySelector('svg').style.transform = ''; };
+  addEventListener('touchstart', e => {
+    if ($('sheet').classList.contains('show') || window.scrollY > 0 || e.touches.length > 1 || e.target.closest('.track')) { y0 = null; return; }
+    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; pull = 0; active = false; ptr.classList.remove('back');
+  }, { passive:true });
+  addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    const dy = e.touches[0].clientY - y0, dx = Math.abs(e.touches[0].clientX - x0);
+    if (!active) { if (dy > 12 && dy > dx * 1.5 && window.scrollY <= 0) active = true; else if (dy < 0 || dx > 20) { y0 = null; return; } else return; }
+    pull = Math.max(0, dy * 0.55);
+    show(pull, pull * 3); ptr.classList.toggle('ready', pull >= LINE);
+  }, { passive:true });
+  addEventListener('touchend', async () => {
+    if (y0 == null || !active) { y0 = null; return; }
+    y0 = null;
+    if (pull < LINE) { hide(); return; }
+    ptr.classList.add('back', 'spin'); ptr.classList.remove('ready'); show(80, 0);
+    await refresh(true);
+    hide();
+  }); }
 // Settings panel: opens from the gear; closes with ✕, a tap outside, a swipe to the right, or the Android back button
 const isOpen = () => $('sheet').classList.contains('show');
 function openSettings() { if (isOpen()) return; $('sheet').classList.add('show'); try { history.pushState({ settings:1 }, ''); } catch {} }
