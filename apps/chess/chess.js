@@ -1,4 +1,4 @@
-const VERSION = '0.25.1';
+const VERSION = '0.26.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -69,7 +69,6 @@ let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0
 // Coach tools. ink = drawing color; pen = drawing mode on; marks = arrows and colored squares on the position shown.
 const INKS = { y:'#f2c230', r:'#e0453a', b:'#3f8ae6', o:'#ef8a2e' }, INK_NAMES = { y:'Yellow', r:'Red', b:'Blue', o:'Orange' };
 let ink = 'y', pen = false, pdraw = null, marks = { arrows: [], boxes: {}, past: [], pos: null }, ex = null;   // ex = the real game, kept while you explore
-try { const v = localStorage.getItem('gambit-ink'); if (INKS[v]) ink = v; } catch {}
 let S, history, flipped = false, selected = null, legalForSel = [];
 
 function initial() {
@@ -210,8 +209,7 @@ function render() {
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
   { const who = mode.cpu ? mode.human : opp(S.turn), left = undos[who], btn = document.getElementById('undo');
-    if (pen) { btn.querySelector('span').innerHTML = 'Undo<small class="ucount">last drawing</small>'; btn.disabled = !marks.past.length; btn.title = 'Erase the last arrow or box'; }
-    else if (ex) { btn.querySelector('span').innerHTML = 'Undo'; btn.disabled = !history.length; btn.title = 'Take back a move you are trying out'; } else {
+    if (ex) { btn.querySelector('span').innerHTML = 'Undo'; btn.disabled = !history.length; btn.title = 'Take back a move you are trying out'; } else {
     btn.querySelector('span').innerHTML = mode.cpu ? `Undo<small class="ucount">${left} left</small>` : `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
     btn.disabled = history.length < undoPlies() || left <= 0 || !!clock?.flag;
     document.getElementById('flip').hidden = mode.cpu; document.querySelector('.actions').classList.toggle('solo', mode.cpu);
@@ -411,7 +409,6 @@ function askPromo(moves) {
   ov.classList.add('show');
 }
 document.getElementById('undo').onclick = () => {
-  if (pen) { const prev = marks.past.pop(); if (prev) Object.assign(marks, JSON.parse(prev)); render(); return; }   // in Draw, Undo erases the last drawing
   if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; const m = S.last; S = history.pop(); selected = null; legalForSel = []; render(); slideMove(m, true); return; }
   const n = undoPlies(); if (history.length < n) return;
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
@@ -737,8 +734,8 @@ function endExplore() {
   lastTick = performance.now(); render(); setTimeout(maybeCpu, 300);
 }
 function renderCoach() {
-  document.getElementById('pen').classList.toggle('on', pen);
   document.querySelector('.coach-card').classList.toggle('drawing', pen);
+  document.getElementById('drawundo').disabled = !marks.past.length;
   document.querySelectorAll('#inks button').forEach(b => b.classList.toggle('on', b.dataset.ink === ink));
   document.getElementById('clearmarks').disabled = !marks.arrows.length && !Object.keys(marks.boxes).length;
   const xb = document.getElementById('explore');
@@ -752,7 +749,7 @@ function renderCoach() {
 { const box = document.getElementById('inks');
   for (const k of Object.keys(INKS)) {
     const b = document.createElement('button'); b.dataset.ink = k; b.style.setProperty('--ink', INKS[k]); b.setAttribute('aria-label', INK_NAMES[k]);
-    b.onclick = () => { ink = k; try { localStorage.setItem('gambit-ink', k); } catch {} render(); };
+    b.onclick = () => { ink = k; render(); };
     box.appendChild(b);
   }
   // one arrowhead per color
@@ -760,9 +757,13 @@ function renderCoach() {
     `<marker id="mk-${k}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.4" markerHeight="2.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join(''));
 }
 // Draw on shows the colors and Clear; Draw off (or Escape) hides them and wipes every drawing
-function setPen(on) { pen = on; pdraw = null; if (!on) { marks.arrows = []; marks.boxes = {}; marks.past = []; } render(); }
-document.getElementById('pen').onclick = () => setPen(!pen);
-document.getElementById('clearmarks').onclick = () => { marks.arrows = []; marks.boxes = {}; marks.past = []; render(); };
+// Opening Draw starts fresh (no drawings, yellow); closing it erases everything and hides the drawing card.
+function setPen(on) { pen = on; pdraw = null; marks.arrows = []; marks.boxes = {}; marks.past = []; if (on) ink = 'y'; render(); }
+document.getElementById('pen').onclick = () => setPen(true);
+document.getElementById('penclose').onclick = () => setPen(false);
+document.getElementById('drawundo').onclick = () => { const prev = marks.past.pop(); if (prev) Object.assign(marks, JSON.parse(prev)); render(); };
+// Clear can be undone too
+document.getElementById('clearmarks').onclick = () => { if (!marks.arrows.length && !Object.keys(marks.boxes).length) return; marks.past.push(JSON.stringify({ arrows: marks.arrows, boxes: marks.boxes })); marks.arrows = []; marks.boxes = {}; render(); };
 document.getElementById('explore').onclick = () => ex ? endExplore() : startExplore();
 document.getElementById('navfirst').onclick = () => step('first');
 document.getElementById('navprev').onclick = () => step('prev');

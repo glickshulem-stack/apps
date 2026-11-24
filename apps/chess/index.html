@@ -36,9 +36,16 @@
         <button class="cbtn" id="explore"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Explore</span></button>
       </div><button id="reviewbtn" class="revbtn" hidden>★ Review game</button></div>
     <div class="coach-card">
-      <button class="cbtn" id="pen" aria-label="Draw"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L19 8a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Draw</span></button>
-      <div id="inks"></div>
-      <button class="cbtn" id="clearmarks" aria-label="Clear drawings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Clear</span></button>
+      <button class="drawopen" id="pen"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L19 8a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Draw on the board</span></button>
+      <div class="drawpanel" id="drawpanel">
+        <div class="dphead"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L19 8a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/></svg><b>Drawing</b><small>Drag for an arrow · tap for a box</small>
+          <button class="dpclose" id="penclose" aria-label="Close drawing and erase it"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div class="dpbody">
+          <div id="inks"></div>
+          <button class="dpbtn" id="drawundo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>
+          <button class="dpbtn" id="clearmarks"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>Clear</span></button>
+        </div>
+      </div>
     </div>
     <div class="actions">
       <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
