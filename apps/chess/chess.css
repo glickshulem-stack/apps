@@ -292,3 +292,10 @@ body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,
 .dpbtn { display:flex; align-items:center; gap:6px; padding:9px 12px; border-radius:10px; border:1px solid var(--p3); background:var(--b2); color:#f3e2c4; font:600 .9rem var(--display); cursor:pointer; }
 .dpbtn:disabled { opacity:.4; cursor:default; }
 .dpbtn:active:not(:disabled) { transform:scale(.96); }
+
+/* 0.26.1: Undo explains itself instead of being silently greyed out */
+#undo.idle { opacity:.6; }
+#toast { position:fixed; left:50%; width:max-content; bottom:28px; transform:translate(-50%, 20px); opacity:0; pointer-events:none; z-index:80; max-width:min(520px, calc(100vw - 32px));
+  padding:12px 20px; border-radius:14px; background:linear-gradient(160deg,#4a3422,#2b1d13); border:1px solid #c99c58; color:#f3e2c4; font:600 1rem Inter,sans-serif; text-align:center;
+  box-shadow:0 12px 30px rgba(0,0,0,.5); transition:opacity .2s, transform .2s; }
+#toast.show { opacity:1; transform:translate(-50%, 0); }
