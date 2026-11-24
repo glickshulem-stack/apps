@@ -1,4 +1,15 @@
 plugins { id 'com.android.application' }
+// Whole package: the app's web files (apps/chess/) are copied into the APK, and its version is the one in chess.js.
+// To release a new version: change VERSION in apps/chess/chess.js (and catalog.json "version"); the APK builds itself.
+def webVersionFile = '../../../apps/chess/chess.js'
+def webVer = (file(webVersionFile).text =~ /const VERSION = '([^']+)'/)[0][1]
+def webCode = webVer.tokenize('.').collect { it as int }.with { it[0] * 1000000 + it[1] * 1000 + it[2] } + 100
+def webDir = layout.buildDirectory.dir('webassets')
+tasks.register('copyWeb', Sync) {
+    from('../../../apps/chess') { into 'web' }
+    into webDir
+}
+preBuild.dependsOn 'copyWeb'
 android {
     namespace 'com.glickshulem.chess'
     compileSdk 34
@@ -6,8 +17,8 @@ android {
         applicationId 'com.glickshulem.chess'
         minSdk 24
         targetSdk 34
-        versionCode 3
-        versionName '0.3.0'
+        versionCode webCode
+        versionName webVer
     }
     signingConfigs {
         release {
@@ -18,5 +29,6 @@ android {
         }
     }
     buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+    sourceSets { main { assets.srcDirs += webDir.get().asFile } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }

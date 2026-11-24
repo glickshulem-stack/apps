@@ -11,17 +11,16 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import org.json.JSONObject;
 
-// Development shell: the editor screen lives on GitHub Pages (fast updates, no reinstall).
-// The heavy work (cutting, cropping, MP3) is done here on the tablet by Engine, through the "Studio" bridge.
+// Whole package: the editor screens are inside this APK (copied from apps/studio/ at build time);
+// new versions arrive as a new APK that Play Hub installs. The heavy work (cutting, cropping, MP3) is done here on the tablet by Engine, through the "Studio" bridge.
 public class MainActivity extends Activity {
-    private static final String SITE = "https://glickshulem-stack.github.io/apps/";
-    private static final String URL = SITE + "apps/studio/";
     private static final int PICK = 1;
     private WebView web;
     private ValueCallback<Uri[]> pending;
@@ -39,8 +38,15 @@ public class MainActivity extends Activity {
         s.setUserAgentString(s.getUserAgentString() + " GlickApp");
         web.addJavascriptInterface(new Bridge(), "Studio");
         web.setWebViewClient(new WebViewClient() {
+            @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
+                return LocalFiles.serve(MainActivity.this, r.getUrl());
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
-                return !r.getUrl().toString().startsWith(SITE);
+                if (!LocalFiles.ours(r.getUrl())) return true;
+                // The ‹ "back to apps" link: close this app (Play Hub or the home screen is underneath).
+                String path = r.getUrl().getPath();
+                if (path == null || !path.startsWith("/web/")) { finish(); return true; }
+                return false;
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -62,7 +68,7 @@ public class MainActivity extends Activity {
         });
         if (Build.VERSION.SDK_INT < 29 && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
-        web.loadUrl(URL);
+        web.loadUrl(LocalFiles.START);
         setContentView(web);
     }
 
