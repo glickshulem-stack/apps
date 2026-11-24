@@ -1,4 +1,4 @@
-const VERSION = '0.24.1';
+const VERSION = '0.24.2';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -68,7 +68,7 @@ let pvLines = {};   // multipv number -> { cp, move } from the engine's latest s
 let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
 // Coach tools. ink = drawing color; pen = drawing mode on; marks = arrows and colored squares on the position shown.
 const INKS = { y:'#f2c230', r:'#e0453a', b:'#3f8ae6', o:'#ef8a2e' }, INK_NAMES = { y:'Yellow', r:'Red', b:'Blue', o:'Orange' };
-let ink = 'y', pen = false, pdraw = null, marks = { arrows: [], boxes: {}, pos: null }, ex = null;   // ex = the real game, kept while you explore
+let ink = 'y', pen = false, pdraw = null, marks = { arrows: [], boxes: {}, past: [], pos: null }, ex = null;   // ex = the real game, kept while you explore
 try { const v = localStorage.getItem('gambit-ink'); if (INKS[v]) ink = v; } catch {}
 let S, history, flipped = false, selected = null, legalForSel = [];
 
@@ -186,7 +186,7 @@ function load() { try { const d = JSON.parse(localStorage.getItem('chess-game'))
 function render() {
   boardEl.innerHTML = '';
   const D = viewIdx == null ? S : [...history, S][viewIdx + 1];
-  if (marks.pos !== D) { marks.arrows = []; marks.boxes = {}; marks.pos = D; }   // drawings belong to the position shown
+  if (marks.pos !== D) { marks.arrows = []; marks.boxes = {}; marks.past = []; marks.pos = D; }   // drawings belong to the position shown
   const over = result(S), dover = result(D), chk = !dover && inCheck(D, D.turn) ? kingPos(D.board, D.turn) : (dover?.startsWith('Checkmate') ? kingPos(D.board, D.turn) : null);
   for (let i=0;i<8;i++) for (let j=0;j<8;j++) {
     const r = flipped ? 7-i : i, c = flipped ? 7-j : j;
@@ -209,7 +209,8 @@ function render() {
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
   { const who = mode.cpu ? mode.human : opp(S.turn), left = undos[who], btn = document.getElementById('undo');
-    if (ex) { btn.querySelector('span').innerHTML = 'Undo'; btn.disabled = !history.length; btn.title = 'Take back a move you are trying out'; } else {
+    if (pen) { btn.querySelector('span').innerHTML = 'Undo<small class="ucount">last drawing</small>'; btn.disabled = !marks.past.length; btn.title = 'Erase the last arrow or box'; }
+    else if (ex) { btn.querySelector('span').innerHTML = 'Undo'; btn.disabled = !history.length; btn.title = 'Take back a move you are trying out'; } else {
     btn.querySelector('span').innerHTML = mode.cpu ? `Undo<small class="ucount">${left} left</small>` : `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
     btn.disabled = history.length < undoPlies() || left <= 0 || !!clock?.flag;
     document.getElementById('flip').hidden = mode.cpu; document.querySelector('.actions').classList.toggle('solo', mode.cpu);
@@ -350,7 +351,7 @@ function squareAt(x, y) {
 boardEl.addEventListener('contextmenu', e => e.preventDefault());
 boardEl.addEventListener('pointerdown', e => {
   if (pen || e.button === 2) return penDown(e);
-  if (marks.arrows.length || Object.keys(marks.boxes).length) { marks.arrows = []; marks.boxes = {}; render(); }   // a normal tap wipes the drawings
+  if (marks.arrows.length || Object.keys(marks.boxes).length) { marks.arrows = []; marks.boxes = {}; marks.past = []; render(); }   // a normal tap wipes the drawings
   if (viewIdx != null) {
     if (!ex) { viewIdx = null; render(); return; }
     // exploring: carry on from the move being shown (later moves of this try-out are dropped)
@@ -399,6 +400,7 @@ function askPromo(moves) {
   ov.classList.add('show');
 }
 document.getElementById('undo').onclick = () => {
+  if (pen) { const prev = marks.past.pop(); if (prev) Object.assign(marks, JSON.parse(prev)); render(); return; }   // in Draw, Undo erases the last drawing
   if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; S = history.pop(); selected = null; legalForSel = []; render(); return; }
   const n = undoPlies(); if (history.length < n) return;
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
@@ -680,6 +682,7 @@ function penMove(e) {
 }
 function penUp(e) {
   const { from } = pdraw, to = squareAt(e.clientX, e.clientY) || pdraw.to; pdraw = null;
+  marks.past.push(JSON.stringify({ arrows: marks.arrows, boxes: marks.boxes }));   // so Undo can take this drawing back
   if (from[0] === to[0] && from[1] === to[1]) {
     // tap = color the square; tap again with the same color to remove it
     const k = from.join(','); if (marks.boxes[k] === ink) delete marks.boxes[k]; else marks.boxes[k] = ink;
@@ -740,9 +743,9 @@ function renderCoach() {
     `<marker id="mk-${k}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.4" markerHeight="2.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join(''));
 }
 // Draw on shows the colors and Clear; Draw off (or Escape) hides them and wipes every drawing
-function setPen(on) { pen = on; pdraw = null; if (!on) { marks.arrows = []; marks.boxes = {}; } render(); }
+function setPen(on) { pen = on; pdraw = null; if (!on) { marks.arrows = []; marks.boxes = {}; marks.past = []; } render(); }
 document.getElementById('pen').onclick = () => setPen(!pen);
-document.getElementById('clearmarks').onclick = () => { marks.arrows = []; marks.boxes = {}; render(); };
+document.getElementById('clearmarks').onclick = () => { marks.arrows = []; marks.boxes = {}; marks.past = []; render(); };
 document.getElementById('explore').onclick = () => ex ? endExplore() : startExplore();
 document.getElementById('navfirst').onclick = () => step('first');
 document.getElementById('navprev').onclick = () => step('prev');
