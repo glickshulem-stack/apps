@@ -179,11 +179,12 @@ const REPO = 'glickshulem-stack/apps';
 const hasHub = typeof Hub !== 'undefined';
 const hubVer = hasHub ? Hub.hubVersion() : 'web';
 const status = {}; let catalog = null, lastCheck = null;
+try { const t = localStorage.getItem('lastCheck'); if (t) lastCheck = new Date(+t); } catch {}
 const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.9.0';
+const PAGE_VER = '0.10.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -317,7 +318,7 @@ function render() {
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
   renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews();
   $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
-  $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+  $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'}) : 'Not checked yet';
 }
 
 let toastTimer = null;
@@ -348,13 +349,20 @@ function news() {
 }
 
 // manual = Su tapped the refresh button (then we always say something). Automatic checks only speak up when there is news.
+// Play Hub only talks to GitHub when Su taps "Check for updates" (Su's wish). Opening or coming back
+// to Play Hub just shows the list saved from the last check. The very first open has nothing saved, so it checks once.
 async function refresh(manual) {
   manual = manual === true;
+  if (!manual) {
+    if (!catalog) try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
+    if (catalog) { render(); return; }
+  }
   if (manual) { if ($('refresh').classList.contains('spin')) return; $('refresh').classList.add('spin'); }
   const started = Date.now(); let offline = false;
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/catalog.json?t=${Date.now()}`, { cache:'no-store' });
     catalog = await r.json(); lastCheck = new Date();
+    try { localStorage.setItem('lastCheck', String(+lastCheck)); } catch {}
     try { localStorage.setItem('catalog', JSON.stringify(catalog)); } catch {}
   } catch {
     try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
