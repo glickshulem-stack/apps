@@ -116,7 +116,14 @@
   .seg button { flex:1; padding:12px; border-radius:14px; cursor:pointer; font:700 .95rem Inter,sans-serif; color:var(--text); background:var(--surface); border:1px solid var(--line); }
   .seg button.on { border-color:var(--gold); box-shadow:inset 0 0 0 1px var(--gold), 0 4px 12px var(--glow); color:var(--gold2); }
   .seg button i { display:block; height:34px; border-radius:8px; margin-bottom:8px; border:1px solid var(--line); }
-  .sheet .news { padding:2px 16px; } .sheet .ni img { width:36px; height:36px; }
+  /* What's new opens as its own page inside Settings */
+  .sheet.sub { transform:translateX(105%); z-index:2; }
+  .sheet-bg.show .sheet.sub { transform:translateX(105%); }
+  .sheet-bg.show.news-on .sheet.sub { transform:none; }
+  .backbtn { display:flex; align-items:center; gap:4px; border:0; background:none; cursor:pointer; color:var(--gold2); font:700 1rem Inter,sans-serif; padding:8px 4px; }
+  .backbtn svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .row.go span:last-child { color:var(--gold2); font-size:1.4rem; line-height:1; }
+  .sheet .news { padding:2px 16px; margin-top:16px; } .sheet .ni img { width:36px; height:36px; }
   .sheet #s-upd-x { padding:0 0 10px; }
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
@@ -158,7 +165,7 @@
   <h5>Versions</h5>
   <div class="box">
     <div class="row"><span>Play Hub app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
-    <div class="row"><span>Play Hub page<small>The screen you see. It updates by itself.</small></span><span class="vv" id="s-page"></span></div>
+    <div class="row"><span>Play Hub page<small>The screen you see. It updates when you check.</small></span><span class="vv" id="s-page"></span></div>
   </div>
   <div id="news-box"></div>
   <h5>About</h5>
@@ -166,6 +173,10 @@
     <div class="row"><span>Apps available</span><span id="s-count"></span></div>
     <div class="row"><span>Source</span><span>GitHub</span></div>
   </div>
+</div>
+<div class="sheet sub" id="newsview">
+  <div class="sheet-head"><button class="backbtn" id="news-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><h4 class="goldtext" style="text-align:right">What's new</h4></div>
+  <div id="news-list"></div>
 </div></div>
 <div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
@@ -184,7 +195,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.10.0';
+const PAGE_VER = '0.11.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -277,10 +288,13 @@ function renderTop(apps, inst, ups) {
 }
 // "What's new": the latest notes from catalog.json (field "news": [{ id, version, date, text }])
 function renderNews() {
-  const items = (catalog.news || []).slice(0, 5), byId = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
+  const items = (catalog.news || []).slice(0, 20), byId = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
   if (!items.length) { $('news-box').innerHTML = ''; return; }
   const day = d => { try { return new Date(d + 'T12:00').toLocaleDateString([], { month:'short', day:'numeric' }); } catch { return d; } };
-  $('news-box').innerHTML = `<h5>What's new</h5><div class="news box">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
+  const top = items[0], ta = byId[top.id] || {};
+  $('news-box').innerHTML = `<h5>What's new</h5><div class="box"><div class="row click go" id="news-open"><span>See what's new<small>Latest: ${ta.name || top.id} v${top.version}</small></span><span>›</span></div></div>`;
+  $('news-open').onclick = openNews;
+  $('news-list').innerHTML = `<div class="news box">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
 }
 
 function render() {
@@ -389,12 +403,19 @@ $('refresh').onclick = () => refresh(true);
 // Settings panel: opens from the gear; closes with ✕, a tap outside, a swipe to the right, or the Android back button
 const isOpen = () => $('sheet').classList.contains('show');
 function openSettings() { if (isOpen()) return; $('sheet').classList.add('show'); try { history.pushState({ settings:1 }, ''); } catch {} }
-function closeSettings() { if (!isOpen()) return; if (history.state && history.state.settings) history.back(); else $('sheet').classList.remove('show'); }
-addEventListener('popstate', () => $('sheet').classList.remove('show'));
+function closeSettings() { if (!isOpen()) return; const st = history.state || {}; if (st.settings) history.go(st.news ? -2 : -1); else $('sheet').classList.remove('show', 'news-on'); }
+addEventListener('popstate', () => {
+  const st = history.state || {};
+  if (!st.news) $('sheet').classList.remove('news-on');
+  if (!st.settings) $('sheet').classList.remove('show', 'news-on');
+});
+function openNews() { $('sheet').classList.add('news-on'); $('newsview').scrollTop = 0; try { history.pushState({ settings:1, news:1 }, ''); } catch {} }
+function closeNews() { if (history.state && history.state.news) history.back(); else $('sheet').classList.remove('news-on'); }
+$('news-back').onclick = closeNews;
 $('settings').onclick = openSettings;
 $('s-close').onclick = closeSettings;
 $('sheet').onclick = e => { if (e.target.id === 'sheet') closeSettings(); };
-addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if ($('sheet').classList.contains('news-on')) closeNews(); else closeSettings(); } });
 { const p = $('panel'); let x0 = null, y0 = 0, dx = 0, horiz = null;
   p.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; horiz = null; }, { passive:true });
   p.addEventListener('touchmove', e => {
