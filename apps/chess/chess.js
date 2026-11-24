@@ -1,4 +1,4 @@
-const VERSION = '0.25.0';
+const VERSION = '0.25.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -330,6 +330,16 @@ function glide(c, t, fromRect, tr, tc) {
   ], { duration: 340, easing: 'cubic-bezier(.4,0,.2,1)' });
   anim.onfinish = () => { g.remove(); real.style.visibility = ''; };
 }
+// Slide pieces between squares after the board has been redrawn (stepping through moves, undo).
+// back = true plays move m in reverse: the piece glides from where it landed back to where it started.
+function slideMove(m, back) {
+  if (!m) return;
+  const D = viewIdx == null ? S : [...history, S][viewIdx + 1];
+  const go = (fr, fc, tr, tc) => { const p = D.board[tr][tc]; if (p) glide(p.c, p.t, sqEl(fr, fc).getBoundingClientRect(), tr, tc); };
+  const rookAt = m.castle === 'K' ? [7, 5] : [0, 3];
+  if (back) { go(m.tr, m.tc, m.fr, m.fc); if (m.castle) go(m.tr, rookAt[1], m.tr, rookAt[0]); }
+  else { go(m.fr, m.fc, m.tr, m.tc); if (m.castle) go(m.tr, rookAt[0], m.tr, rookAt[1]); }
+}
 function flyOff(p, rect, delay) {
   const g = ghost(p.c, p.t, rect);
   // Black pieces fly off to the right and up, white pieces to the left and down.
@@ -402,12 +412,15 @@ function askPromo(moves) {
 }
 document.getElementById('undo').onclick = () => {
   if (pen) { const prev = marks.past.pop(); if (prev) Object.assign(marks, JSON.parse(prev)); render(); return; }   // in Draw, Undo erases the last drawing
-  if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; S = history.pop(); selected = null; legalForSel = []; render(); return; }
+  if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; const m = S.last; S = history.pop(); selected = null; legalForSel = []; render(); slideMove(m, true); return; }
   const n = undoPlies(); if (history.length < n) return;
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;
   cancelThink();
-  if (review || reviewing) stopReview(); hintMove = null; undos[who]--; viewIdx = null; for (let i = 0; i < n; i++) S = history.pop(); selected = null; legalForSel = []; save(); render();
+  if (review || reviewing) stopReview(); hintMove = null; undos[who]--; viewIdx = null;
+  const taken = []; for (let i = 0; i < n; i++) { taken.push(S.last); S = history.pop(); }
+  selected = null; legalForSel = []; save(); render();
+  for (const m of taken) slideMove(m, true);   // the taken-back moves slide back
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
@@ -700,7 +713,10 @@ function step(where) {
   const last = history.length - 1, cur = viewIdx ?? last;
   const to = where === 'first' ? -1 : where === 'prev' ? cur - 1 : where === 'next' ? cur + 1 : last;
   if (to < -1 || to > last) return;
+  const all = [...history, S];
   viewIdx = to >= last ? null : to; selected = null; legalForSel = []; render();
+  // one step: the piece slides; a jump to the start or the end just redraws
+  if (to === cur + 1) slideMove(all[to + 1].last, false); else if (to === cur - 1) slideMove(all[cur + 1].last, true);
 }
 function startExplore() {
   if (ex || reviewing) return;
