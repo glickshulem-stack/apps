@@ -49,14 +49,13 @@
     </div>
     <div class="actions">
       <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
-      <button id="undo" class="act"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>
       <button id="hint" class="act"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/></svg><span>Hint</span></button>
       <button id="flip" class="act"><svg viewBox="0 0 24 24"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg><span>Flip</span></button>
     </div>
   </aside>
 </div>
 <div id="promo" class="overlay"><div class="dialog"><div class="dtitle">Promote pawn to</div><div id="promo-choices"></div></div></div>
-<div id="settings" class="overlay"><div class="dialog"><div class="dtitle">Settings</div><div class="slabel">Pieces</div><div id="setchoices"></div><div class="slabel">Board</div><div id="boardchoices"></div><button class="act primary" id="closesettings">Done</button></div></div>
+<div id="settings" class="overlay"><div class="dialog"><div class="dtitle">Settings</div><div class="slabel">This game</div><button id="undo" class="act undorow"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button><div class="slabel">Pieces</div><div id="setchoices"></div><div class="slabel">Board</div><div id="boardchoices"></div><button class="act primary" id="closesettings">Done</button></div></div>
 <div id="confirm" class="overlay"><div class="dialog"><div class="dtitle">New game</div><div class="slabel">Opponent</div><div id="oppchoices" class="chips"></div><div id="cpuopts"><div class="slabel">Computer level</div><div id="levelchoices" class="chips"></div><div class="slabel">You play</div><div id="colorchoices" class="chips"></div></div><div class="slabel">Clock</div><div id="timechoices"></div><div class="drow"><button class="act ghost" id="no">Cancel</button><button class="act primary" id="yes">Start</button></div></div></div>
 <div id="win" class="overlay"><canvas id="confetti"></canvas><div class="dialog wincard"><div class="winrays"></div><div id="winpiece"></div><div class="winsub">Checkmate</div><div id="wintitle"></div><div class="drow"><button class="act ghost" id="winlook">See board</button><button class="act ghost" id="winreview">Review</button><button class="act primary" id="winnew">New game</button></div></div></div>
 <script src="chess.js"></script>

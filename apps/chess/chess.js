@@ -1,4 +1,4 @@
-const VERSION = '0.26.1';
+const VERSION = '0.27.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -429,7 +429,7 @@ function toast(msg) {
   t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 document.getElementById('undo').onclick = () => {
-  if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; const m = S.last; S = history.pop(); selected = null; legalForSel = []; render(); slideMove(m, true); return; }
+  if (ex) { if (!history.length) return toast('Nothing to take back yet'); document.getElementById('settings').classList.remove('show'); hintMove = null; viewIdx = null; const m = S.last; S = history.pop(); selected = null; legalForSel = []; render(); slideMove(m, true); return; }
   { const why = undoWhy(); if (why) return toast(why); }
   const n = undoPlies(); if (history.length < n) return;
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
@@ -439,6 +439,7 @@ document.getElementById('undo').onclick = () => {
   const taken = []; for (let i = 0; i < n; i++) { taken.push(S.last); S = history.pop(); }
   selected = null; legalForSel = []; save(); render();
   for (const m of taken) slideMove(m, true);   // the taken-back moves slide back
+  document.getElementById('settings').classList.remove('show');   // Undo lives in Settings: close it so you see the board
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
 document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
