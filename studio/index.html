@@ -186,7 +186,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -394,6 +394,7 @@ function publish(a) {
     await changeFile('catalog.json', c => {
       const i = c.apps.findIndex(x => x.id === a.id), old = c.apps[i];
       if (i >= 0) c.apps[i] = publicEntry(a); else c.apps.push(publicEntry(a));
+      if (c.removed) c.removed = c.removed.filter(r => r.id !== a.id);   // back in Play Hub: no more "removed" message
       if (!old || old.version !== a.version) {
         c.news = c.news || [];
         if (!c.news.some(n => n.id === a.id && n.version === a.version))
@@ -404,8 +405,13 @@ function publish(a) {
   });
 }
 function hide(a) {
-  confirmBox(`Take ${a.name} off Play Hub?`, `It disappears from Play Hub for everyone. People who installed it keep it for now. It stays in your Studio test bench, so you can drop it onto Play Hub again any time.`, 'Take off', async () => {
-    await changeFile('catalog.json', c => { c.apps = c.apps.filter(x => x.id !== a.id); }, `Hide ${a.name} from Play Hub (from Studio)`);
+  confirmBox(`Take ${a.name} off Play Hub?`, `It disappears from Play Hub for everyone. Play Hub tells people who have it installed and offers to uninstall it. It stays in your Studio test bench, so you can drop it onto Play Hub again any time.`, 'Take off', async () => {
+    await changeFile('catalog.json', c => {
+      c.apps = c.apps.filter(x => x.id !== a.id);
+      // Play Hub tells people who have it installed that it was removed, and offers to uninstall it.
+      c.removed = (c.removed || []).filter(r => r.id !== a.id);
+      c.removed.push({ id:a.id, name:a.name, package:a.package, iconUrl:a.iconUrl });
+    }, `Take ${a.name} off Play Hub (from Studio)`);
     await load(); toast(`${a.name} is off Play Hub`);
   });
 }

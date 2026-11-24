@@ -61,6 +61,13 @@
   h3::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); opacity:.6; }
   /* app tiles */
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; }
+  .gone { display:flex; align-items:center; gap:16px; background:var(--surface); border:1px solid var(--gold); border-radius:20px; padding:16px 20px; margin:18px 0 0; box-shadow:var(--shadow); }
+  .gone img { width:52px; height:52px; border-radius:14px; filter:grayscale(.6); opacity:.8; flex:none; }
+  .gone .t { flex:1; min-width:0; } .gone b { font:700 1.05rem Cinzel,Georgia,serif; display:block; } .gone span { color:var(--muted); font-size:.9rem; }
+  .gone .acts { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .gone button { border-radius:12px; padding:10px 16px; font-weight:700; cursor:pointer; }
+  .gone .un { border:0; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); }
+  .gone .keep { border:1px solid var(--line); background:var(--surface2); color:var(--gold2); }
   .card { position:relative; display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:22px; overflow:hidden; box-shadow:var(--shadow); transition:transform .2s; }
   .card:active { transform:scale(.99); }
   .cover { position:relative; height:118px; display:flex; align-items:center; justify-content:center; background:linear-gradient(120deg,#2b1d12 0%,#4a3422 55%,#6b4a2c 100%); }
@@ -150,6 +157,7 @@
 </header>
 <main>
   <section class="welcome"><div><div class="d" id="w-date"></div><h2 id="w-hi">Welcome</h2></div><div class="chips" id="chips"></div></section>
+  <div id="removed"></div>
   <div id="hero"></div>
   <h3>Your apps</h3>
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
@@ -195,7 +203,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.13.0';
+const PAGE_VER = '0.14.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -291,7 +299,7 @@ function renderTop(apps, inst, ups) {
   $('w-date').textContent = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
   $('w-hi').textContent = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
   const chip = (txt) => `<span class="chip"><i></i>${txt}</span>`;
-  $('chips').innerHTML = chip(`<b>${apps.length}</b> apps`) + (hasHub ? chip(`<b>${inst}</b> installed`) : '') +
+  $('chips').innerHTML = chip(`<b>${apps.length}</b> app${apps.length === 1 ? "" : "s"}`) + (hasHub ? chip(`<b>${inst}</b> installed`) : '') +
     chip(ups ? `<b>${ups}</b> update${ups > 1 ? 's' : ''} ready` : 'All up to date');
 }
 // "What's new": the latest notes from catalog.json (field "news": [{ id, version, date, text }])
@@ -306,6 +314,21 @@ function renderNews() {
   $('news-list').innerHTML = `<div class="news box">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
 }
 
+// Apps Su took off Play Hub that are still on this device: say so, and offer to uninstall (Android asks once to confirm).
+const canUninstall = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 4;
+function keptAnyway() { try { return JSON.parse(localStorage.getItem('hubKeepRemoved') || '[]'); } catch { return []; } }
+function renderRemoved() {
+  const box = $('removed'); if (!box) return;
+  const keep = keptAnyway();
+  const gone = hasHub ? (catalog.removed || []).filter(r => r.package && !keep.includes(r.id) && !catalog.apps.some(a => a.id === r.id) && Hub.installedVersion(r.package)) : [];
+  box.innerHTML = gone.map(r => `<div class="gone" data-id="${r.id}"><img src="../${r.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${r.name} was removed</b><span>${r.name} is no longer in Play Hub. ${canUninstall ? 'You can remove it from this device.' : 'To remove it, press and hold its icon and choose Uninstall.'}</span></div><div class="acts">${canUninstall ? '<button class="un">Uninstall</button>' : ''}<button class="keep">Keep it</button></div></div>`).join('');
+  box.onclick = e => {
+    const card = e.target.closest('.gone'); if (!card) return;
+    const r = (catalog.removed || []).find(x => x.id === card.dataset.id); if (!r) return;
+    if (e.target.closest('.un')) Hub.uninstall(r.package);
+    else if (e.target.closest('.keep')) { try { localStorage.setItem('hubKeepRemoved', JSON.stringify([...keep, r.id])); } catch {} renderRemoved(); }
+  };
+}
 function render() {
   if (!catalog) return;
   const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
@@ -340,7 +363,7 @@ function render() {
   // while something is downloading, refresh the progress twice a second
   if (busy && !ticker) ticker = setInterval(render, 500);
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
-  renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews();
+  renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews(); renderRemoved();
   $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
   $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'}) : 'Not checked yet';
 }
