@@ -26,7 +26,22 @@
   .ghost:hover { border-color:var(--gold); }
   main { padding:28px clamp(16px,4vw,44px) 60px; max-width:1400px; margin:0 auto; }
   .top { display:grid; grid-template-columns:1.05fr 1fr; gap:30px; align-items:start; }
-  @media (max-width:900px) { .top { grid-template-columns:1fr; } }
+  .addpanel { margin-bottom:30px; position:relative; }
+  .addpanel .x { position:absolute; top:14px; right:16px; }
+  .addbtn { border:1px solid var(--gold); color:var(--gold2); border-radius:12px; padding:8px 16px; font-weight:700; background:rgba(212,166,74,.1); }
+  .cols { display:grid; grid-template-columns:1.25fr 1fr; gap:30px; align-items:start; }
+  .sub { color:var(--muted); margin:-6px 0 14px; font-size:.9rem; }
+  .pub { background:linear-gradient(170deg,#2a2015,#1a140e); border:1px solid var(--gold); border-radius:22px; padding:22px; min-height:420px; box-shadow:0 0 50px rgba(212,166,74,.12); position:sticky; top:16px; }
+  .zone { border:2px dashed var(--gold); border-radius:18px; padding:24px 16px; text-align:center; background:rgba(212,166,74,.08); margin-bottom:16px; transition:background .15s, transform .15s; }
+  .zone b { font:700 1.2rem Cinzel,Georgia,serif; display:block; } .zone span { color:var(--muted); font-size:.88rem; }
+  .zone.hot { background:rgba(212,166,74,.28); transform:scale(1.02); }
+  .grip { touch-action:none; cursor:grab; color:var(--muted); font-size:20px; letter-spacing:-3px; padding:6px 4px; user-select:none; flex:none; }
+  .grip:hover { color:var(--gold2); }
+  .floating { position:fixed; z-index:40; pointer-events:none; transform:rotate(-2deg); box-shadow:0 20px 40px rgba(0,0,0,.6),0 0 0 2px var(--gold); opacity:.96; }
+  .dragging { opacity:.3; }
+  .tag { font-family:Inter,sans-serif; font-size:.72rem; font-weight:700; color:var(--gold2); background:rgba(212,166,74,.14); border-radius:99px; padding:2px 9px; margin-left:6px; letter-spacing:0; vertical-align:2px; white-space:nowrap; }
+  .menu .btn, .menu .gold { width:100%; margin-top:10px; text-align:center; }
+  @media (max-width:900px) { .top, .cols { grid-template-columns:1fr; } .pub { position:static; } }
   h3 { font:700 1.08rem Cinzel,Georgia,serif; letter-spacing:.05em; margin:0 0 14px; display:flex; gap:12px; align-items:center; }
   h3:after { content:""; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); }
   .drop { border:2px dashed var(--gold); border-radius:22px; background:linear-gradient(160deg,rgba(212,166,74,.10),rgba(212,166,74,.02)); min-height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; padding:24px; transition:background .2s, transform .2s; cursor:pointer; }
@@ -59,11 +74,10 @@
   .progress i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--gold),var(--goldhi)); transition:width .3s; }
   .steps { list-style:none; margin:10px 0 0; padding:0; }
   .steps li { padding:4px 0; color:var(--muted); } .steps li.on { color:var(--text); font-weight:600; } .steps li.done { color:var(--gold2); }
-  .list { margin-top:34px; }
-  .apps { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:16px; }
+  .apps { display:flex; flex-direction:column; gap:12px; }
   .app { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
   .app.ready { border-color:rgba(212,166,74,.6); box-shadow:0 0 0 1px rgba(212,166,74,.25), var(--shadow); }
-  .app .h { display:flex; align-items:center; gap:14px; }
+  .app .h { display:flex; align-items:center; gap:12px; }
   .app .h img { width:50px; height:50px; border-radius:12px; background:#2b2218; padding:5px; flex:none; }
   .app .h .t { flex:1; min-width:0; } .app .h b { font:700 1.06rem Cinzel,Georgia,serif; display:block; } .app .h small { color:var(--muted); }
   .status { font-size:.85rem; color:var(--muted); } .status b { color:var(--gold2); }
@@ -91,6 +105,7 @@
   <img src="icon.svg" alt="">
   <h1>Play Hub Studio</h1><span class="badge">DEVELOPER</span>
   <div class="sp"></div>
+  <button class="addbtn" id="addbtn" hidden>+ Add an app file</button>
   <span class="who" id="who" hidden></span>
   <button class="ghost" id="reload" hidden title="Check GitHub again">↻ Refresh</button>
   <button class="ghost" id="signout" hidden>Sign out</button>
@@ -117,14 +132,16 @@
 </main>
 
 <main id="home" hidden>
+  <section class="card addpanel" id="addpanel" hidden>
+    <button class="ghost x" id="add-close">✕ Close</button>
   <div class="top">
     <section>
-      <h3>Add an app</h3>
+      <h3>Add an app file</h3>
       <div class="drop" id="drop" tabindex="0"><div class="arrow">⇩</div><b>Drop an app here</b><span id="drop-hint">Drag the .apk file here, or click to choose it</span></div>
       <input type="file" id="pick" accept=".apk,application/vnd.android.package-archive" hidden>
       <div class="file" id="file" hidden><div class="ic" id="file-ic">▣</div><div class="t"><b id="file-name"></b><small id="file-info"></small></div><span id="file-state"></span></div>
     </section>
-    <section class="card" id="details">
+    <section id="details">
       <h3>Details users will see</h3>
       <div id="details-empty" class="empty">Drop an app file and its details show up here.</div>
       <div id="details-form" hidden>
@@ -136,7 +153,7 @@
         <div class="row"><label class="l">Category</label><input class="in" id="f-cat" maxlength="30" list="cats" placeholder="Games, Books, Music…"></div>
         <datalist id="cats"><option>Board games</option><option>Games</option><option>Books</option><option>Music</option><option>Video</option><option>Tools</option><option>Learning</option></datalist>
         <button class="gold wide" id="send">Send to Studio</button>
-        <div class="note">It shows up in your apps below in about 3 minutes. Then you can try it and publish it to Play Hub.</div>
+        <div class="note">It shows up in your test bench in about 3 minutes. Nobody else sees it until you drop it onto Play Hub.</div>
       </div>
       <div id="upload" hidden>
         <div><b id="up-title"></b></div>
@@ -148,10 +165,20 @@
     </section>
   </div>
 
-  <section class="list">
-    <h3>Your apps</h3>
-    <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
   </section>
+  <div class="cols">
+    <section>
+      <h3>Studio · your test bench</h3>
+      <p class="sub">Only you see these. Install any of them to try it. When one is ready for everyone, drag it by ⋮⋮ onto Play Hub.</p>
+      <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
+    </section>
+    <section class="pub" id="pub">
+      <h3>Play Hub · for everyone</h3>
+      <p class="sub">What your friends see. Only the apps you drop here.</p>
+      <div class="zone" id="zone"><b>Drop an app here to publish</b><span>Or press ⋯ on an app and choose Publish</span></div>
+      <div class="apps" id="pubapps"></div>
+    </section>
+  </div>
 </main>
 
 <div class="modal-bg" id="modal"><div class="card modal" id="modal-box"></div></div>
@@ -159,7 +186,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -219,12 +246,13 @@ $('signin-btn').onclick = async () => {
 };
 $('signout').onclick = () => confirmBox('Sign out of Studio?', 'You will need to paste your GitHub key again to use Studio on this device.', 'Sign out', () => { store.set('studioKey', null); token = null; showSignin(); });
 
-function showSignin() { $('signin').hidden = false; $('home').hidden = true; ['who','reload','signout'].forEach(i => $(i).hidden = true); }
+function showSignin() { $('signin').hidden = false; $('home').hidden = true; ['who','reload','signout','addbtn'].forEach(i => $(i).hidden = true); }
 async function showHome() {
-  $('signin').hidden = true; $('home').hidden = false; ['who','reload','signout'].forEach(i => $(i).hidden = false);
+  $('signin').hidden = true; $('home').hidden = false; ['who','reload','signout','addbtn'].forEach(i => $(i).hidden = false);
   if (me) $('who').innerHTML = `Signed in as <b>${esc(me.name || me.login)}</b>`;
   await load();
   resumeUpload();
+  window.onIncoming();
 }
 
 // ---------- apps ----------
@@ -248,23 +276,30 @@ async function load(quiet) {
 }
 $('reload').onclick = async () => { $('reload').disabled = true; await load(); $('reload').disabled = false; toast('Up to date with GitHub'); };
 
+const TAG = { private:'Only for you', none:'Not published', newer:'Newer than Play Hub', details:'New details', live:'Published' };
+function stateOf(a, p) {
+  if (a.private) return 'private';
+  if (!p) return 'none';
+  if (p.version !== a.version) return 'newer';
+  return sameEntry(a, p) ? 'live' : 'details';
+}
 function render() {
   const pub = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
   const list = studio.apps.slice().sort((a, b) => (a.private ? 1 : 0) - (b.private ? 1 : 0));
   $('apps').innerHTML = list.map(a => {
-    const p = pub[a.id];
-    let status, ready = false;
-    if (a.private) status = 'Only for you, never in Play Hub';
-    else if (!p) { status = `<b>Not in Play Hub</b> · ready to publish`; ready = true; }
-    else if (p.version !== a.version) { status = `<b>New version ready</b> · Play Hub has ${esc(p.version)}, Studio has ${esc(a.version)}`; ready = true; }
-    else if (!sameEntry(a, p)) { status = `<b>New details ready</b> to publish`; ready = true; }
-    else status = 'Live in Play Hub · up to date';
-    return `<div class="app${ready ? ' ready' : ''}" data-id="${esc(a.id)}">
-      <div class="h"><img src="${esc(iconSrc(a))}" alt=""><div class="t"><b>${esc(a.name)}</b><small>Version ${esc(a.version)}${a.category ? ' · ' + esc(a.category) : ''}</small></div></div>
-      <div class="status">${status}${a.note ? `<br>What's new: ${esc(a.note)}` : ''}</div>
-      <div class="acts">${tryButton(a)}${ready ? `<button class="gold" data-act="publish">Publish</button>` : ''}${a.private ? '' : `<button class="btn" data-act="edit">Edit</button>`}${p && a.id !== 'hub' ? `<button class="btn" data-act="hide">Hide</button>` : ''}</div>
+    const p = pub[a.id], st = stateOf(a, p);
+    const line = st === 'newer' ? `Play Hub has ${esc(p.version)}` : st === 'details' ? 'Name, icon or text changed since you published' : st === 'none' ? 'Try it, then drag it onto Play Hub' : st === 'live' ? 'Same as in Play Hub' : 'Studio itself';
+    return `<div class="app${st === 'newer' || st === 'details' ? ' ready' : ''}" data-id="${esc(a.id)}">
+      <div class="h">${a.private ? '<span class="grip" style="visibility:hidden">⋮⋮</span>' : '<span class="grip" title="Drag onto Play Hub to publish">⋮⋮</span>'}<img src="${esc(iconSrc(a))}" alt=""><div class="t"><b>${esc(a.name)}<span class="tag">${TAG[st]}</span></b><small>Version ${esc(a.version)}${a.category ? ' · ' + esc(a.category) : ''} · ${line}</small>${a.note ? `<small style="display:block">What's new: ${esc(a.note)}</small>` : ''}</div>
+      <div class="acts">${tryButton(a)}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div></div>
     </div>`;
-  }).join('') || '<div class="empty">No apps yet.</div>';
+  }).join('') || '<div class="empty">No apps yet. Press + Add an app file.</div>';
+  const pubList = catalog.apps;
+  $('pubapps').innerHTML = pubList.map(p => {
+    const a = studio.apps.find(x => x.id === p.id), st = a ? stateOf(a, p) : 'live';
+    return `<div class="app" data-id="${esc(p.id)}"><div class="h"><img src="${esc(iconSrc(p))}" alt=""><div class="t"><b>${esc(p.name)}</b><small>Version ${esc(p.version)} for everyone${st === 'newer' ? ` · Studio has ${esc(a.version)}, drop it again to update` : st === 'details' ? ' · drop it again to show the new details' : ''}</small></div>
+      ${p.id !== 'hub' ? `<div class="acts"><button class="btn" data-act="hide">Take off</button></div>` : ''}</div></div>`;
+  }).join('') || '<div class="empty">Nothing published yet.<br>Play Hub is empty until you drop an app here.</div>';
 }
 
 // Try on the tablet: Studio app downloads and installs the test version, like Play Hub does.
@@ -274,7 +309,7 @@ function tryButton(a) {
   let job = null; try { job = JSON.parse(bridge.job(a.id) || 'null'); } catch {}
   if (job && job.state === 'downloading') return `<button class="btn" data-act="cancel">Downloading ${job.total ? Math.round(job.done * 100 / job.total) + '%' : '…'}</button>`;
   if (have === a.version) return a.id === 'hubstudio' ? '' : `<button class="btn" data-act="open">Open</button>`;
-  return `<button class="btn" data-act="try">${a.id === 'hubstudio' ? 'Update Studio' : have ? 'Try ' + esc(a.version) : 'Install to try'}</button>`;
+  return `<button class="gold" data-act="try">${a.id === 'hubstudio' ? 'Update Studio' : have ? 'Install ' + esc(a.version) : 'Install'}</button>`;
 }
 window.hubEvent = (id, what) => {
   const msg = { installing:'Installing…', installed:'Installed', failed:'The install did not work', back:'Install cancelled', missing:'Download it again', permission:'Allow Studio to install apps, then come back' }[what];
@@ -282,19 +317,74 @@ window.hubEvent = (id, what) => {
   if (studio) render();
 };
 window.refresh = () => { if (studio) render(); };
-setInterval(() => { if (bridge && studio && document.querySelector('[data-act="cancel"]')) render(); }, 1000);
+setInterval(() => { if (bridge && studio && !drag && document.querySelector('[data-act="cancel"]')) render(); }, 1000);
 
+const appOf = el => { const c = el.closest('.app'); return c && studio.apps.find(x => x.id === c.dataset.id); };
 $('apps').onclick = e => {
   const b = e.target.closest('button[data-act]'); if (!b) return;
-  const id = b.closest('.app').dataset.id, a = studio.apps.find(x => x.id === id);
-  const act = b.dataset.act;
+  const a = appOf(b), act = b.dataset.act;
   if (act === 'try') { bridge.download(a.id, apkUrl(a), a.version); toast('Downloading ' + a.name); setTimeout(render, 300); }
   else if (act === 'open') bridge.open(a.package);
   else if (act === 'cancel') { bridge.cancel(a.id); setTimeout(render, 500); }
-  else if (act === 'publish') publish(a);
-  else if (act === 'hide') hide(a);
-  else if (act === 'edit') edit(a);
+  else if (act === 'menu') menu(a);
 };
+$('pubapps').onclick = e => {
+  const b = e.target.closest('button[data-act="hide"]'); if (!b) return;
+  const id = b.closest('.app').dataset.id;
+  hide(catalog.apps.find(x => x.id === id));
+};
+function menu(a) {
+  const st = stateOf(a, catalog.apps.find(x => x.id === a.id));
+  modal(`<h4>${esc(a.name)} ${esc(a.version)}</h4><p>${esc(TAG[st])}</p><div class="menu">
+    ${st !== 'live' ? '<button class="gold" id="mm-pub">Publish to Play Hub</button>' : ''}
+    <button class="btn" id="mm-edit">Edit details</button><button class="btn" id="mm-no">Cancel</button></div>`);
+  if ($('mm-pub')) $('mm-pub').onclick = () => publish(a);
+  $('mm-edit').onclick = () => edit(a);
+  $('mm-no').onclick = closeModal;
+}
+
+// Drag an app by its ⋮⋮ handle onto Play Hub to publish it. Works with a mouse and with a finger.
+// Holding an app (without moving) opens its menu, for the tablet.
+let drag = null, hold = null;
+const overZone = (x, y) => { const r = $('pub').getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
+$('apps').addEventListener('pointerdown', e => {
+  const card = e.target.closest('.app'); if (!card || e.target.closest('button')) return;
+  const a = studio.apps.find(x => x.id === card.dataset.id); if (!a) return;
+  if (!e.target.closest('.grip')) {   // hold anywhere else on the card = menu
+    if (a.private) return;
+    const x0 = e.clientX, y0 = e.clientY;
+    hold = { t: setTimeout(() => { hold = null; menu(a); }, 550), x0, y0 };
+    return;
+  }
+  e.preventDefault();
+  const r = card.getBoundingClientRect();
+  drag = { a, card, dx: e.clientX - r.left, dy: e.clientY - r.top, x0: e.clientX, y0: e.clientY, moved: false, ghost: null, w: r.width, id: e.pointerId };
+  try { e.target.setPointerCapture(e.pointerId); } catch {}
+});
+addEventListener('pointermove', e => {
+  if (hold && Math.hypot(e.clientX - hold.x0, e.clientY - hold.y0) > 8) { clearTimeout(hold.t); hold = null; }
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
+  if (!drag.moved) {
+    drag.moved = true;
+    drag.ghost = drag.card.cloneNode(true); drag.ghost.classList.add('floating'); drag.ghost.style.width = drag.w + 'px';
+    document.body.appendChild(drag.ghost); drag.card.classList.add('dragging');
+  }
+  drag.ghost.style.left = (e.clientX - drag.dx) + 'px'; drag.ghost.style.top = (e.clientY - drag.dy) + 'px';
+  $('zone').classList.toggle('hot', overZone(e.clientX, e.clientY));
+});
+function endDrag(e, cancel) {
+  if (hold) { clearTimeout(hold.t); hold = null; }
+  if (!drag || (e && e.pointerId !== drag.id)) return;
+  const d = drag; drag = null;
+  $('zone').classList.remove('hot'); d.card.classList.remove('dragging'); if (d.ghost) d.ghost.remove();
+  if (!cancel && d.moved && overZone(e.clientX, e.clientY)) {
+    if (stateOf(d.a, catalog.apps.find(x => x.id === d.a.id)) === 'live') toast(`${d.a.name} is already in Play Hub, nothing new to publish`);
+    else publish(d.a);
+  } else if (!d.moved) toast('Drag it by ⋮⋮ onto Play Hub to publish');
+}
+addEventListener('pointerup', e => endDrag(e));
+addEventListener('pointercancel', e => endDrag(e, true));
 
 function publish(a) {
   const p = catalog.apps.find(x => x.id === a.id);
@@ -314,9 +404,9 @@ function publish(a) {
   });
 }
 function hide(a) {
-  confirmBox(`Hide ${a.name}?`, `It disappears from Play Hub for everyone. People who installed it keep it. It stays here in Studio, so you can publish it again any time.`, 'Hide', async () => {
+  confirmBox(`Take ${a.name} off Play Hub?`, `It disappears from Play Hub for everyone. People who installed it keep it for now. It stays in your Studio test bench, so you can drop it onto Play Hub again any time.`, 'Take off', async () => {
     await changeFile('catalog.json', c => { c.apps = c.apps.filter(x => x.id !== a.id); }, `Hide ${a.name} from Play Hub (from Studio)`);
-    await load(); toast(`${a.name} is hidden from Play Hub`);
+    await load(); toast(`${a.name} is off Play Hub`);
   });
 }
 
@@ -454,7 +544,21 @@ drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') drop.onclick(); 
 $('pick').onchange = () => $('pick').files[0] && takeFile($('pick').files[0]);
 ['dragenter','dragover'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (!$('home').hidden) drop.classList.add('over'); }));
 ['dragleave','drop'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
-addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && !$('home').hidden && $('upload').hidden) takeFile(f); });
+addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && !$('home').hidden && $('upload').hidden) { openAdd(); takeFile(f); } });
+function openAdd() { $('addpanel').hidden = false; $('addpanel').scrollIntoView({ behavior:'smooth', block:'start' }); }
+$('addbtn').onclick = openAdd;
+$('add-close').onclick = () => { if (!$('upload').hidden && $('up-done').hidden) { toast('Still sending. You can close it when it is done.'); return; } $('addpanel').hidden = true; $('up-done').onclick(); };
+
+// Tablet: an APK opened with Studio from Files / Downloads, or shared to it. The Studio app hands it over here.
+window.onIncoming = async () => {
+  if (!bridge || !bridge.incoming || !studio) return;
+  let inc; try { inc = JSON.parse(bridge.incoming() || 'null'); } catch {} if (!inc) return;
+  openAdd();
+  if (!$('upload').hidden && $('up-done').hidden) { toast('Wait until the current app is sent, then open the file again'); return; }
+  $('file').hidden = false; $('file-name').textContent = inc.name; $('file-info').textContent = 'Opening…'; $('file-state').innerHTML = '';
+  try { const blob = await (await fetch(inc.url)).blob(); takeFile(new File([blob], inc.name)); }
+  catch { $('file-info').textContent = 'Could not open this file. Try + Add an app file instead.'; }
+};
 if (bridge) $('drop-hint').textContent = 'Tap to choose the .apk file on this tablet';
 
 const mb = n => n > 1e6 ? (n / 1048576).toFixed(0) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';

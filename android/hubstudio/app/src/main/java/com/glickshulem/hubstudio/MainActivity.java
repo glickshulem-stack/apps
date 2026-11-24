@@ -18,6 +18,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceError;
+import android.webkit.WebResourceResponse;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,6 +67,17 @@ public class MainActivity extends Activity {
                 try { startActivity(new Intent(Intent.ACTION_VIEW, r.getUrl())); } catch (Exception e) { }
                 return true;
             }
+            // The page reads an APK that was opened with / shared to Studio from this made-up address.
+            @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
+                Uri u = incoming;
+                if (u == null || !r.getUrl().toString().startsWith(SITE + "studio/__incoming/")) return null;
+                try {
+                    WebResourceResponse res = new WebResourceResponse("application/vnd.android.package-archive", null, getContentResolver().openInputStream(u));
+                    java.util.Map<String, String> h = new java.util.HashMap<>(); h.put("Access-Control-Allow-Origin", "*");
+                    res.setResponseHeaders(h);
+                    return res;
+                } catch (Exception e) { return null; }
+            }
             @Override public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
                 if (r.isForMainFrame()) v.loadUrl("file:///android_asset/index.html");
             }
@@ -79,6 +93,7 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+        takeIncoming(getIntent());
         web.loadUrl(SITE + "studio/");
         setContentView(web);
     }
@@ -93,6 +108,29 @@ public class MainActivity extends Activity {
             new Thread(() -> openInstaller(id)).start();   // copying a big app into the installer must not freeze the screen
         }
         if (web != null) web.evaluateJavascript("window.refresh && refresh()", null);
+    }
+
+    /** APK handed to Studio by "Open with" or "Share", waiting for the page to pick it up. */
+    private volatile Uri incoming; private volatile String incomingName; private volatile boolean incomingNew;
+
+    private void takeIncoming(Intent i) {
+        if (i == null) return;
+        Uri u = null;
+        if (Intent.ACTION_VIEW.equals(i.getAction())) u = i.getData();
+        else if (Intent.ACTION_SEND.equals(i.getAction())) u = i.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (u == null) return;
+        String name = "app.apk";
+        try (Cursor c = getContentResolver().query(u, new String[]{ OpenableColumns.DISPLAY_NAME }, null, null, null)) {
+            if (c != null && c.moveToFirst() && c.getString(0) != null) name = c.getString(0);
+        } catch (Exception e) { }
+        incoming = u; incomingName = name; incomingNew = true;
+    }
+
+    @Override
+    protected void onNewIntent(Intent i) {
+        super.onNewIntent(i);
+        takeIncoming(i);
+        if (web != null && incomingNew) web.evaluateJavascript("window.onIncoming && onIncoming()", null);
     }
 
     private static final int PICK = 41;
@@ -274,6 +312,12 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        /** {"name","url"} of an APK opened with / shared to Studio that the page has not taken yet, or "". */
+        @JavascriptInterface public String incoming() {
+            if (!incomingNew || incoming == null) return "";
+            incomingNew = false;
+            return "{\"name\":" + jq(incomingName) + ",\"url\":" + jq(SITE + "studio/__incoming/" + System.currentTimeMillis() + ".apk") + "}";
+        }
         @JavascriptInterface public String hubVersion() { return installedVersion(getPackageName()); }
         @JavascriptInterface public String installedVersion(String pkg) {
             try { return getPackageManager().getPackageInfo(pkg, 0).versionName; }

@@ -9,30 +9,6 @@
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
       "live": "0.12.0"
-    },
-    {
-      "id": "chess",
-      "name": "Gambit",
-      "icon": "♞",
-      "package": "com.glickshulem.chess",
-      "version": "0.27.0",
-      "iconUrl": "apps/chess/logo.svg",
-      "tagline": "Classic chess, beautifully made",
-      "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
-      "category": "Board games",
-      "webPath": "apps/chess/"
-    },
-    {
-      "id": "quillsong",
-      "name": "Quillsong",
-      "icon": "✒",
-      "package": "com.su.quillsong",
-      "version": "1.9.0",
-      "iconUrl": "apps/quillsong/icon.svg",
-      "tagline": "Books that turn like paper and read aloud",
-      "category": "Books",
-      "description": "A book reader with lifelike page turns and two pages side by side on the tablet. Opens PDF, EPUB, Word and text files, and reads them aloud in a natural voice that works offline, even with the screen off, highlighting each word as it goes.",
-      "hero": "linear-gradient(120deg,#1e150d 0%,#3a2716 50%,#6a4a25 100%)"
     }
   ],
   "news": [
