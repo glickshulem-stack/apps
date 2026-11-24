@@ -269,3 +269,7 @@ body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,
 .layout.exploring #board { border-color:transparent; background:linear-gradient(135deg,#f6dc8e,#b88a2c 50%,#f3d27a) border-box; }
 .layout.exploring .status-card { box-shadow:inset 0 0 0 2px var(--gold), 0 6px 18px rgba(0,0,0,.35); }
 @media (orientation: portrait) { .panel .coach-card { order:1; } }
+
+/* 0.24.1: only a small Draw button until drawing is switched on */
+.coach-card:not(.drawing) { background:transparent; border-color:transparent; }
+.coach-card:not(.drawing) #inks, .coach-card:not(.drawing) #clearmarks { display:none; }
