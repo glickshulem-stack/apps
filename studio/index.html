@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en" data-theme="noir">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Play Hub Studio</title>
+<link rel="icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#120f0b; --bg2:#1b1611; --surface:#1d1813; --surface2:#262019; --text:#f4e8d2; --muted:#b09d80; --line:#3a2f22;
+    --gold:#d4a64a; --gold2:#e6c07a; --goldhi:#f6dc9c; --red:#e07a5f; --shadow:0 14px 34px rgba(0,0,0,.45); color-scheme:dark; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; min-height:100vh; background:radial-gradient(1200px 600px at 70% -10%,#2a2015,var(--bg)) fixed, var(--bg); color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
+  button, input, textarea, select { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  .serif { font-family:Cinzel,Georgia,serif; }
+  .bar { display:flex; align-items:center; gap:14px; padding:18px clamp(16px,4vw,44px); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .bar img { width:40px; height:40px; }
+  .bar h1 { margin:0; font:700 1.45rem Cinzel,Georgia,serif; letter-spacing:.06em; }
+  .badge { border:1px solid var(--gold); color:var(--gold2); border-radius:99px; padding:3px 12px; font-size:.72rem; font-weight:700; letter-spacing:.12em; }
+  .sp { flex:1; }
+  .who { color:var(--muted); font-size:.88rem; } .who b { color:var(--text); }
+  .ver { color:var(--muted); font-size:.78rem; }
+  .ghost { background:none; border:1px solid var(--line); border-radius:10px; padding:6px 12px; font-size:.82rem; color:var(--gold2); }
+  .ghost:hover { border-color:var(--gold); }
+  main { padding:28px clamp(16px,4vw,44px) 60px; max-width:1400px; margin:0 auto; }
+  .top { display:grid; grid-template-columns:1.05fr 1fr; gap:30px; align-items:start; }
+  @media (max-width:900px) { .top { grid-template-columns:1fr; } }
+  h3 { font:700 1.08rem Cinzel,Georgia,serif; letter-spacing:.05em; margin:0 0 14px; display:flex; gap:12px; align-items:center; }
+  h3:after { content:""; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); }
+  .drop { border:2px dashed var(--gold); border-radius:22px; background:linear-gradient(160deg,rgba(212,166,74,.10),rgba(212,166,74,.02)); min-height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; padding:24px; transition:background .2s, transform .2s; cursor:pointer; }
+  .drop.over { background:rgba(212,166,74,.2); transform:scale(1.01); }
+  .drop .arrow { width:60px; height:60px; border-radius:50%; border:1px solid var(--gold); display:grid; place-items:center; font-size:28px; color:var(--goldhi); box-shadow:0 0 40px rgba(212,166,74,.25); }
+  .drop b { font:700 1.35rem Cinzel,Georgia,serif; } .drop span { color:var(--muted); }
+  .file { margin-top:14px; display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 18px; }
+  .file .ic { width:44px; height:44px; border-radius:12px; background:#2b2218; display:grid; place-items:center; font-size:22px; flex:none; }
+  .file .t { flex:1; min-width:0; } .file .t b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .file .t small { color:var(--muted); }
+  .ok { color:var(--gold2); font-weight:700; font-size:.85rem; } .bad { color:var(--red); font-weight:700; font-size:.85rem; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:22px; padding:22px 24px; box-shadow:var(--shadow); }
+  .empty { color:var(--muted); text-align:center; padding:50px 10px; }
+  .row { display:grid; grid-template-columns:110px 1fr; gap:12px; align-items:center; margin-bottom:12px; }
+  @media (max-width:520px) { .row { grid-template-columns:1fr; gap:4px; } }
+  label.l { color:var(--muted); font-size:.85rem; font-weight:600; }
+  .in { width:100%; background:var(--surface2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; outline:none; }
+  .in:focus { border-color:var(--gold); }
+  textarea.in { min-height:70px; resize:vertical; }
+  .pill { display:inline-block; background:rgba(212,166,74,.15); color:var(--gold2); border-radius:99px; padding:2px 10px; font-size:.78rem; font-weight:700; }
+  .icons { display:flex; gap:8px; flex-wrap:wrap; }
+  .icons button { width:44px; height:44px; border-radius:12px; background:var(--surface2); border:1px solid var(--line); display:grid; place-items:center; font-size:21px; padding:0; overflow:hidden; }
+  .icons button img { width:100%; height:100%; object-fit:cover; }
+  .icons button.on { border:2px solid var(--gold); box-shadow:0 0 16px rgba(212,166,74,.35); }
+  .icons .own { font-size:.72rem; color:var(--muted); width:auto; padding:0 12px; }
+  .gold { border:0; border-radius:14px; padding:14px 20px; font:700 1.02rem Cinzel,Georgia,serif; letter-spacing:.08em; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); box-shadow:0 8px 24px rgba(212,166,74,.28); }
+  .gold:disabled { opacity:.45; box-shadow:none; cursor:default; }
+  .gold.wide { width:100%; margin-top:6px; }
+  .note { color:var(--muted); font-size:.82rem; text-align:center; margin-top:10px; }
+  .progress { height:8px; border-radius:99px; background:var(--surface2); overflow:hidden; margin:12px 0 6px; }
+  .progress i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--gold),var(--goldhi)); transition:width .3s; }
+  .steps { list-style:none; margin:10px 0 0; padding:0; }
+  .steps li { padding:4px 0; color:var(--muted); } .steps li.on { color:var(--text); font-weight:600; } .steps li.done { color:var(--gold2); }
+  .list { margin-top:34px; }
+  .apps { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:16px; }
+  .app { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .app.ready { border-color:rgba(212,166,74,.6); box-shadow:0 0 0 1px rgba(212,166,74,.25), var(--shadow); }
+  .app .h { display:flex; align-items:center; gap:14px; }
+  .app .h img { width:50px; height:50px; border-radius:12px; background:#2b2218; padding:5px; flex:none; }
+  .app .h .t { flex:1; min-width:0; } .app .h b { font:700 1.06rem Cinzel,Georgia,serif; display:block; } .app .h small { color:var(--muted); }
+  .status { font-size:.85rem; color:var(--muted); } .status b { color:var(--gold2); }
+  .acts { display:flex; gap:8px; flex-wrap:wrap; }
+  .acts .gold { padding:9px 16px; font-size:.88rem; border-radius:11px; }
+  .btn { border:1px solid var(--line); border-radius:11px; padding:8px 14px; font-size:.85rem; color:var(--gold2); background:var(--surface2); font-weight:600; }
+  .btn:hover { border-color:var(--gold); }
+  .signin { max-width:620px; margin:40px auto; }
+  .signin ol { padding-left:22px; margin:12px 0 18px; } .signin li { margin:8px 0; }
+  .signin a.gold { display:inline-block; text-decoration:none; }
+  .err { color:var(--red); font-size:.88rem; min-height:1.3em; margin-top:8px; }
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:16px; z-index:20; }
+  .modal-bg.show { display:flex; }
+  .modal { width:min(560px,100%); max-height:92vh; overflow:auto; }
+  .modal h4 { margin:0 0 6px; font:700 1.3rem Cinzel,Georgia,serif; }
+  .modal p { color:var(--muted); margin:6px 0 16px; }
+  .modal .acts { justify-content:flex-end; margin-top:14px; }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(30px); opacity:0; background:#2b2218; border:1px solid var(--gold); border-radius:14px; padding:12px 20px; transition:.25s; z-index:30; max-width:90vw; text-align:center; }
+  .toast.show { opacity:1; transform:translateX(-50%); }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <img src="icon.svg" alt="">
+  <h1>Play Hub Studio</h1><span class="badge">DEVELOPER</span>
+  <div class="sp"></div>
+  <span class="who" id="who" hidden></span>
+  <button class="ghost" id="reload" hidden title="Check GitHub again">↻ Refresh</button>
+  <button class="ghost" id="signout" hidden>Sign out</button>
+  <span class="ver" id="ver"></span>
+</div>
+
+<!-- One-time sign in: the GitHub key stays only on this device -->
+<main id="signin" hidden>
+  <div class="card signin">
+    <h3>Sign in once</h3>
+    <p>Studio needs a key from your GitHub account so it can put apps into Play Hub. You only do this once on each device, and the key stays on this device.</p>
+    <ol>
+      <li>Tap <b>Make a key on GitHub</b> below. Sign in to GitHub if it asks.</li>
+      <li>Next to <b>Expiration</b>, choose <b>No expiration</b>.</li>
+      <li>Scroll to the bottom and press <b>Generate token</b>.</li>
+      <li>Copy the long key that starts with <b>ghp_</b>, come back here and paste it below.</li>
+    </ol>
+    <a class="gold" id="makekey" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Play%20Hub%20Studio" target="_blank" rel="noopener">Make a key on GitHub</a>
+    <div style="margin-top:22px"><label class="l" for="key">Paste your key here</label>
+      <input class="in" id="key" type="password" autocomplete="off" placeholder="ghp_…" style="margin-top:6px"></div>
+    <button class="gold wide" id="signin-btn" style="margin-top:14px">Sign in</button>
+    <div class="err" id="signin-err"></div>
+  </div>
+</main>
+
+<main id="home" hidden>
+  <div class="top">
+    <section>
+      <h3>Add an app</h3>
+      <div class="drop" id="drop" tabindex="0"><div class="arrow">⇩</div><b>Drop an app here</b><span id="drop-hint">Drag the .apk file here, or click to choose it</span></div>
+      <input type="file" id="pick" accept=".apk,application/vnd.android.package-archive" hidden>
+      <div class="file" id="file" hidden><div class="ic" id="file-ic">▣</div><div class="t"><b id="file-name"></b><small id="file-info"></small></div><span id="file-state"></span></div>
+    </section>
+    <section class="card" id="details">
+      <h3>Details users will see</h3>
+      <div id="details-empty" class="empty">Drop an app file and its details show up here.</div>
+      <div id="details-form" hidden>
+        <div class="row"><label class="l">Name</label><div><input class="in" id="f-name" maxlength="40"><div style="margin-top:6px" id="f-kind"></div></div></div>
+        <div class="row"><label class="l">Icon</label><div class="icons" id="f-icons"></div></div>
+        <div class="row"><label class="l">Short line</label><input class="in" id="f-tagline" maxlength="70" placeholder="One line about the app"></div>
+        <div class="row"><label class="l">About</label><textarea class="in" id="f-desc" maxlength="400" placeholder="A few sentences for the big card in Play Hub"></textarea></div>
+        <div class="row"><label class="l">What's new</label><input class="in" id="f-note" maxlength="90" placeholder="What changed in this version"></div>
+        <div class="row"><label class="l">Category</label><input class="in" id="f-cat" maxlength="30" list="cats" placeholder="Games, Books, Music…"></div>
+        <datalist id="cats"><option>Board games</option><option>Games</option><option>Books</option><option>Music</option><option>Video</option><option>Tools</option><option>Learning</option></datalist>
+        <button class="gold wide" id="send">Send to Studio</button>
+        <div class="note">It shows up in your apps below in about 3 minutes. Then you can try it and publish it to Play Hub.</div>
+      </div>
+      <div id="upload" hidden>
+        <div><b id="up-title"></b></div>
+        <div class="progress"><i id="up-bar"></i></div>
+        <ul class="steps" id="up-steps"></ul>
+        <div class="err" id="up-err"></div>
+        <button class="btn" id="up-done" hidden>Add another app</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="list">
+    <h3>Your apps</h3>
+    <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modal"><div class="card modal" id="modal-box"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+
+<script>
+const VERSION = '0.1.0';
+const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
+const API = `https://api.github.com/repos/${REPO}`;
+const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
+const PART = 25 * 1024 * 1024;              // upload pieces (GitHub takes up to 100 MB each)
+const EMOJI = ['★','✦','♞','✒','♪','♫','✎','☀','☾','♥','♛','⚑','✿','✈','⌂','☕'];
+const RESERVED = ['hub','chess','studio','hubstudio','upload'];   // ids already used by apps built from this repo
+const $ = id => document.getElementById(id);
+const bridge = typeof Hub !== 'undefined' ? Hub : null;   // inside the Studio app on the tablet
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+let token = store.get('studioKey');
+let studio = null, catalog = null, me = null;
+
+$('ver').textContent = `Studio ${VERSION}` + (bridge && bridge.hubVersion ? ` · app ${bridge.hubVersion()}` : '');
+
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('show'), 3200); }
+
+// ---------- GitHub ----------
+async function gh(path, opts = {}) {
+  const r = await fetch(path.startsWith('http') ? path : API + path, { ...opts, cache:'no-store',
+    headers:{ Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28', ...(opts.body ? { 'Content-Type':'application/json' } : {}), ...(opts.headers || {}) } });
+  if (!r.ok) { const e = new Error(`GitHub said ${r.status}`); e.status = r.status; try { e.detail = (await r.json()).message; } catch {} throw e; }
+  return r.status === 204 ? null : r.json();
+}
+const b64ToText = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, '')), c => c.charCodeAt(0)));
+function textToB64(t) { const u = new TextEncoder().encode(t); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); }
+async function readFile(path) { const r = await gh(`/contents/${path}?ref=main&t=${Date.now()}`); return { data: JSON.parse(b64ToText(r.content)), sha: r.sha }; }
+/** Change a JSON file on main. mutate(data) edits it in place; if someone else changed it meanwhile, read again and redo. */
+async function changeFile(path, mutate, message) {
+  for (let i = 0; ; i++) {
+    const { data, sha } = await readFile(path);
+    mutate(data);
+    try { await gh(`/contents/${path}`, { method:'PUT', body: JSON.stringify({ message, branch:'main', sha, content: textToB64(JSON.stringify(data, null, 2) + '\n') }) }); return data; }
+    catch (e) { if ((e.status === 409 || e.status === 422) && i < 3) continue; throw e; }
+  }
+}
+async function putBinary(path, b64, message) {
+  let sha; try { sha = (await gh(`/contents/${path}?ref=main`)).sha; } catch {}
+  await gh(`/contents/${path}`, { method:'PUT', body: JSON.stringify({ message, branch:'main', content:b64, ...(sha ? { sha } : {}) }) });
+}
+
+// ---------- sign in ----------
+async function signIn(key) {
+  token = key;
+  const u = await gh('https://api.github.com/user');
+  const repo = await gh('');
+  if (!repo.permissions || !repo.permissions.push) { const e = new Error('This key cannot change your apps. Make it again and tick "public_repo".'); throw e; }
+  me = u; store.set('studioKey', key);
+}
+$('signin-btn').onclick = async () => {
+  const key = $('key').value.trim(); $('signin-err').textContent = '';
+  if (!key) { $('signin-err').textContent = 'Paste the key first.'; return; }
+  $('signin-btn').disabled = true;
+  try { await signIn(key); $('key').value = ''; showHome(); }
+  catch (e) { token = null; $('signin-err').textContent = e.status === 401 ? 'GitHub did not accept this key. Copy it again, all of it.' : (e.message || 'Could not sign in.'); }
+  $('signin-btn').disabled = false;
+};
+$('signout').onclick = () => confirmBox('Sign out of Studio?', 'You will need to paste your GitHub key again to use Studio on this device.', 'Sign out', () => { store.set('studioKey', null); token = null; showSignin(); });
+
+function showSignin() { $('signin').hidden = false; $('home').hidden = true; ['who','reload','signout'].forEach(i => $(i).hidden = true); }
+async function showHome() {
+  $('signin').hidden = true; $('home').hidden = false; ['who','reload','signout'].forEach(i => $(i).hidden = false);
+  if (me) $('who').innerHTML = `Signed in as <b>${esc(me.name || me.login)}</b>`;
+  await load();
+  resumeUpload();
+}
+
+// ---------- apps ----------
+const PUBLIC_SKIP = ['note', 'private'];
+function publicEntry(a) { const o = {}; for (const k of Object.keys(a)) if (!PUBLIC_SKIP.includes(k)) o[k] = a[k]; return o; }
+const sameEntry = (a, b) => { const n = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]])); return n(publicEntry(a)) === n(b); };
+const iconSrc = a => a.iconUrl ? (/^https?:/.test(a.iconUrl) ? a.iconUrl : SITE + a.iconUrl) : 'icon.svg';
+const apkUrl = a => `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`;
+
+async function load(quiet) {
+  try {
+    const [s, c, u] = await Promise.all([readFile('studio.json'), readFile('catalog.json'), me ? me : gh('https://api.github.com/user')]);
+    studio = s.data; catalog = c.data; me = u;
+    $('who').innerHTML = `Signed in as <b>${esc(me.name || me.login)}</b>`;
+    render();
+    if (!quiet) return true;
+  } catch (e) {
+    if (e.status === 401) { store.set('studioKey', null); token = null; showSignin(); $('signin-err').textContent = 'Your key stopped working. Make a new one and paste it.'; return; }
+    $('apps').innerHTML = `<div class="empty">Could not reach GitHub. Check the internet and press Refresh.</div>`;
+  }
+}
+$('reload').onclick = async () => { $('reload').disabled = true; await load(); $('reload').disabled = false; toast('Up to date with GitHub'); };
+
+function render() {
+  const pub = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
+  const list = studio.apps.slice().sort((a, b) => (a.private ? 1 : 0) - (b.private ? 1 : 0));
+  $('apps').innerHTML = list.map(a => {
+    const p = pub[a.id];
+    let status, ready = false;
+    if (a.private) status = 'Only for you, never in Play Hub';
+    else if (!p) { status = `<b>Not in Play Hub</b> · ready to publish`; ready = true; }
+    else if (p.version !== a.version) { status = `<b>New version ready</b> · Play Hub has ${esc(p.version)}, Studio has ${esc(a.version)}`; ready = true; }
+    else if (!sameEntry(a, p)) { status = `<b>New details ready</b> to publish`; ready = true; }
+    else status = 'Live in Play Hub · up to date';
+    return `<div class="app${ready ? ' ready' : ''}" data-id="${esc(a.id)}">
+      <div class="h"><img src="${esc(iconSrc(a))}" alt=""><div class="t"><b>${esc(a.name)}</b><small>Version ${esc(a.version)}${a.category ? ' · ' + esc(a.category) : ''}</small></div></div>
+      <div class="status">${status}${a.note ? `<br>What's new: ${esc(a.note)}` : ''}</div>
+      <div class="acts">${tryButton(a)}${ready ? `<button class="gold" data-act="publish">Publish</button>` : ''}${a.private ? '' : `<button class="btn" data-act="edit">Edit</button>`}${p && a.id !== 'hub' ? `<button class="btn" data-act="hide">Hide</button>` : ''}</div>
+    </div>`;
+  }).join('') || '<div class="empty">No apps yet.</div>';
+}
+
+// Try on the tablet: Studio app downloads and installs the test version, like Play Hub does.
+function tryButton(a) {
+  if (!bridge || !a.package) return '';
+  const have = bridge.installedVersion(a.package);
+  let job = null; try { job = JSON.parse(bridge.job(a.id) || 'null'); } catch {}
+  if (job && job.state === 'downloading') return `<button class="btn" data-act="cancel">Downloading ${job.total ? Math.round(job.done * 100 / job.total) + '%' : '…'}</button>`;
+  if (have === a.version) return a.id === 'hubstudio' ? '' : `<button class="btn" data-act="open">Open</button>`;
+  return `<button class="btn" data-act="try">${a.id === 'hubstudio' ? 'Update Studio' : have ? 'Try ' + esc(a.version) : 'Install to try'}</button>`;
+}
+window.hubEvent = (id, what) => {
+  const msg = { installing:'Installing…', installed:'Installed', failed:'The install did not work', back:'Install cancelled', missing:'Download it again', permission:'Allow Studio to install apps, then come back' }[what];
+  if (msg) toast(msg);
+  if (studio) render();
+};
+window.refresh = () => { if (studio) render(); };
+setInterval(() => { if (bridge && studio && document.querySelector('[data-act="cancel"]')) render(); }, 1000);
+
+$('apps').onclick = e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = b.closest('.app').dataset.id, a = studio.apps.find(x => x.id === id);
+  const act = b.dataset.act;
+  if (act === 'try') { bridge.download(a.id, apkUrl(a), a.version); toast('Downloading ' + a.name); setTimeout(render, 300); }
+  else if (act === 'open') bridge.open(a.package);
+  else if (act === 'cancel') { bridge.cancel(a.id); setTimeout(render, 500); }
+  else if (act === 'publish') publish(a);
+  else if (act === 'hide') hide(a);
+  else if (act === 'edit') edit(a);
+};
+
+function publish(a) {
+  const p = catalog.apps.find(x => x.id === a.id);
+  const what = !p ? `${a.name} will appear in Play Hub for everyone.` : p.version !== a.version ? `Everyone's Play Hub will offer ${a.name} ${a.version} as an update.` : `Everyone's Play Hub will show the new details for ${a.name}.`;
+  confirmBox(`Publish ${a.name}?`, what, 'Publish', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await changeFile('catalog.json', c => {
+      const i = c.apps.findIndex(x => x.id === a.id), old = c.apps[i];
+      if (i >= 0) c.apps[i] = publicEntry(a); else c.apps.push(publicEntry(a));
+      if (!old || old.version !== a.version) {
+        c.news = c.news || [];
+        if (!c.news.some(n => n.id === a.id && n.version === a.version))
+          c.news.unshift({ id:a.id, version:a.version, date:today, text: a.note || (old ? 'A new version' : `${a.name} is now in Play Hub`) });
+      }
+    }, `Publish ${a.name} ${a.version} to Play Hub (from Studio)`);
+    await load(); toast(`${a.name} is published. Play Hub shows it after Check for updates.`);
+  });
+}
+function hide(a) {
+  confirmBox(`Hide ${a.name}?`, `It disappears from Play Hub for everyone. People who installed it keep it. It stays here in Studio, so you can publish it again any time.`, 'Hide', async () => {
+    await changeFile('catalog.json', c => { c.apps = c.apps.filter(x => x.id !== a.id); }, `Hide ${a.name} from Play Hub (from Studio)`);
+    await load(); toast(`${a.name} is hidden from Play Hub`);
+  });
+}
+
+// ---------- modals ----------
+function modal(html) { $('modal-box').innerHTML = html; $('modal').classList.add('show'); }
+function closeModal() { $('modal').classList.remove('show'); }
+$('modal').onclick = e => { if (e.target === $('modal')) closeModal(); };
+addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function confirmBox(title, text, okText, run) {
+  modal(`<h4>${esc(title)}</h4><p>${esc(text)}</p><div class="err" id="m-err"></div><div class="acts"><button class="btn" id="m-no">Cancel</button><button class="gold" id="m-ok">${esc(okText)}</button></div>`);
+  $('m-no').onclick = closeModal;
+  $('m-ok').onclick = async () => {
+    $('m-ok').disabled = true; $('m-ok').textContent = 'Working…';
+    try { await run(); closeModal(); } catch (e) { $('m-err').textContent = 'That did not work: ' + (e.detail || e.message); $('m-ok').disabled = false; $('m-ok').textContent = okText; }
+  };
+}
+
+// Icons: pick a symbol (made into a gold tile) or your own picture.
+function iconPicker(box, current, onPick) {
+  let chosen = current;   // { emoji } | { file, dataUrl } | { keep:url }
+  const draw = () => {
+    box.innerHTML = (current && current.keep ? `<button data-k="keep" class="${chosen.keep ? 'on' : ''}" title="Current icon"><img src="${esc(current.keep)}"></button>` : '')
+      + EMOJI.slice(0, current && current.keep ? 7 : 8).map(e => `<button data-e="${e}" class="${chosen.emoji === e ? 'on' : ''}">${e}</button>`).join('')
+      + (chosen.dataUrl ? `<button class="on"><img src="${chosen.dataUrl}"></button>` : '')
+      + `<button class="own" data-own="1">Own picture…</button>`;
+  };
+  box.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.k) chosen = current; else if (b.dataset.e) chosen = { emoji:b.dataset.e };
+    else if (b.dataset.own) { const p = $('pick-icon'); p.value = ''; p.onchange = () => { const f = p.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { chosen = { file:f, dataUrl:r.result }; draw(); onPick(chosen); }; r.readAsDataURL(f); }; p.click(); return; }
+    draw(); onPick(chosen);
+  };
+  draw(); onPick(chosen);
+}
+function emojiSvg(e) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc9c"/><stop offset=".55" stop-color="#d4a64a"/><stop offset="1" stop-color="#9a6d26"/></linearGradient><radialGradient id="b" cx=".5" cy=".35" r=".8"><stop offset="0" stop-color="#2c2117"/><stop offset="1" stop-color="#120e0a"/></radialGradient></defs><rect width="512" height="512" rx="104" fill="url(#b)"/><rect x="18" y="18" width="476" height="476" rx="90" fill="none" stroke="url(#g)" stroke-width="8"/><text x="256" y="262" font-size="270" text-anchor="middle" dominant-baseline="central" fill="url(#g)" font-family="Segoe UI Symbol,Noto Sans Symbols 2,DejaVu Sans,sans-serif">${e}</text></svg>\n`;
+}
+/** Save the chosen icon into the repo and return its iconUrl (or null to keep the current one). */
+async function saveIcon(id, chosen) {
+  if (!chosen || chosen.keep) return null;
+  const t = Date.now().toString(36);
+  if (chosen.emoji) { const path = `apps/${id}/icon-${t}.svg`; await putBinary(path, textToB64(emojiSvg(chosen.emoji)), `Studio: icon for ${id}`); return path; }
+  const ext = (chosen.file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z]/g, '') || 'png';
+  const path = `apps/${id}/icon-${t}.${ext}`;
+  await putBinary(path, chosen.dataUrl.split(',')[1], `Studio: icon for ${id}`); return path;
+}
+
+function edit(a) {
+  modal(`<h4>Edit ${esc(a.name)}</h4><p>Changes are kept in Studio first. Press Publish afterwards to show them in Play Hub.</p>
+    <div class="row"><label class="l">Name</label><input class="in" id="e-name" maxlength="40" value="${esc(a.name)}"></div>
+    <div class="row"><label class="l">Icon</label><div class="icons" id="e-icons"></div></div>
+    <div class="row"><label class="l">Short line</label><input class="in" id="e-tag" maxlength="70" value="${esc(a.tagline)}"></div>
+    <div class="row"><label class="l">About</label><textarea class="in" id="e-desc" maxlength="400">${esc(a.description)}</textarea></div>
+    <div class="row"><label class="l">What's new</label><input class="in" id="e-note" maxlength="90" value="${esc(a.note)}" placeholder="What changed in this version"></div>
+    <div class="row"><label class="l">Category</label><input class="in" id="e-cat" maxlength="30" list="cats" value="${esc(a.category)}"></div>
+    <div class="err" id="m-err"></div>
+    <div class="acts"><button class="btn" id="m-no">Cancel</button><button class="gold" id="m-ok">Save in Studio</button></div>`);
+  let icon; iconPicker($('e-icons'), { keep: iconSrc(a) }, c => icon = c);
+  $('m-no').onclick = closeModal;
+  $('m-ok').onclick = async () => {
+    const name = $('e-name').value.trim(); if (!name) { $('m-err').textContent = 'The app needs a name.'; return; }
+    $('m-ok').disabled = true; $('m-ok').textContent = 'Saving…';
+    try {
+      const iconUrl = await saveIcon(a.id, icon);
+      const fields = { name, tagline:$('e-tag').value.trim(), description:$('e-desc').value.trim(), note:$('e-note').value.trim(), category:$('e-cat').value.trim() };
+      if (iconUrl) { fields.iconUrl = iconUrl; if (icon.emoji) fields.icon = icon.emoji; }
+      await changeFile('studio.json', s => { const x = s.apps.find(y => y.id === a.id); for (const [k, v] of Object.entries(fields)) { if (v) x[k] = v; else delete x[k]; } }, `Studio: edit ${name}`);
+      closeModal(); await load(); toast('Saved in Studio. Press Publish to show it in Play Hub.');
+    } catch (e) { $('m-err').textContent = 'Could not save: ' + (e.detail || e.message); $('m-ok').disabled = false; $('m-ok').textContent = 'Save in Studio'; }
+  };
+}
+
+// ---------- reading an APK: name, package and version straight from the file ----------
+async function inflateRaw(buf) { return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer(); }
+async function readApk(file) {
+  const tailLen = Math.min(file.size, 65557);
+  const tail = new DataView(await file.slice(file.size - tailLen).arrayBuffer());
+  let e = -1; for (let i = tailLen - 22; i >= 0; i--) if (tail.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('not an app file');
+  const cdSize = tail.getUint32(e + 12, true), cdOff = tail.getUint32(e + 16, true);
+  const cd = new DataView(await file.slice(cdOff, cdOff + cdSize).arrayBuffer());
+  for (let p = 0; p + 46 <= cd.byteLength && cd.getUint32(p, true) === 0x02014b50;) {
+    const method = cd.getUint16(p + 10, true), comp = cd.getUint32(p + 20, true), nl = cd.getUint16(p + 28, true), xl = cd.getUint16(p + 30, true), cl = cd.getUint16(p + 32, true), local = cd.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(new Uint8Array(cd.buffer, p + 46, nl));
+    if (name === 'AndroidManifest.xml') {
+      const lh = new DataView(await file.slice(local, local + 30).arrayBuffer());
+      const start = local + 30 + lh.getUint16(26, true) + lh.getUint16(28, true);
+      let data = await file.slice(start, start + comp).arrayBuffer();
+      if (method === 8) data = await inflateRaw(data);
+      return parseManifest(data);
+    }
+    p += 46 + nl + xl + cl;
+  }
+  throw new Error('no manifest');
+}
+function parseManifest(buf) {
+  const dv = new DataView(buf), out = {}; let strings = [];
+  for (let pos = 8; pos + 8 <= buf.byteLength;) {
+    const type = dv.getUint16(pos, true), hsz = dv.getUint16(pos + 2, true), size = dv.getUint32(pos + 4, true);
+    if (!size) break;
+    if (type === 0x0001) {
+      const count = dv.getUint32(pos + 8, true), utf8 = dv.getUint32(pos + 16, true) & 0x100, sStart = dv.getUint32(pos + 20, true);
+      strings = [];
+      for (let k = 0; k < count; k++) {
+        let s = pos + sStart + dv.getUint32(pos + hsz + k * 4, true);
+        if (utf8) {
+          s += (dv.getUint8(s) & 0x80) ? 2 : 1;
+          let bl = dv.getUint8(s); if (bl & 0x80) { bl = ((bl & 0x7f) << 8) | dv.getUint8(s + 1); s += 2; } else s += 1;
+          strings.push(new TextDecoder().decode(new Uint8Array(buf, s, bl)));
+        } else {
+          let l = dv.getUint16(s, true); s += 2; if (l & 0x8000) { l = ((l & 0x7fff) << 16) | dv.getUint16(s, true); s += 2; }
+          strings.push(new TextDecoder('utf-16le').decode(new Uint8Array(buf, s, l * 2)));
+        }
+      }
+    } else if (type === 0x0102) {
+      const tag = strings[dv.getUint32(pos + 20, true)], aStart = dv.getUint16(pos + 24, true), aSize = dv.getUint16(pos + 26, true), n = dv.getUint16(pos + 28, true);
+      for (let k = 0; k < n; k++) {
+        const a = pos + 16 + aStart + k * aSize, an = strings[dv.getUint32(a + 4, true)], raw = dv.getInt32(a + 8, true), dt = dv.getUint8(a + 15), d = dv.getUint32(a + 16, true);
+        const str = raw >= 0 ? strings[raw] : dt === 3 ? strings[d] : null;
+        if (tag === 'manifest') { if (an === 'package') out.package = str; else if (an === 'versionName') out.versionName = str; else if (an === 'versionCode') out.versionCode = d; }
+        else if (tag === 'application' && an === 'label' && str) out.label = str;
+      }
+    }
+    pos += size;
+  }
+  return out;
+}
+
+// ---------- add an app ----------
+let picked = null;   // { file, info, existing, id }
+let newIcon = null;
+const drop = $('drop');
+drop.onclick = () => { $('pick').value = ''; $('pick').click(); };
+drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') drop.onclick(); };
+$('pick').onchange = () => $('pick').files[0] && takeFile($('pick').files[0]);
+['dragenter','dragover'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (!$('home').hidden) drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
+addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && !$('home').hidden && $('upload').hidden) takeFile(f); });
+if (bridge) $('drop-hint').textContent = 'Tap to choose the .apk file on this tablet';
+
+const mb = n => n > 1e6 ? (n / 1048576).toFixed(0) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+function slugify(s) { return (s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '').slice(0, 24) || 'app'; }
+
+async function takeFile(file) {
+  $('file').hidden = false; $('file-name').textContent = file.name; $('file-info').textContent = mb(file.size) + ' · reading…'; $('file-state').innerHTML = ''; $('file-ic').textContent = '▣';
+  $('details-form').hidden = true; $('details-empty').hidden = false; picked = null;
+  let info;
+  try { info = await readApk(file); if (!info.package || !info.versionName) throw 0; }
+  catch { $('file-info').textContent = mb(file.size); $('file-state').innerHTML = '<span class="bad">Not an app file</span>'; $('details-empty').textContent = 'That file is not an Android app (.apk). Try another file.'; return; }
+  const existing = studio.apps.find(a => a.package === info.package);
+  const guess = info.label || file.name.replace(/\.apk$/i, '').replace(/[_\- ]*v?\d+(\.\d+)*.*$/i, '').replace(/[_\-]+/g, ' ').trim() || 'My app';
+  $('file-info').textContent = `${mb(file.size)} · read from the file: ${existing ? existing.name : guess}, version ${info.versionName}`;
+  if (existing && existing.version === info.versionName) {
+    $('file-state').innerHTML = '<span class="bad">Already here</span>';
+    $('details-empty').textContent = `Studio already has ${existing.name} ${info.versionName}. Build the app with a higher version number, then drop it again.`; return;
+  }
+  $('file-state').innerHTML = '<span class="ok">✓ Ready</span>';
+  if (existing && existing.icon) $('file-ic').textContent = existing.icon;
+  picked = { file, info, existing };
+  $('details-empty').hidden = true; $('details-form').hidden = false;
+  const a = existing || {};
+  $('f-name').value = a.name || guess; $('f-tagline').value = a.tagline || ''; $('f-desc').value = a.description || ''; $('f-cat').value = a.category || ''; $('f-note').value = '';
+  $('f-kind').innerHTML = existing ? `<span class="pill">Update · ${esc(existing.version)} → ${esc(info.versionName)}</span>` : `<span class="pill">New app · version ${esc(info.versionName)}</span>`;
+  newIcon = null;
+  iconPicker($('f-icons'), existing ? { keep: iconSrc(existing) } : { emoji: EMOJI[0] }, c => newIcon = c);
+}
+
+$('send').onclick = async () => {
+  if (!picked) return;
+  const name = $('f-name').value.trim(); if (!name) { toast('The app needs a name'); return; }
+  const { file, info, existing } = picked;
+  let id = existing ? existing.id : slugify(name);
+  if (!existing) { const base = RESERVED.includes(id) ? id + 'app' : id; id = base; for (let n = 2; studio.apps.some(a => a.id === id); n++) id = base + n; }
+  const meta = { ...(existing || {}), id, name, package: info.package, version: info.versionName,
+    tagline: $('f-tagline').value.trim(), description: $('f-desc').value.trim(), category: $('f-cat').value.trim(), note: $('f-note').value.trim() };
+  for (const k of ['tagline','description','category','note']) if (!meta[k]) delete meta[k];
+  $('details-form').hidden = true; $('upload').hidden = false; $('up-done').hidden = true; $('up-err').textContent = '';
+  $('up-title').textContent = `${name} ${info.versionName}`;
+  setSteps(0);
+  try {
+    const iconUrl = await saveIcon(id, newIcon);
+    if (iconUrl) { meta.iconUrl = iconUrl; if (newIcon.emoji) meta.icon = newIcon.emoji; }
+    if (!meta.iconUrl) meta.iconUrl = 'icon.svg';
+    if (!meta.icon) meta.icon = '★';
+    try { await gh(`/releases/tags/${id}-v${info.versionName}`); throw Object.assign(new Error(`Version ${info.versionName} of this app was sent before. Build it with a higher version number.`), { detail: `Version ${info.versionName} of this app was sent before. Build it with a higher version number.` }); }
+    catch (e) { if (e.status !== 404) throw e; }
+    await uploadApk(file, id, info.versionName, meta);
+    store.set('studioPending', JSON.stringify({ id, version: info.versionName, name, t: Date.now() }));
+    setSteps(1); await waitReady(id, info.versionName);
+  } catch (e) { $('up-err').textContent = 'Something went wrong: ' + (e.detail || e.message) + '. Nothing was published; you can try again.'; $('up-done').hidden = false; $('up-done').textContent = 'Try again'; }
+};
+$('up-done').onclick = () => { $('upload').hidden = true; $('file').hidden = true; $('details-empty').hidden = false; $('details-empty').textContent = 'Drop an app file and its details show up here.'; picked = null; };
+
+function setSteps(n, pct) {
+  const steps = ['Sending the app to GitHub', 'GitHub is packing it up (about 2 minutes)', 'Ready in Studio'];
+  $('up-steps').innerHTML = steps.map((s, i) => `<li class="${i < n ? 'done' : i === n ? 'on' : ''}">${i < n ? '✓' : i === n ? '›' : '○'} ${s}${i === 0 && n === 0 && pct != null ? ` · ${pct}%` : ''}</li>`).join('');
+  $('up-bar').style.width = (n >= 2 ? 100 : n === 1 ? 85 : Math.round((pct || 0) * .8)) + '%';
+}
+function readB64(blob) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result.slice(r.result.indexOf(',') + 1)); r.onerror = () => no(r.error); r.readAsDataURL(blob); }); }
+
+/** Put the APK on a temporary upload/... branch in pieces; the "Publish uploaded APK" workflow joins them into a release
+ *  and adds the app to studio.json (never to catalog.json: that is the Publish button). */
+async function uploadApk(file, id, ver, meta) {
+  const head = await gh('/git/ref/heads/main');
+  const commit = await gh(`/git/commits/${head.object.sha}`);
+  const parts = Math.ceil(file.size / PART), tree = [];
+  for (let i = 0; i < parts; i++) {
+    const b64 = await readB64(file.slice(i * PART, Math.min(file.size, (i + 1) * PART)));
+    let blob; for (let t = 0; ; t++) { try { blob = await gh('/git/blobs', { method:'POST', body: JSON.stringify({ content:b64, encoding:'base64' }) }); break; } catch (e) { if (t >= 2) throw e; await new Promise(r => setTimeout(r, 3000)); } }
+    tree.push({ path:`upload/part-${String(i).padStart(3, '0')}`, mode:'100644', type:'blob', sha:blob.sha });
+    setSteps(0, Math.round((i + 1) * 100 / parts));
+  }
+  tree.push({ path:'upload/app.txt', mode:'100644', type:'blob', content:`${id} ${ver}\n` });
+  tree.push({ path:'upload/meta.json', mode:'100644', type:'blob', content: JSON.stringify(meta, null, 2) + '\n' });
+  const t = await gh('/git/trees', { method:'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree }) });
+  const c = await gh('/git/commits', { method:'POST', body: JSON.stringify({ message:`Studio upload: ${id} ${ver}`, tree:t.sha, parents:[head.object.sha] }) });
+  await gh('/git/refs', { method:'POST', body: JSON.stringify({ ref:`refs/heads/upload/${id}-${ver}-${Date.now().toString(36)}`, sha:c.sha }) });
+}
+async function waitReady(id, ver) {
+  const until = Date.now() + 15 * 60e3;
+  while (Date.now() < until) {
+    await new Promise(r => setTimeout(r, 12000));
+    try { const s = (await readFile('studio.json')).data; const a = s.apps.find(x => x.id === id); if (a && a.version === ver) { store.set('studioPending', null); setSteps(3); await load(); $('up-done').hidden = false; $('up-done').textContent = 'Add another app'; toast(`${a.name} ${ver} is in Studio. Try it, then press Publish.`); return; } } catch {}
+  }
+  throw new Error('GitHub is taking longer than usual. Press Refresh in a few minutes');
+}
+function resumeUpload() {
+  let p; try { p = JSON.parse(store.get('studioPending') || 'null'); } catch {}
+  if (!p || Date.now() - p.t > 20 * 60e3) { store.set('studioPending', null); return; }
+  const a = studio && studio.apps.find(x => x.id === p.id);
+  if (a && a.version === p.version) { store.set('studioPending', null); return; }
+  $('details-empty').hidden = true; $('upload').hidden = false; $('up-title').textContent = `${p.name} ${p.version}`; setSteps(1);
+  waitReady(p.id, p.version).catch(e => { $('up-err').textContent = e.message; $('up-done').hidden = false; });
+}
+
+// ---------- start ----------
+(async () => {
+  if (!token) return showSignin();
+  try { me = await gh('https://api.github.com/user'); } catch (e) { if (e.status === 401) { store.set('studioKey', null); token = null; return showSignin(); } }
+  showHome();
+})();
+addEventListener('visibilitychange', () => { if (!document.hidden && studio && bridge) render(); });
+</script>
+</body>
+</html>
