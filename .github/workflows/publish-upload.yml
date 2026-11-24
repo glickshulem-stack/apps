@@ -1,8 +1,10 @@
 name: Publish uploaded APK
-# For ready-made APKs too big to keep in the repo (like Quillsong). Push a temporary branch named
-# upload/<anything> holding the APK split into upload/part-* (each under 100 MB) plus upload/app.txt
-# containing "<id> <version>" and upload/sha256.txt. This joins
-# the parts, publishes release <id>-v<version> with <id>.apk for App Hub, then deletes the branch.
+# For ready-made APKs too big to keep in the repo (like Quillsong). Play Hub Studio (or a person) pushes a
+# temporary branch named upload/<anything> holding the APK split into upload/part-* (each under 100 MB) plus
+# upload/app.txt containing "<id> <version>". Optional: upload/sha256.txt ("<hash>  ../<id>.apk") to check the
+# joined file, and upload/meta.json = the app's Studio entry, merged into studio.json on main once released.
+# This joins the parts, publishes release <id>-v<version> with <id>.apk, then deletes the branch.
+# It never touches catalog.json: only Su's Publish button in Play Hub Studio does that.
 on:
   push:
     branches: ['upload/**']
@@ -18,7 +20,24 @@ jobs:
         run: |
           read id ver < upload/app.txt; tag="$id-v$ver"
           cat upload/part-* > "$id.apk"
-          (cd upload && sha256sum -c sha256.txt)
+          if [ -f upload/sha256.txt ]; then (cd upload && sha256sum -c sha256.txt); fi
           if gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "$tag already released"; else
             gh release create "$tag" "$id.apk" -R "$GITHUB_REPOSITORY" --target main --title "$id $ver" --notes "$id version $ver"; fi
-          git push origin --delete "$GITHUB_REF_NAME"
+          if [ -f upload/meta.json ]; then cp upload/meta.json "$RUNNER_TEMP/meta.json"; fi
+      - name: Offer it in Play Hub Studio
+        if: hashFiles('upload/meta.json') != ''
+        run: |
+          git config user.name "Play Hub Studio"; git config user.email "studio@users.noreply.github.com"
+          for try in 1 2 3 4 5; do
+            git fetch -q origin main && git checkout -q -f -B studio-update FETCH_HEAD
+            jq --slurpfile m "$RUNNER_TEMP/meta.json" '.apps |= (if any(.id == $m[0].id) then map(if .id == $m[0].id then . + $m[0] else . end) else . + $m else . end)' studio.json > studio.tmp
+            mv studio.tmp studio.json
+            git add studio.json
+            git diff --cached --quiet && break
+            git commit -q -m "Studio: $(jq -r '.id + " " + .version' "$RUNNER_TEMP/meta.json") ready to try"
+            git push -q origin HEAD:main && break
+            sleep $((try * 5))
+          done
+      - name: Remove the upload branch
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: git push origin --delete "$GITHUB_REF_NAME"
