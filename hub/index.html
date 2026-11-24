@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Play Hub</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#120f0b">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -140,6 +143,14 @@
   .toast .ti { width:30px; height:30px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#f3d58f,#b8862f); color:#2a1d10; font-weight:800; }
   .toast small { display:block; font-weight:500; color:#e6c79a; margin-top:2px; }
   .row.click { cursor:pointer; } .row.click span:first-child { color:var(--gold2); font-weight:600; }
+  /* On a computer (no Android app): offer to install Play Hub as a program */
+  .pcbar { display:flex; align-items:center; gap:18px; margin:0 0 20px; padding:16px 20px; border-radius:20px; background:var(--surface); border:1px solid var(--gold); box-shadow:var(--shadow); }
+  .pcbar .pi { flex:none; width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#2a1d10; background:linear-gradient(135deg,#f6dc9c,#c9993f); }
+  .pcbar .pi svg, .pcbar .x svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .pcbar .t { flex:1; min-width:0; } .pcbar b { font:700 1.05rem Cinzel,Georgia,serif; } .pcbar span { display:block; color:var(--muted); font-size:.88rem; margin-top:2px; }
+  .pcbar .x { flex:none; border:0; background:none; color:var(--muted); cursor:pointer; padding:6px; }
+  .meta.only { opacity:.85; }
+  @media (max-width:640px) { .pcbar { flex-wrap:wrap; } }
 </style>
 </head>
 <body>
@@ -150,6 +161,7 @@
 </header>
 <main>
   <section class="welcome"><div><div class="d" id="w-date"></div><h2 id="w-hi">Welcome</h2></div><div class="chips" id="chips"></div></section>
+  <div class="pcbar" id="pcbar" hidden><div class="pi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><div class="t"><b>Put Play Hub on this computer</b><span>It gets its own icon in the Start menu and opens in its own window, like a normal program.</span></div><button class="btn" id="pc-install">Install</button><button class="x" id="pc-x" aria-label="Not now"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="hero"></div>
   <h3>Your apps</h3>
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
@@ -164,7 +176,7 @@
   <div class="seg" id="s-theme"><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
   <h5>Versions</h5>
   <div class="box">
-    <div class="row"><span>Play Hub app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
+    <div class="row"><span>Play Hub app<small id="s-ver-sub">The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
     <div class="row"><span>Play Hub page<small>The screen you see. It updates when you check.</small></span><span class="vv" id="s-page"></span></div>
   </div>
   <div id="news-box"></div>
@@ -195,7 +207,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.12.0';
+const PAGE_VER = '0.13.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -255,14 +267,16 @@ function stateOf(a, have) {
 }
 
 function button(a, have) {
-  if (!hasHub) {
+  if (!hasHub) {   // on a computer: apps made for the web open in their own window
     if (!a.webPath) return null;
     const b = document.createElement('button'); b.className = 'btn open'; b.textContent = 'Open';
-    b.onclick = () => location.href = '../' + a.webPath; return b;
+    b.onclick = () => openWeb(a); return b;
   }
   const s = stateOf(a, have).btn; if (!s) return null;
   const b = document.createElement('button'); b.className = 'btn ' + s.cls; b.textContent = s.label; b.onclick = s.fn; return b;
 }
+// The published copy of a web app (web/<id>/, made by the "Publish web apps" workflow when Su publishes in Studio).
+function openWeb(a) { const w = window.open(`../web/${a.id}/`, '_blank'); if (!w) location.href = `../web/${a.id}/`; }
 function barHtml(st) { return st && st.pct != null ? `<div class="bar${st.pct < 0 ? ' wait' : ''}"><i style="${st.pct >= 0 ? `width:${st.pct}%` : ''}"></i></div>` : ''; }
 
 // Featured: one slide per app, built only when the app list changes so it doesn't jump back while you watch.
@@ -315,6 +329,7 @@ function render() {
     const have = hasHub ? Hub.installedVersion(a.package) : '';
     const shown = a.live || a.version;
     let meta = have ? `✓ Installed · v${a.live || have}` : `v${shown}`, up = false;
+    if (!hasHub && !a.webPath) meta = 'Android only';
     if (have && newer(a.version, have)) { meta = `★ Update · v${a.version}`; up = true; }
     const st = hasHub ? stateOf(a, have) : null; if (st && st.pct != null) busy = true;
     const card = document.createElement('div'); card.className = 'card'; card.dataset.id = a.id;
@@ -323,7 +338,8 @@ function render() {
     if (have) inst++; if (up) ups++;
     list.appendChild(card);
   }
-  $('s-ver').textContent = hasHub ? 'v' + hubVer : 'Not installed';
+  $('s-ver').textContent = hasHub ? 'v' + hubVer : standalone() ? 'Installed' : 'In the browser';
+  if (!hasHub) $('s-ver-sub').textContent = 'On this computer';
   $('s-page').textContent = 'v' + PAGE_VER;
   const hubUpd = hasHub && hub && newer(hub.version, hubVer);
   $('s-upd-box').style.display = hubUpd ? '' : 'none';
@@ -434,6 +450,24 @@ addEventListener('keydown', e => { if (e.key === 'Escape') { if ($('sheet').clas
   p.addEventListener('touchend', () => { p.classList.remove('drag'); p.style.transform = ''; if (horiz && dx > 90) closeSettings(); x0 = null; }); }
 document.querySelectorAll('#s-theme button').forEach(b => b.onclick = () => setTheme(b.dataset.t));
 markTheme();
+// On a computer (Windows, Mac): Play Hub can be installed from Edge or Chrome as its own program.
+function standalone() { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches; }
+let installEv = null;
+function pcBar() {
+  let later = false; try { later = sessionStorage.getItem('pcLater') === '1'; } catch {}
+  $('pcbar').hidden = hasHub || standalone() || later || /Android|iPhone|iPad/i.test(navigator.userAgent);
+}
+if (!hasHub) {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; pcBar(); });
+  addEventListener('appinstalled', () => { installEv = null; $('pcbar').hidden = true; toast('✓', 'Play Hub is installed', 'Find it in the Start menu or on the desktop.'); });
+  $('pc-install').onclick = async () => {
+    if (installEv) { installEv.prompt(); const r = await installEv.userChoice; if (r.outcome === 'accepted') $('pcbar').hidden = true; installEv = null; return; }
+    toast('i', 'Use Edge or Chrome', 'Click the install icon at the right end of the address bar, or ⋯ menu › Apps › Install Play Hub.');
+  };
+  $('pc-x').onclick = () => { $('pcbar').hidden = true; try { sessionStorage.setItem('pcLater', '1'); } catch {} };
+  pcBar();
+}
 window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHubResume;
 refresh();
 </script>

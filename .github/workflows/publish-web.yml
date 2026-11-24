@@ -1,0 +1,42 @@
+name: Publish web apps
+# Play Hub on a computer (Windows/Mac, in Edge or Chrome) opens web apps like Gambit from web/<id>/.
+# That folder must hold the version Su PUBLISHED in Play Hub Studio, not whatever is newest on main.
+# So whenever catalog.json changes (Su pressed Publish), this copies apps/<id>/ from the released tag
+# <id>-v<version> into web/<id>/ for every catalog app that has a "webPath". It never edits catalog.json.
+on:
+  push:
+    branches: [main]
+    paths: ['catalog.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency: publish-web
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Copy published versions into web/
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          git config user.name "Play Hub"; git config user.email "playhub@users.noreply.github.com"
+          for try in 1 2 3 4 5; do
+            git fetch -q --tags origin main && git checkout -q -f -B web-update FETCH_HEAD
+            changed=""
+            for row in $(jq -r '.apps[] | select(.webPath) | "\(.id)=\(.version)"' catalog.json); do
+              id="${row%%=*}"; ver="${row#*=}"; tag="$id-v$ver"
+              [ "$(cat "web/$id/VERSION" 2>/dev/null)" = "$ver" ] && continue
+              if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then echo "::warning::$tag not released yet, keeping web/$id as it is"; continue; fi
+              tmp=$(mktemp -d); git archive "$tag" "apps/$id" | tar -x -C "$tmp"
+              rm -rf "web/$id"; mkdir -p web; mv "$tmp/apps/$id" "web/$id"; echo "$ver" > "web/$id/VERSION"
+              git add -A "web/$id"; changed="$changed $id $ver"
+            done
+            [ -z "$changed" ] && { echo "web/ already matches catalog.json"; exit 0; }
+            git commit -q -m "web/: publish$changed for Play Hub on computers"
+            git push -q origin HEAD:main && break
+            sleep $((try * 5))
+          done
+          # pushes made by this workflow don't start a GitHub Pages build on their own, so ask for one
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" >/dev/null || echo "::warning::could not start a Pages build"

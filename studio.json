@@ -8,7 +8,8 @@
       "version": "0.7.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
-      "live": "0.12.0"
+      "live": "0.13.0",
+      "note": "Play Hub now works on Windows computers too: install it from Edge or Chrome"
     },
     {
       "id": "chess",
