@@ -249,3 +249,23 @@ body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,
 #moves .q { margin-left:6px; font-size:.8rem; }
 .q-best { color:#e8b84a; } .q-good { color:#d8c8a8; } .q-inaccuracy { color:#e7b04a; } .q-mistake { color:#e07a40; } .q-blunder { color:#e0463a; }
 #moves .mv.cur .q-best { color:#9a6a10; } #moves .mv.cur .q-good { color:#6b5a3a; } #moves .mv.cur .q-inaccuracy { color:#a06a10; } #moves .mv.cur .q-mistake { color:#a84a18; } #moves .mv.cur .q-blunder { color:#b02418; }
+
+/* 0.24.0: coach tools (draw arrows and squares, step through moves, explore) */
+.sq .mk { position:absolute; inset:0; background:var(--ink); opacity:.62; box-shadow:inset 0 0 0 3px rgba(0,0,0,.18); }
+.navrow { display:grid; grid-template-columns:repeat(4,1fr) auto; gap:8px; }
+.sq .mk { pointer-events:none; }
+.nav, .cbtn { display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 8px; border-radius:10px; border:1px solid var(--p3); background:var(--b2); color:#f3e2c4; font:600 .9rem var(--display); cursor:pointer; }
+.nav:disabled, .cbtn:disabled { opacity:.4; cursor:default; }
+.nav:active:not(:disabled), .cbtn:active:not(:disabled) { transform:scale(.96); }
+.nav svg, .cbtn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.nav#navfirst svg path:last-child, .nav#navlast svg path:last-child { fill:currentColor; }
+.coach-card { display:flex; align-items:center; gap:8px; padding:8px; border-radius:14px; background:var(--well); border:1px solid var(--p3); }
+.cbtn.on { background:linear-gradient(180deg,var(--gold2),var(--gold)); color:#1a1408; border-color:transparent; }
+#explore { white-space:nowrap; padding:9px 14px; }
+#clearmarks { margin-left:auto; }
+#inks { display:flex; gap:6px; }
+#inks button { width:28px; height:28px; border-radius:50%; border:2px solid rgba(255,255,255,.15); background:var(--ink); cursor:pointer; padding:0; }
+#inks button.on { border-color:#fff4d6; box-shadow:0 0 0 2px var(--gold); }
+.layout.exploring #board { border-color:transparent; background:linear-gradient(135deg,#f6dc8e,#b88a2c 50%,#f3d27a) border-box; }
+.layout.exploring .status-card { box-shadow:inset 0 0 0 2px var(--gold), 0 6px 18px rgba(0,0,0,.35); }
+@media (orientation: portrait) { .panel .coach-card { order:1; } }

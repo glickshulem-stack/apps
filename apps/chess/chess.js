@@ -1,4 +1,4 @@
-const VERSION = '0.23.2';
+const VERSION = '0.24.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -66,6 +66,10 @@ try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeo
 let hintMove = null, hintBusy = false, review = null, reviewing = false, lastScore = null;
 let pvLines = {};   // multipv number -> { cp, move } from the engine's latest search
 let engine = null, searching = false, ignoreBest = 0, onBest = null, thinkId = 0, cpuBusy = false, pickSetup = { ...setup };
+// Coach tools. ink = drawing color; pen = drawing mode on; marks = arrows and colored squares on the position shown.
+const INKS = { y:'#f2c230', r:'#e0453a', b:'#3f8ae6', o:'#ef8a2e' }, INK_NAMES = { y:'Yellow', r:'Red', b:'Blue', o:'Orange' };
+let ink = 'y', pen = false, pdraw = null, marks = { arrows: [], boxes: {}, pos: null }, ex = null;   // ex = the real game, kept while you explore
+try { const v = localStorage.getItem('gambit-ink'); if (INKS[v]) ink = v; } catch {}
 let S, history, flipped = false, selected = null, legalForSel = [];
 
 function initial() {
@@ -171,16 +175,18 @@ const boardEl = document.getElementById('board'), statusEl = document.getElement
 const UNDO_LIMIT = 3;
 let undos = { w: UNDO_LIMIT, b: UNDO_LIMIT };
 function newGame() {
+  ex = null; pen = false;
   cancelThink(); hintMove = null; if (review || reviewing) stopReview();
   mode = setup.cpu ? { cpu:true, level:setup.level, human: setup.color === 'r' ? (Math.random() < .5 ? 'w' : 'b') : setup.color } : { cpu:false };
   if (mode.cpu) flipped = mode.human === 'b';
   clock = timeCtl ? { base: timeCtl[0], inc: timeCtl[1], w: timeCtl[0]*60000, b: timeCtl[0]*60000, flag: null } : null; viewIdx = null; S = initial(); S.positions[posKey(S)] = 1; history = []; undos = { w: UNDO_LIMIT, b: UNDO_LIMIT }; selected = null; legalForSel = []; save(); render(); maybeCpu(); }
-function save() { try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos, clock, mode})); } catch {} }
+function save() { if (ex) return; try { localStorage.setItem('chess-game', JSON.stringify({S, history, flipped, undos, clock, mode})); } catch {} }
 function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; clock = d.clock || null; mode = d.mode || { cpu:false }; return true; } } catch {} return false; }
 
 function render() {
   boardEl.innerHTML = '';
   const D = viewIdx == null ? S : [...history, S][viewIdx + 1];
+  if (marks.pos !== D) { marks.arrows = []; marks.boxes = {}; marks.pos = D; }   // drawings belong to the position shown
   const over = result(S), dover = result(D), chk = !dover && inCheck(D, D.turn) ? kingPos(D.board, D.turn) : (dover?.startsWith('Checkmate') ? kingPos(D.board, D.turn) : null);
   for (let i=0;i<8;i++) for (let j=0;j<8;j++) {
     const r = flipped ? 7-i : i, c = flipped ? 7-j : j;
@@ -192,8 +198,9 @@ function render() {
     if (mv) d.classList.add(D.board[r][c] ? 'capture' : 'move');
     // en passant: also ring the pawn that gets taken (beside the moving pawn)
     else if (legalForSel.some(m => m.enpassant && m.fr===r && m.tc===c)) d.classList.add('capture');
-    const p = D.board[r][c];
-    if (p) d.innerHTML = piece(p.c, p.t);
+    const p = D.board[r][c], box = marks.boxes[r + ',' + c];
+    if (box) d.insertAdjacentHTML('beforeend', `<i class="mk" style="--ink:${INKS[box]}"></i>`);
+    if (p) d.insertAdjacentHTML('beforeend', piece(p.c, p.t));
     if (i===7) d.insertAdjacentHTML('beforeend', `<span class="coord f">${'abcdefgh'[c]}</span>`);
     if (j===0) d.insertAdjacentHTML('beforeend', `<span class="coord r">${8-r}</span>`);
     boardEl.appendChild(d);
@@ -202,18 +209,21 @@ function render() {
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
   statusEl.classList.toggle('over', !!over);
   { const who = mode.cpu ? mode.human : opp(S.turn), left = undos[who], btn = document.getElementById('undo');
+    if (ex) { btn.querySelector('span').innerHTML = 'Undo'; btn.disabled = !history.length; btn.title = 'Take back a move you are trying out'; } else {
     btn.querySelector('span').innerHTML = mode.cpu ? `Undo<small class="ucount">${left} left</small>` : `Undo<small class="ucount">White ${undos.w} · Black ${undos.b} left</small>`;
     btn.disabled = history.length < undoPlies() || left <= 0 || !!clock?.flag;
     document.getElementById('flip').hidden = mode.cpu; document.querySelector('.actions').classList.toggle('solo', mode.cpu);
-    btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; }
+    btn.title = `${who==='w'?'White':'Black'} has ${left} undo${left===1?'':'s'} left`; } }
+  renderCoach();
   renderMoves(); renderClock(); drawHint();
   { const h = document.getElementById('hint'); h.disabled = !!result(S) || cpuTurn() || viewIdx != null; h.classList.toggle('busy', hintBusy); }
   renderReview();
   if (viewIdx != null) {
     const c = review?.cls[viewIdx], label = `${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} ${sanAt(viewIdx)}`;
-    statusEl.textContent = c ? `${label}: ${QNAME[c]}${c !== 'best' && review.bestSan[viewIdx] ? `. Better was ${review.bestSan[viewIdx]}` : ''}` : `Viewing move ${Math.floor(viewIdx/2)+1}${viewIdx%2?'…':'.'} Tap board to return`;
+    statusEl.textContent = viewIdx < 0 ? 'Start position' : c ? `${label}: ${QNAME[c]}${c !== 'best' && review.bestSan[viewIdx] ? `. Better was ${review.bestSan[viewIdx]}` : ''}` : ex ? `Move ${label}. Move a piece to try something else` : `Move ${label}. Tap the board to go back to the game`;
     statusEl.classList.remove('over'); return; }
   if (reviewing) { statusEl.textContent = `Reviewing the game… ${reviewing.done} / ${reviewing.total}`; return; }
+  if (ex) { statusEl.textContent = dover || (hintMove ? `Hint: ${hintMove.san}` : `Exploring. ${S.turn==='w' ? 'White' : 'Black'} to move`); return; }
   statusEl.textContent = over || (hintMove && !cpuTurn() ? `Hint: ${hintMove.san}` : '') || (mode.cpu ? (S.turn === mode.human ? 'Your move' : 'Computer is thinking…') : `${S.turn==='w' ? 'White' : 'Black'} to move`) + (chk ? ' (check!)' : '');
 }
 
@@ -252,7 +262,7 @@ function doMove(m, animate = true) {
     glide(mover.c, m.promo || mover.t, fromRect, m.tr, m.tc);
     if (m.castle) glide(mover.c, 'r', rookFrom, m.tr, m.castle === 'K' ? 5 : 3);
   }
-  if (result(S)?.startsWith('Checkmate')) setTimeout(celebrate, 450);
+  if (!ex && result(S)?.startsWith('Checkmate')) setTimeout(celebrate, 450);
   lastTick = performance.now();
   setTimeout(maybeCpu, 30);
 }
@@ -337,8 +347,15 @@ function squareAt(x, y) {
   let j = Math.floor((x - b.left) / b.width * 8), i = Math.floor((y - b.top) / b.height * 8);
   return flipped ? [7-i, 7-j] : [i, j];
 }
+boardEl.addEventListener('contextmenu', e => e.preventDefault());
 boardEl.addEventListener('pointerdown', e => {
-  if (viewIdx != null) { viewIdx = null; render(); return; }
+  if (pen || e.button === 2) return penDown(e);
+  if (marks.arrows.length || Object.keys(marks.boxes).length) { marks.arrows = []; marks.boxes = {}; render(); }   // a normal tap wipes the drawings
+  if (viewIdx != null) {
+    if (!ex) { viewIdx = null; render(); return; }
+    // exploring: carry on from the move being shown (later moves of this try-out are dropped)
+    const all = [...history, S]; S = all[viewIdx + 1]; history = all.slice(0, viewIdx + 1); viewIdx = null; selected = null; legalForSel = []; render();
+  }
   const sq = squareAt(e.clientX, e.clientY); if (!sq || result(S) || cpuTurn()) return;
   const [r, c] = sq, p = S.board[r][c];
   const wasSelected = selected && selected[0]===r && selected[1]===c;
@@ -350,6 +367,7 @@ boardEl.addEventListener('pointerdown', e => {
   } else tap(r, c);
 });
 boardEl.addEventListener('pointermove', e => {
+  if (pdraw) return penMove(e);
   if (!drag) return;
   const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
   if (!drag.moved && Math.hypot(dx, dy) < 6) return;
@@ -357,6 +375,7 @@ boardEl.addEventListener('pointermove', e => {
   drag.pc.style.transition = 'none'; drag.pc.style.zIndex = 10; drag.pc.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`;
 });
 boardEl.addEventListener('pointerup', e => {
+  if (pdraw) return penUp(e);
   if (!drag) return;
   const d = drag; drag = null;
   const sq = squareAt(e.clientX, e.clientY);
@@ -367,7 +386,7 @@ boardEl.addEventListener('pointerup', e => {
     render();
   } else if (d.wasSelected) { selected = null; legalForSel = []; render(); }
 });
-boardEl.addEventListener('pointercancel', () => { if (drag) { drag = null; render(); } });
+boardEl.addEventListener('pointercancel', () => { if (pdraw) { pdraw = null; drawHint(); } if (drag) { drag = null; render(); } });
 function askPromo(moves) {
   const box = document.getElementById('promo-choices'), ov = document.getElementById('promo');
   box.innerHTML = '';
@@ -380,6 +399,7 @@ function askPromo(moves) {
   ov.classList.add('show');
 }
 document.getElementById('undo').onclick = () => {
+  if (ex) { if (!history.length) return; hintMove = null; viewIdx = null; S = history.pop(); selected = null; legalForSel = []; render(); return; }
   const n = undoPlies(); if (history.length < n) return;
   const who = mode.cpu ? mode.human : opp(S.turn); // the player who made the last move takes it back
   if (undos[who] <= 0) return;
@@ -619,8 +639,14 @@ function drawHint() {
   svg.style.left = (b.left - pr.left + boardEl.clientLeft) + 'px'; svg.style.top = (b.top - pr.top + boardEl.clientTop) + 'px';
   svg.style.width = bw + 'px'; svg.style.height = bh + 'px';
   const m = viewIdx == null ? hintMove : null;
-  svg.style.display = m ? '' : 'none'; if (!m) return;
   const X = c => (flipped ? 7 - c : c) + .5, Y = r => (flipped ? 7 - r : r) + .5;
+  const list = [...marks.arrows]; if (pdraw?.to && (pdraw.to[0] !== pdraw.from[0] || pdraw.to[1] !== pdraw.from[1])) list.push({ from: pdraw.from, to: pdraw.to, ink, preview: true });
+  document.getElementById('marks').innerHTML = list.map(a => {
+    const x1 = X(a.from[1]), y1 = Y(a.from[0]), x2 = X(a.to[1]), y2 = Y(a.to[0]), len = Math.hypot(x2 - x1, y2 - y1), k = (len - .34) / len;
+    return `<line x1="${x1}" y1="${y1}" x2="${x1 + (x2 - x1) * k}" y2="${y1 + (y2 - y1) * k}" stroke="${INKS[a.ink]}" stroke-width=".19" stroke-linecap="round" marker-end="url(#mk-${a.ink})" opacity="${a.preview ? .55 : .85}"/>`;
+  }).join('');
+  line.style.display = m ? '' : 'none';
+  svg.style.display = m || list.length ? '' : 'none'; if (!m) return;
   const x1 = X(m.fc), y1 = Y(m.fr), x2 = X(m.tc), y2 = Y(m.tr), len = Math.hypot(x2 - x1, y2 - y1), k = (len - .32) / len;
   line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x1 + (x2 - x1) * k); line.setAttribute('y2', y1 + (y2 - y1) * k);
 }
@@ -642,6 +668,88 @@ document.getElementById('hint').onclick = () => {
   eng.postMessage('position fen ' + fen(S));
   searching = true; eng.postMessage('go movetime 800');
 };
+
+// ---- coach tools: draw arrows and colored squares, step through moves, explore lines ----
+function penDown(e) {
+  const sq = squareAt(e.clientX, e.clientY); if (!sq) return;
+  pdraw = { from: sq, to: sq }; boardEl.setPointerCapture(e.pointerId);
+}
+function penMove(e) {
+  const sq = squareAt(e.clientX, e.clientY); if (!sq || (sq[0] === pdraw.to[0] && sq[1] === pdraw.to[1])) return;
+  pdraw.to = sq; drawHint();
+}
+function penUp(e) {
+  const { from } = pdraw, to = squareAt(e.clientX, e.clientY) || pdraw.to; pdraw = null;
+  if (from[0] === to[0] && from[1] === to[1]) {
+    // tap = color the square; tap again with the same color to remove it
+    const k = from.join(','); if (marks.boxes[k] === ink) delete marks.boxes[k]; else marks.boxes[k] = ink;
+  } else {
+    // drag = arrow; drawing the same arrow again in the same color removes it
+    const i = marks.arrows.findIndex(a => a.from.join() === from.join() && a.to.join() === to.join()), same = i >= 0 && marks.arrows[i].ink === ink;
+    if (i >= 0) marks.arrows.splice(i, 1);
+    if (!same) marks.arrows.push({ from, to, ink });
+  }
+  render();
+}
+function step(where) {
+  if (reviewing) return;
+  const last = history.length - 1, cur = viewIdx ?? last;
+  const to = where === 'first' ? -1 : where === 'prev' ? cur - 1 : where === 'next' ? cur + 1 : last;
+  if (to < -1 || to > last) return;
+  viewIdx = to >= last ? null : to; selected = null; legalForSel = []; render();
+}
+function startExplore() {
+  if (ex || reviewing) return;
+  cancelThink(); hintMove = null; hintBusy = false;
+  const all = [...history, S], at = viewIdx == null ? all.length - 1 : viewIdx + 1;
+  const keep = marks.pos === all[at] ? { arrows: marks.arrows, boxes: marks.boxes } : null;
+  ex = { S, history, clock, mode, flipped, review };
+  // a copy of the game up to the move shown; the real game waits (its clock stops) until you come back
+  const copy = JSON.parse(JSON.stringify(all.slice(0, at + 1)));
+  S = copy.pop(); history = copy; clock = null; mode = { cpu:false }; review = null; viewIdx = null; selected = null; legalForSel = [];
+  if (keep) Object.assign(marks, keep, { pos: S });   // keep what you drew on the board
+  render();
+}
+function endExplore() {
+  if (!ex) return;
+  cancelThink(); hintMove = null; hintBusy = false;
+  ({ S, history, clock, mode, flipped, review } = ex); ex = null; viewIdx = null; selected = null; legalForSel = [];
+  lastTick = performance.now(); render(); setTimeout(maybeCpu, 300);
+}
+function renderCoach() {
+  document.getElementById('pen').classList.toggle('on', pen);
+  document.querySelectorAll('#inks button').forEach(b => b.classList.toggle('on', b.dataset.ink === ink));
+  document.getElementById('clearmarks').disabled = !marks.arrows.length && !Object.keys(marks.boxes).length;
+  const xb = document.getElementById('explore');
+  xb.classList.toggle('on', !!ex); xb.disabled = !!reviewing;
+  xb.querySelector('span').textContent = ex ? 'Back to game' : 'Explore';
+  const last = history.length - 1, cur = viewIdx ?? last;
+  document.getElementById('navfirst').disabled = document.getElementById('navprev').disabled = cur < 0 || !!reviewing;
+  document.getElementById('navnext').disabled = document.getElementById('navlast').disabled = viewIdx == null || !!reviewing;
+  document.querySelector('.layout').classList.toggle('exploring', !!ex);
+}
+{ const box = document.getElementById('inks');
+  for (const k of Object.keys(INKS)) {
+    const b = document.createElement('button'); b.dataset.ink = k; b.style.setProperty('--ink', INKS[k]); b.setAttribute('aria-label', INK_NAMES[k]);
+    b.onclick = () => { ink = k; pen = true; try { localStorage.setItem('gambit-ink', k); } catch {} render(); };
+    box.appendChild(b);
+  }
+  // one arrowhead per color
+  document.querySelector('#arrows defs').insertAdjacentHTML('beforeend', Object.entries(INKS).map(([k, c]) =>
+    `<marker id="mk-${k}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.4" markerHeight="2.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join(''));
+}
+document.getElementById('pen').onclick = () => { pen = !pen; render(); };
+document.getElementById('clearmarks').onclick = () => { marks.arrows = []; marks.boxes = {}; render(); };
+document.getElementById('explore').onclick = () => ex ? endExplore() : startExplore();
+document.getElementById('navfirst').onclick = () => step('first');
+document.getElementById('navprev').onclick = () => step('prev');
+document.getElementById('navnext').onclick = () => step('next');
+document.getElementById('navlast').onclick = () => step('last');
+addEventListener('keydown', e => {
+  if (document.querySelector('.overlay.show')) return;
+  if (e.key === 'ArrowLeft') step('prev'); else if (e.key === 'ArrowRight') step('next');
+  else if (e.key === 'ArrowUp' || e.key === 'Home') step('first'); else if (e.key === 'ArrowDown' || e.key === 'End') step('last');
+});
 
 // ---- game review: the engine checks every position and rates each move ----
 const QSYM = { best:'★', good:'✓', inaccuracy:'?!', mistake:'?', blunder:'??' };
@@ -691,7 +799,7 @@ function finishReview(positions, evals, bests) {
 }
 function renderReview() {
   const card = document.getElementById('reviewcard'), btn = document.getElementById('reviewbtn');
-  btn.hidden = !!review || !!reviewing || history.length < 2 || !(result(S) || (!mode.cpu && !clock));
+  btn.hidden = !!ex || !!review || !!reviewing || history.length < 2 || !(result(S) || (!mode.cpu && !clock));
   card.hidden = !review && !reviewing;
   if (!review) { document.getElementById('evalfill').style.width = '50%'; document.getElementById('evaltxt').textContent = reviewing ? 'Checking moves…' : ''; document.getElementById('revcounts').innerHTML = ''; return; }
   const idx = viewIdx == null ? review.evals.length - 1 : viewIdx + 1, cp = review.evals[idx] ?? 0;

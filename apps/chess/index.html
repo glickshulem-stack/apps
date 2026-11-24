@@ -16,7 +16,7 @@
 <div class="layout">
   <section class="play">
     <div id="board"></div>
-    <svg id="arrows" viewBox="0 0 8 8" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8b84a"/></marker></defs><line id="hintline" x1="0" y1="0" x2="0" y2="0" stroke="#e8b84a" stroke-width=".2" stroke-linecap="round" marker-end="url(#ah)" opacity=".9"/></svg>
+    <svg id="arrows" viewBox="0 0 8 8" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8b84a"/></marker></defs><g id="marks"></g><line id="hintline" x1="0" y1="0" x2="0" y2="0" stroke="#e8b84a" stroke-width=".2" stroke-linecap="round" marker-end="url(#ah)" opacity=".9"/></svg>
   </section>
   <aside class="panel">
     <header class="topbar">
@@ -27,7 +27,19 @@
     <div class="status-card"><div class="turn-dot" id="turn-dot"></div><div id="status"></div></div>
     <div class="clock-card" id="clocks" hidden><div class="clk" id="clk-w"><span class="cname">White</span><span class="ctime"></span></div><div class="clk" id="clk-b"><span class="cname">Black</span><span class="ctime"></span></div></div>
     <div class="review-card" id="reviewcard" hidden><div class="evalbar"><div id="evalfill"></div></div><div id="evaltxt"></div><div id="revcounts"></div></div>
-    <div class="moves-card"><div id="moves"></div><button id="reviewbtn" class="revbtn" hidden>★ Review game</button></div>
+    <div class="moves-card"><div id="moves"></div>
+      <div class="navrow">
+        <button class="nav" id="navfirst" aria-label="First move"><svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-8 6 8 6z"/></svg></button>
+        <button class="nav" id="navprev" aria-label="Back one move"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="nav" id="navnext" aria-label="Forward one move"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="nav" id="navlast" aria-label="Latest move"><svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l8 6-8 6z"/></svg></button>
+        <button class="cbtn" id="explore"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Explore</span></button>
+      </div><button id="reviewbtn" class="revbtn" hidden>★ Review game</button></div>
+    <div class="coach-card">
+      <button class="cbtn" id="pen" aria-label="Draw"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L19 8a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Draw</span></button>
+      <div id="inks"></div>
+      <button class="cbtn" id="clearmarks" aria-label="Clear drawings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Clear</span></button>
+    </div>
     <div class="actions">
       <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
       <button id="undo" class="act"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>
