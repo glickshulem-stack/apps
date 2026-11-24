@@ -1,4 +1,4 @@
-const VERSION = '0.24.0';
+const VERSION = '0.24.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -718,6 +718,7 @@ function endExplore() {
 }
 function renderCoach() {
   document.getElementById('pen').classList.toggle('on', pen);
+  document.querySelector('.coach-card').classList.toggle('drawing', pen);
   document.querySelectorAll('#inks button').forEach(b => b.classList.toggle('on', b.dataset.ink === ink));
   document.getElementById('clearmarks').disabled = !marks.arrows.length && !Object.keys(marks.boxes).length;
   const xb = document.getElementById('explore');
@@ -731,14 +732,16 @@ function renderCoach() {
 { const box = document.getElementById('inks');
   for (const k of Object.keys(INKS)) {
     const b = document.createElement('button'); b.dataset.ink = k; b.style.setProperty('--ink', INKS[k]); b.setAttribute('aria-label', INK_NAMES[k]);
-    b.onclick = () => { ink = k; pen = true; try { localStorage.setItem('gambit-ink', k); } catch {} render(); };
+    b.onclick = () => { ink = k; try { localStorage.setItem('gambit-ink', k); } catch {} render(); };
     box.appendChild(b);
   }
   // one arrowhead per color
   document.querySelector('#arrows defs').insertAdjacentHTML('beforeend', Object.entries(INKS).map(([k, c]) =>
     `<marker id="mk-${k}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.4" markerHeight="2.4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join(''));
 }
-document.getElementById('pen').onclick = () => { pen = !pen; render(); };
+// Draw on shows the colors and Clear; Draw off (or Escape) hides them and wipes every drawing
+function setPen(on) { pen = on; pdraw = null; if (!on) { marks.arrows = []; marks.boxes = {}; } render(); }
+document.getElementById('pen').onclick = () => setPen(!pen);
 document.getElementById('clearmarks').onclick = () => { marks.arrows = []; marks.boxes = {}; render(); };
 document.getElementById('explore').onclick = () => ex ? endExplore() : startExplore();
 document.getElementById('navfirst').onclick = () => step('first');
@@ -747,6 +750,7 @@ document.getElementById('navnext').onclick = () => step('next');
 document.getElementById('navlast').onclick = () => step('last');
 addEventListener('keydown', e => {
   if (document.querySelector('.overlay.show')) return;
+  if (e.key === 'Escape' && pen) return setPen(false);
   if (e.key === 'ArrowLeft') step('prev'); else if (e.key === 'ArrowRight') step('next');
   else if (e.key === 'ArrowUp' || e.key === 'Home') step('first'); else if (e.key === 'ArrowDown' || e.key === 'End') step('last');
 });
