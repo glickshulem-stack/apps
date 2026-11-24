@@ -12,3 +12,6 @@ New versions go to **Studio only**. Su tries them in Studio on the tablet and pr
 4. Do **not** edit `catalog.json` by hand.
 
 Ready-made APKs (like Quillsong) are dropped into Studio, which uploads them to an `upload/...` branch; the *Publish uploaded APK* workflow makes the release and adds the version to `studio.json`.
+
+## Play Hub on computers (Windows)
+Play Hub's page (`hub/`) can be installed from Edge or Chrome as its own program (`hub/manifest.webmanifest`, offline help from `sw.js`). There, web apps like Gambit open from `web/<id>/`, which holds the **published** version only: the *Publish web apps* workflow copies `apps/<id>/` from tag `<id>-v<version>` whenever `catalog.json` changes. Never edit `web/` by hand. Apps without a `webPath` show "Android only". The friends page `get/` offers both Android and Windows.

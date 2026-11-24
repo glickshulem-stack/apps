@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1a1918">
+<title>Gambit</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="chess.css">
+</head>
+<body data-theme="fide" data-bg="saddle" data-font="cinzel">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="tintw" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".3 .59 .11 0 0  .3 .59 .11 0 0  .3 .59 .11 0 0  0 0 0 1 0"/><feComponentTransfer><feFuncR id="tintwR" type="table" tableValues="0 1"/><feFuncG id="tintwG" type="table" tableValues="0 1"/><feFuncB id="tintwB" type="table" tableValues="0 1"/></feComponentTransfer></filter><filter id="tintb" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".3 .59 .11 0 0  .3 .59 .11 0 0  .3 .59 .11 0 0  0 0 0 1 0"/><feComponentTransfer><feFuncR id="tintbR" type="table" tableValues="0 1"/><feFuncG id="tintbG" type="table" tableValues="0 1"/><feFuncB id="tintbB" type="table" tableValues="0 1"/></feComponentTransfer></filter></svg>
+<div class="layout">
+  <section class="play">
+    <div id="board"></div>
+    <svg id="arrows" viewBox="0 0 8 8" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8b84a"/></marker></defs><g id="marks"></g><line id="hintline" x1="0" y1="0" x2="0" y2="0" stroke="#e8b84a" stroke-width=".2" stroke-linecap="round" marker-end="url(#ah)" opacity=".9"/></svg>
+  </section>
+  <aside class="panel">
+    <header class="topbar">
+      <a href="../../" class="iconbtn" id="back" aria-label="Back to apps">‹</a>
+      <button class="iconbtn" id="opensettings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
+      <div class="brand"><img src="logo.svg" alt=""><span class="name">Gambit</span><span class="ver">v<span id="ver"></span></span></div>
+    </header>
+    <div class="status-card"><div class="turn-dot" id="turn-dot"></div><div id="status"></div></div>
+    <div class="clock-card" id="clocks" hidden><div class="clk" id="clk-w"><span class="cname">White</span><span class="ctime"></span></div><div class="clk" id="clk-b"><span class="cname">Black</span><span class="ctime"></span></div></div>
+    <div class="review-card" id="reviewcard" hidden><div class="evalbar"><div id="evalfill"></div></div><div id="evaltxt"></div><div id="revcounts"></div></div>
+    <div class="moves-card"><div id="moves"></div>
+      <div class="navrow">
+        <button class="nav" id="navfirst" aria-label="First move"><svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-8 6 8 6z"/></svg></button>
+        <button class="nav" id="navprev" aria-label="Back one move"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="nav" id="navnext" aria-label="Forward one move"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="nav" id="navlast" aria-label="Latest move"><svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l8 6-8 6z"/></svg></button>
+        <button class="cbtn" id="explore"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Explore</span></button>
+      </div><button id="reviewbtn" class="revbtn" hidden>★ Review game</button></div>
+    <div class="coach-card">
+      <button class="drawopen" id="pen"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L19 8a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Draw on the board</span></button>
+      <div class="drawpanel" id="drawpanel">
+        <div class="dphead"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L19 8a2.1 2.1 0 00-3-3L5 16z"/><path d="M14 7l3 3"/></svg><b>Drawing</b><small>Drag for an arrow · tap for a box</small>
+          <button class="dpclose" id="penclose" aria-label="Close drawing and erase it"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div class="dpbody">
+          <div id="inks"></div>
+          <button class="dpbtn" id="drawundo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button>
+          <button class="dpbtn" id="clearmarks"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>Clear</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="newgame" class="act"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
+      <button id="hint" class="act"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/></svg><span>Hint</span></button>
+      <button id="flip" class="act"><svg viewBox="0 0 24 24"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg><span>Flip</span></button>
+    </div>
+  </aside>
+</div>
+<div id="promo" class="overlay"><div class="dialog"><div class="dtitle">Promote pawn to</div><div id="promo-choices"></div></div></div>
+<div id="settings" class="overlay"><div class="dialog"><div class="dtitle">Settings</div><div class="slabel">This game</div><button id="undo" class="act undorow"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span>Undo</span></button><div class="slabel">Pieces</div><div id="setchoices"></div><div class="slabel">Board</div><div id="boardchoices"></div><button class="act primary" id="closesettings">Done</button></div></div>
+<div id="confirm" class="overlay"><div class="dialog"><div class="dtitle">New game</div><div class="slabel">Opponent</div><div id="oppchoices" class="chips"></div><div id="cpuopts"><div class="slabel">Computer level</div><div id="levelchoices" class="chips"></div><div class="slabel">You play</div><div id="colorchoices" class="chips"></div></div><div class="slabel">Clock</div><div id="timechoices"></div><div class="drow"><button class="act ghost" id="no">Cancel</button><button class="act primary" id="yes">Start</button></div></div></div>
+<div id="win" class="overlay"><canvas id="confetti"></canvas><div class="dialog wincard"><div class="winrays"></div><div id="winpiece"></div><div class="winsub">Checkmate</div><div id="wintitle"></div><div class="drow"><button class="act ghost" id="winlook">See board</button><button class="act ghost" id="winreview">Review</button><button class="act primary" id="winnew">New game</button></div></div></div>
+<script src="chess.js"></script>
+</body>
+</html>

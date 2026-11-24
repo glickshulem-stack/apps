@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Get Play Hub</title>
-<meta name="description" content="Download Play Hub for Android: a small personal app store with Gambit chess and more.">
+<meta name="description" content="Get Play Hub for Android or Windows: a small personal app store with Gambit chess and more.">
 <meta property="og:title" content="Get Play Hub">
-<meta property="og:description" content="Download Play Hub for Android: a small personal app store with Gambit chess and more.">
+<meta property="og:description" content="Get Play Hub for Android or Windows: a small personal app store with Gambit chess and more.">
 <link rel="icon" href="../icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,6 +35,11 @@
     font-weight:800; font-size:.9rem; color:#2a1d10; background:linear-gradient(135deg,#f3d58f,#b8862f); }
   b { color:var(--gold2); }
   .note { color:var(--muted); font-size:.88rem; padding:12px 0 16px; border-top:1px solid var(--line); }
+  .pair { display:flex; flex-direction:column; align-items:center; }
+  .pair.pc { flex-direction:column-reverse; }
+  .pair.pc #android-box .dl { margin-top:14px; padding:14px 28px; font-size:1.05rem; color:var(--gold2); background:transparent; box-shadow:inset 0 0 0 1.5px var(--gold); }
+  .pair.pc #win .dl.alt { margin-top:0; padding:18px 34px; font-size:1.2rem; color:#2a1d10; background:linear-gradient(135deg,#f6dc9c,#c9993f); box-shadow:0 10px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(246,220,156,.4); }
+  .pair.pc #win { margin-bottom:14px; }
   footer { margin-top:30px; color:var(--muted); font-size:.78rem; letter-spacing:.16em; text-transform:uppercase; }
   footer::before, footer::after { content:'✦'; color:var(--gold); margin:0 10px; }
 </style>
@@ -43,41 +48,53 @@
 <main>
   <img class="logo" src="../icon.svg" alt="">
   <h1>Play Hub</h1>
-  <p class="lead">A little app store for Android. Get Gambit chess and more, and keep them up to date with one tap.</p>
-  <a class="dl" id="dl" href="https://github.com/glickshulem-stack/apps/releases/download/hub-v0.7.0/hub.apk" download>
-    <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download Play Hub</a>
-  <div class="small" id="ver">For Android phones and tablets · about 1.5 MB</div>
-  <!-- Windows: shown only when catalog.json's "hub" entry has a "windows" download URL -->
-  <div id="win" hidden>
-    <a class="dl alt" id="win-dl" href="#" download><svg viewBox="0 0 24 24"><path d="M3 5l8-1v8H3z"/><path d="M13 4l8-1v9h-8z"/><path d="M3 13h8v7l-8-1z"/><path d="M13 13h8v8l-8-1z"/></svg>Download for Windows</a>
-    <div class="small" id="win-ver">For Windows computers</div>
+  <p class="lead">A little app store for your Android phone, tablet or Windows computer. Get Gambit chess and more, and keep them up to date with one tap.</p>
+  <div class="pair" id="pair">
+    <div id="android-box">
+      <a class="dl" id="dl" href="https://github.com/glickshulem-stack/apps/releases/download/hub-v0.7.0/hub.apk" download>
+        <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download for Android</a>
+      <div class="small" id="ver">For Android phones and tablets · about 1.5 MB</div>
+    </div>
+    <div id="win">
+      <a class="dl alt" id="win-dl" href="../hub/"><svg viewBox="0 0 24 24"><path d="M3 5l8-1v8H3z"/><path d="M13 4l8-1v9h-8z"/><path d="M3 13h8v7l-8-1z"/><path d="M13 13h8v8l-8-1z"/></svg>Get it for Windows</a>
+      <div class="small">For Windows computers · nothing to download</div>
+    </div>
   </div>
 
-  <div class="card">
-    <h2>How to install</h2>
+  <div class="card" id="steps-android">
+    <h2>Install on Android</h2>
     <ol>
-      <li><span>Tap <b>Download Play Hub</b> above. If your phone asks, tap <b>Download</b> again.</span></li>
+      <li><span>Tap <b>Download for Android</b> above. If your phone asks, tap <b>Download</b> again.</span></li>
       <li><span>When it's done, tap <b>Open</b> (or open <b>hub.apk</b> from your Downloads).</span></li>
       <li><span>If Android says your browser can't install apps, tap <b>Settings</b>, turn on <b>Allow from this source</b>, then go back.</span></li>
       <li><span>Tap <b>Install</b>. If Google Play Protect shows a warning, tap <b>More details</b> and then <b>Install anyway</b>. Play Hub isn't from the Play Store, so this is normal.</span></li>
       <li><span>Open <b>Play Hub</b>, pick an app, and tap <b>Install</b>. Play Hub keeps your apps updated.</span></li>
     </ol>
-    <div class="note">Android only. Play Hub doesn't work on iPhone or iPad.</div>
   </div>
+  <div class="card" id="steps-win">
+    <h2>Install on Windows</h2>
+    <ol>
+      <li><span>Open this page in <b>Microsoft Edge</b> or <b>Google Chrome</b> and click <b>Get it for Windows</b>.</span></li>
+      <li><span>Play Hub opens. Click the gold <b>Install</b> button at the top, then <b>Install</b> again in the little box.</span></li>
+      <li><span>That's it. Play Hub now has its own icon in the Start menu and opens in its own window. No warnings, and it updates by itself.</span></li>
+      <li><span>Click <b>Open</b> on Gambit to play. Some apps, like Quillsong, are Android only.</span></li>
+    </ol>
+  </div>
+  <div class="note" style="border:0;margin-top:14px">Play Hub doesn't work on iPhone or iPad yet.</div>
   <footer>Play Hub</footer>
 </main>
 <script>
+// On a computer, Windows comes first; on a phone or tablet, Android does.
+if (!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
+  document.getElementById('pair').classList.add('pc');
+  const w = document.getElementById('steps-win'); w.parentNode.insertBefore(w, document.getElementById('steps-android'));
+}
 // Always point at the newest Play Hub app listed in the store's catalog.
 fetch('../catalog.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).then(c => {
   const hub = (c.apps || []).find(a => a.id === 'hub');
   if (!hub || !hub.version) return;
   document.getElementById('dl').href = `https://github.com/glickshulem-stack/apps/releases/download/hub-v${hub.version}/hub.apk`;
   document.getElementById('ver').textContent = `Version ${hub.version} · for Android phones and tablets · about 1.5 MB`;
-  if (hub.windows) {
-    document.getElementById('win-dl').href = hub.windows;
-    if (hub.windowsVersion) document.getElementById('win-ver').textContent = `Version ${hub.windowsVersion} · for Windows computers`;
-    document.getElementById('win').hidden = false;
-  }
 }).catch(() => {});
 </script>
 </body>
