@@ -15,8 +15,7 @@
       "name": "Gambit",
       "icon": "♞",
       "package": "com.glickshulem.chess",
-      "version": "0.3.0",
-      "live": "0.27.0",
+      "version": "0.27.0",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
@@ -28,8 +27,7 @@
       "name": "Aurum Studio",
       "icon": "▶",
       "package": "com.glickshulem.studio",
-      "version": "0.1.0",
-      "live": "0.1.0",
+      "version": "0.2.0",
       "iconUrl": "apps/studio/icon.svg",
       "tagline": "Cut videos, save the sound as MP3",
       "category": "Video & audio",
@@ -51,6 +49,18 @@
     }
   ],
   "news": [
+    {
+      "id": "chess",
+      "version": "0.27.0",
+      "date": "2026-11-24",
+      "text": "Now a whole app installed by Play Hub; the icon says Gambit"
+    },
+    {
+      "id": "studio",
+      "version": "0.2.0",
+      "date": "2026-11-24",
+      "text": "Now a whole app: everything is inside, works without internet"
+    },
     {
       "id": "hub",
       "version": "0.12.0",
