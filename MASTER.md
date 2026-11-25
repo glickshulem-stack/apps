@@ -27,8 +27,8 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 
 | App | Folder | Current version | Status | Next to-do |
 |---|---|---|---|---|
-| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.12.0 (Apps + App Vault tabs), app 0.5.0 | testing | Su signs in to the new People tab and approves a test request; next big step (after Su's OK): who has which apps |
-| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.21.0 public (0.24.1 in Studio: new icon + sign-in and approval + no See what's new), app 0.9.0 public (0.10.0 new icon in Studio) | testing | Su tries page 0.24.1 from Studio (ask to join, approve), then Publishes. Later steps: who has what, bug reports with photos, chat, publish to chosen people |
+| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.13.0 (People shows who has which apps), app 0.5.0 | testing | Su pastes the new database rules, opens App Vault page 0.25.0 from Studio, then checks People › Approved |
+| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.24.1 public (sign-in + approval live), 0.25.0 in Studio (reports installed apps); app 0.10.0 public | testing | Su tries page 0.25.0 and Publishes. Next steps (one at a time): bug reports with photos (notes), chat, publish to chosen people |
 | Gambit (chess) | `apps/chess/` + `android/chess/` | 0.29.0 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
 | App Vault for Windows | `hub/` installed from Edge/Chrome | (uses the App Vault page) | in progress | PR #26 waits for Su's go |
