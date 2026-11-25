@@ -7,14 +7,14 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (App Vault page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html`. Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.24.1, sign-in + approval live); test copy `hub-next/index.html` 0.25.0 (reports which apps are installed) waiting for Su's Publish
+- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.24.1, sign-in + approval live); test copy `hub-next/index.html` 0.26.0 (reports which apps are installed + 8 color looks) waiting for Su's Publish
 - App Vault app (APK): 0.9.0 public; 0.10.0 (new home-screen icon) goes to Studio for Su to publish (`android/hub/app/build.gradle`)
 
 ## Su's decisions
 - The name is **App Vault** (Su renamed Play Hub → App Vault on 2026-11-25; earlier App Hub, never "Su's Apps"). The catalog id `hub`, the folders, the URLs and the package `com.glickshulem.apphub` stay the same so installed copies keep updating.
 - The friends page is staged too: edit `get-next/index.html`, never `get/index.html`. Studio's page Publish copies it over `get/` together with the page.
 - Icon = **Tile vault** (Su picked 2026-11-25): gold square vault door with hinges, 2x2 tiles inside, one tile is the dial. File `vault-icon.svg` (repo root), launcher PNG `android/hub/.../mipmap-xxxhdpi/ic_launcher.png`. Old `icon.svg` (grid) is still used by the old root launcher page only.
-- Dark "Noir" look with gold is the default; "Ivory" light look is in Settings. No green anywhere.
+- Looks (Settings › Look, page 0.26.0, Su wanted all of them): Ember Sunset (default), Amethyst Dusk, Midnight Sapphire, Royal Bordeaux, Rose Gold Twilight, Onyx Gold (gradient looks, `data-grad`, see-through cards), plus Noir (plain dark) and Ivory (light). Saved per device as `hubLook`. No green anywhere.
 - Checks GitHub only when Su taps "Check for updates" (or pulls down at the top). Never add automatic checking.
 - Settings is a panel that slides in from the side: Check for updates, Look, and the versions of the app and the page shown separately.
 - No Featured banner: the page starts with the greeting and the apps (Su removed it in 0.19.0). The catalog field `hero` now only colors the card cover and app-page icon.

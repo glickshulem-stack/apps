@@ -12,6 +12,20 @@
     --gold:#b8862f; --gold2:#8a5d1f; --goldhi:#f3d58f; --glow:rgba(201,163,90,.28); --shadow:0 10px 30px rgba(74,52,24,.12); --bar:rgba(246,239,226,.86); }
   :root[data-theme="noir"] { --bg:#120f0b; --bg2:#1b1611; --surface:#1d1813; --surface2:#262019; --text:#f4e8d2; --muted:#b09d80; --line:#3a2f22;
     --gold:#d4a64a; --gold2:#e6c07a; --goldhi:#f6dc9c; --glow:rgba(212,166,74,.18); --shadow:0 14px 34px rgba(0,0,0,.45); --bar:rgba(18,15,11,.86); }
+  /* Gradient looks (Su, page 0.26.0): see-through cards over a rich gradient, gold accents. Ember Sunset is the default. */
+  :root[data-grad] { --surface:rgba(255,255,255,.07); --surface2:rgba(255,255,255,.11); --text:#fbf3ea; --line:rgba(255,255,255,.16);
+    --gold:#e2b04f; --gold2:#f4cf7e; --goldhi:#fde6a8; --glow:rgba(226,176,79,.22); --bar:rgba(0,0,0,.25); --shadow:0 14px 34px rgba(0,0,0,.35); }
+  :root[data-theme="ember"] { --bg:#2b0e10; --bg2:#2b0e10; --muted:#f0cdb8; --grad:linear-gradient(135deg,#240a10 0%,#5c1a1f 35%,#8a3a1a 65%,#3d1410 100%); --cover:linear-gradient(120deg,#3a1012,#7a2e18); }
+  :root[data-theme="amethyst"] { --bg:#1a1426; --bg2:#1a1426; --muted:#dccbe8; --grad:linear-gradient(135deg,#17122a 0%,#3a1f5c 35%,#6b2a6e 65%,#8a3a4e 100%); --cover:linear-gradient(120deg,#241a3a,#5a2a66); }
+  :root[data-theme="sapphire"] { --bg:#0b1430; --bg2:#0b1430; --muted:#c8d3ee; --grad:linear-gradient(135deg,#070d22 0%,#132a5e 40%,#1f3f7a 65%,#0b1430 100%); --cover:linear-gradient(120deg,#0e1a3c,#24407a); }
+  :root[data-theme="bordeaux"] { --bg:#1e0710; --bg2:#1e0710; --muted:#ecc7cf; --grad:linear-gradient(135deg,#16050b 0%,#4a1024 40%,#6e1a30 65%,#1e0710 100%); --cover:linear-gradient(120deg,#2e0a16,#6a1a2e); }
+  :root[data-theme="rosegold"] { --bg:#2a1420; --bg2:#2a1420; --muted:#f2d2cf; --grad:linear-gradient(135deg,#1f0f18 0%,#5a2a3a 40%,#9a5a4e 70%,#2a1420 100%); --cover:linear-gradient(120deg,#3a1a28,#8a4a44); }
+  :root[data-theme="onyx"] { --bg:#070605; --bg2:#070605; --muted:#c9b48e; --grad:radial-gradient(900px 500px at 80% -10%,rgba(212,166,74,.28),transparent 60%),radial-gradient(700px 400px at -10% 110%,rgba(212,166,74,.18),transparent 60%),linear-gradient(180deg,#070605,#0f0c08); --cover:linear-gradient(120deg,#0d0b08,#2a2012); }
+  :root[data-grad] body, :root[data-grad] .sheet, :root[data-grad] .detail { background:var(--grad) fixed, var(--bg); }
+  :root[data-grad] .cover, :root[data-grad] .d-icon { background:var(--cover) !important; }
+  :root[data-grad] .card { backdrop-filter:blur(6px); }
+  #s-theme { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
+  #s-theme button { font-size:.85rem; padding:10px; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; font-family:Inter,system-ui,Roboto,sans-serif; color:var(--text); user-select:none; min-height:100vh;
     background:radial-gradient(1200px 500px at 85% -10%, var(--glow), transparent 60%), radial-gradient(900px 500px at -10% 110%, var(--glow), transparent 60%), linear-gradient(180deg,var(--bg),var(--bg2)); background-attachment:fixed; }
@@ -205,7 +219,7 @@
   <div class="last" id="s-last"></div>
   <div class="box" id="s-upd-box" style="display:none;margin-top:12px"><div class="row click" id="s-upd"><span>Update App Vault</span><span id="s-updv"></span></div><div id="s-upd-x"></div></div>
   <h5>Look</h5>
-  <div class="seg" id="s-theme"><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
+  <div class="seg" id="s-theme"><button data-t="ember"><i style="background:linear-gradient(135deg,#240a10 0%,#5c1a1f 35%,#8a3a1a 65%,#3d1410 100%);"></i>Ember Sunset</button><button data-t="amethyst"><i style="background:linear-gradient(135deg,#17122a 0%,#3a1f5c 35%,#6b2a6e 65%,#8a3a4e 100%);"></i>Amethyst Dusk</button><button data-t="sapphire"><i style="background:linear-gradient(135deg,#070d22 0%,#132a5e 40%,#1f3f7a 65%,#0b1430 100%);"></i>Midnight Sapphire</button><button data-t="bordeaux"><i style="background:linear-gradient(135deg,#16050b 0%,#4a1024 40%,#6e1a30 65%,#1e0710 100%);"></i>Royal Bordeaux</button><button data-t="rosegold"><i style="background:linear-gradient(135deg,#1f0f18 0%,#5a2a3a 40%,#9a5a4e 70%,#2a1420 100%);"></i>Rose Gold Twilight</button><button data-t="onyx"><i style="background:linear-gradient(135deg,#070605,#3a2a12);"></i>Onyx Gold</button><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
   <div id="s-me"></div>
   <h5>Versions</h5>
   <div class="box">
@@ -218,12 +232,15 @@
 <div class="ptr" id="ptr"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
 <div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
-// Look: 'ivory' (light) or 'noir' (dark). Saved on this device; ?theme= can override for previews.
-const THEMES = { ivory:'Ivory', noir:'Noir' };
-function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubTheme'); if (THEMES[t]) return t; } catch {} return 'noir'; }
-function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('hubTheme', t); } catch {} markTheme(); }
+// Look: six gradient looks (Ember Sunset is the default) plus Noir (plain dark) and Ivory (light).
+// Saved on this device as 'hubLook' (new key in 0.26.0, so everyone starts on Ember Sunset); ?theme= can override for previews.
+const GRAD = ['ember', 'amethyst', 'sapphire', 'bordeaux', 'rosegold', 'onyx'];
+const THEMES = { ember:1, amethyst:1, sapphire:1, bordeaux:1, rosegold:1, onyx:1, noir:1, ivory:1 };
+function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubLook'); if (THEMES[t]) return t; } catch {} return 'ember'; }
+function applyTheme(t) { const r = document.documentElement; r.dataset.theme = t; if (GRAD.includes(t)) r.dataset.grad = '1'; else delete r.dataset.grad; }
+function setTheme(t) { applyTheme(t); try { localStorage.setItem('hubLook', t); } catch {} markTheme(); }
 function markTheme() { document.querySelectorAll('#s-theme button').forEach(b => b.classList.toggle('on', b.dataset.t === document.documentElement.dataset.theme)); }
-document.documentElement.dataset.theme = getTheme();
+applyTheme(getTheme());
 const REPO = 'glickshulem-stack/apps';
 const hasHub = typeof Hub !== 'undefined';
 const hubVer = hasHub ? Hub.hubVersion() : 'web';
@@ -233,7 +250,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.25.0';
+const PAGE_VER = '0.26.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
