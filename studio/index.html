@@ -8,12 +8,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* Royal Blue & Gold (Su's pick, Studio 0.6.0): light page, white cards, navy bar, gold buttons */
-  :root { --bg:#eaf0fa; --bg2:#dfe8f8; --surface:#ffffff; --surface2:#eef3fb; --text:#14213d; --muted:#56657f; --line:#d2dcee;
-    --gold:#c0902f; --gold2:#8a5d1f; --goldhi:#f3d58f; --red:#b8462c; --shadow:0 8px 24px rgba(20,40,90,.10); color-scheme:light;
-    --glow:#dfe8f8; --tile:#e7eef9; --strong:#1f3566; --dangerline:#e0b4a4; --dangertext:#a2452c; --navy:#1f3566; }
+  /* Dark gradient looks (Su, Studio 0.7.0): Ember Sunset (default) and Amethyst Dusk, picked in Settings > Look.
+     Light, see-through cards over a slowly drifting gradient; gold buttons. */
+  :root { --bg:#2b0e10; --bg2:#3d1410; --surface:rgba(255,255,255,.08); --surface2:rgba(255,255,255,.12); --text:#fbf3ff; --muted:#f0cdb8; --line:rgba(255,255,255,.18);
+    --gold:#e2b04f; --gold2:#f4cf7e; --goldhi:#fde6a8; --red:#ff9b84; --shadow:0 14px 34px rgba(0,0,0,.35); color-scheme:dark;
+    --glow:#6b2a17; --tile:rgba(255,255,255,.14); --strong:#fde6a8; --dangerline:rgba(255,180,160,.4); --dangertext:#ffc2b0;
+    --grad:linear-gradient(135deg,#240a10 0%,#5c1a1f 30%,#8a3a1a 60%,#3d1410 85%,#240a10 100%); }
+  :root[data-look="amethyst"] { --bg:#1a1426; --bg2:#3a1f5c; --muted:#dccbe8; --glow:#3b2a5c;
+    --grad:linear-gradient(135deg,#17122a 0%,#3a1f5c 30%,#6b2a6e 55%,#8a3a4e 80%,#17122a 100%); }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; min-height:100vh; background:radial-gradient(1200px 600px at 70% -10%,var(--glow),var(--bg)) fixed, var(--bg); color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
+  body { margin:0; min-height:100vh; background:var(--grad) fixed, var(--bg); background-size:300% 300%; animation:drift 40s ease-in-out infinite alternate; color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
   button, input, textarea, select { font:inherit; color:inherit; }
   button { cursor:pointer; }
   .serif { font-family:Cinzel,Georgia,serif; }
@@ -120,9 +124,16 @@
   .settings .line span { color:var(--muted); }
   .danger { margin-top:26px; border:1px solid var(--dangerline); color:var(--dangertext); background:none; border-radius:12px; padding:10px 18px; font-weight:700; }
   @media (max-width:640px) { .row2 { grid-template-columns:auto 1fr; } .row2 .acts { grid-column:1/-1; } }
-  .bar, .tabs { background:var(--navy); border-color:var(--navy); }
-  .bar h1, .sync { color:#fff; } .bar .ghost { color:var(--goldhi); border-color:#3d5689; }
-  .tab { color:#c9d5ee; } .tab:hover { color:#fff; } .tab.on { background:var(--bg); border-color:var(--bg); color:var(--navy); }
+  @keyframes drift { from { background-position:0% 30%; } to { background-position:100% 70%; } }
+  @media (prefers-reduced-motion: reduce) { body { animation:none; } }
+  .bar, .tabs { background:rgba(0,0,0,.18); border-color:rgba(255,255,255,.14); }
+  .bar h1, .sync { color:#fff; } .bar .ghost { color:var(--goldhi); border-color:rgba(255,255,255,.25); }
+  .tab { color:rgba(255,255,255,.72); } .tab:hover { color:#fff; } .tab.on { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.18); color:var(--goldhi); }
+  .app.ready { border-color:var(--gold); }
+  .modal { background:#3a1a22; } :root[data-look="amethyst"] .modal { background:#2e1f48; }
+  .toast { background:#3a1a22; } :root[data-look="amethyst"] .toast { background:#2e1f48; }
+  .looks { display:flex; gap:10px; } .looks button { width:120px; height:54px; border-radius:12px; border:2px solid transparent; color:#fff; font-weight:700; font-size:.82rem; }
+  .looks button.on { border-color:var(--gold); box-shadow:0 0 14px rgba(226,176,79,.45); }
   .toast { color:var(--text); }
   [hidden] { display:none !important; }
 </style>
@@ -132,6 +143,7 @@
   <img src="icon.svg" alt="">
   <h1>Play Hub Studio</h1>
   <div class="sp"></div>
+  <button class="gold" id="share3" hidden style="padding:9px 16px;font-size:.88rem">Share Play Hub</button>
   <span class="sync" id="sync" hidden><span id="checked"></span><button class="ghost" id="reload" title="Check GitHub again">↻ Check again</button></span>
 </div>
 <nav class="tabs" id="tabs" hidden>
@@ -208,6 +220,7 @@
     <div class="line"><span>Studio page</span><b id="set-page"></b></div>
     <div class="line"><span>Studio app</span><span id="set-app" style="display:flex;gap:10px;align-items:center"></span></div>
     <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
+    <div class="line"><span>Look</span><div class="looks" id="looks"><button data-look="ember" style="background:linear-gradient(135deg,#5c1a1f,#8a3a1a)">Ember Sunset</button><button data-look="amethyst" style="background:linear-gradient(135deg,#3a1f5c,#8a3a4e)">Amethyst Dusk</button></div></div>
     <div class="line"><span>Give Play Hub to someone</span><button class="btn" id="share2">Share Play Hub</button></div>
     <button class="danger" id="signout">Sign out of Studio</button>
     <p class="hint" style="margin-top:10px">Only needed if you want to stop using Studio on this device. You will have to paste your GitHub key again.</p>
@@ -219,7 +232,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.6.0';
+const VERSION = '0.7.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -278,9 +291,9 @@ $('signin-btn').onclick = async () => {
 };
 $('signout').onclick = () => confirmBox('Sign out of Studio?', 'You will need to paste your GitHub key again to use Studio on this device.', 'Sign out', () => { store.set('studioKey', null); token = null; showSignin(); });
 
-function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; }
+function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; $('share3').hidden = true; }
 async function showHome() {
-  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false;
+  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false; $('share3').hidden = false;
   showTab(store.get('studioTab') || 'bench');
   await load();
   resumeUpload();
@@ -344,7 +357,29 @@ function shareBox() {
   };
   $('sh-no').onclick = closeModal;
 }
-$('share').onclick = shareBox; $('share2').onclick = shareBox;
+// Real share menu first: the Studio app's Android share sheet (Quick Share, WhatsApp, Bluetooth, Drive…),
+// then the browser's own share (Windows / Android Chrome); otherwise our box with copy / WhatsApp / text / email.
+function sharePlayHub() {
+  if (bridge && bridge.shareFile) {   // Studio app 0.3.0+: share the Play Hub app file itself (works with Quick Share and Bluetooth too)
+    const hub = catalog && catalog.apps.find(x => x.id === 'hub');
+    if (hub) { toast('Getting Play Hub ready to share…'); bridge.shareFile(apkUrl(hub), 'PlayHub.apk', SHARE_TEXT + SHARE_URL); return; }
+  }
+  if (bridge && bridge.share) { bridge.share('Play Hub', SHARE_TEXT + SHARE_URL); return; }
+  if (bridge) { shareBox(); toast('Update Studio in Settings to get the full Android share menu'); return; }
+  if (navigator.share) { navigator.share({ title:'Play Hub', text:SHARE_TEXT, url:SHARE_URL }).catch(e => { if (e && e.name !== 'AbortError') shareBox(); }); return; }
+  shareBox();
+}
+window.shareReady = ok => { if (!ok) { toast('Could not get Play Hub ready. Sending the link instead.'); bridge.share ? bridge.share('Play Hub', SHARE_TEXT + SHARE_URL) : shareBox(); } };
+$('share').onclick = sharePlayHub; $('share2').onclick = sharePlayHub; $('share3').onclick = sharePlayHub;
+
+// Look: Ember Sunset (default) or Amethyst Dusk, remembered on this device.
+function setLook(l) {
+  if (l !== 'amethyst') l = 'ember';
+  document.documentElement.dataset.look = l; store.set('studioLook', l);
+  document.querySelectorAll('#looks button').forEach(b => b.classList.toggle('on', b.dataset.look === l));
+}
+setLook(store.get('studioLook'));
+$('looks').onclick = e => { const b = e.target.closest('button[data-look]'); if (b) setLook(b.dataset.look); };
 
 // Tabs
 function showTab(t) {
