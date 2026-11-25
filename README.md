@@ -14,3 +14,6 @@ New versions go to **Studio only**. Su tries them in Studio on the tablet and pr
 When you change the Studio page (`studio/index.html`), raise its `VERSION` and set `"studioPage"` in `studio.json` to match, so open or cached copies of Studio reload themselves before they can change Play Hub.
 
 Ready-made APKs (like Quillsong) are dropped into Studio, which uploads them to an `upload/...` branch; the *Publish uploaded APK* workflow makes the release and adds the version to `studio.json`.
+
+## Notes
+`PROJECTS.md` is the master list of every app. Each app folder has a `NOTES.md`; read it before working on that app and update it when you finish.
