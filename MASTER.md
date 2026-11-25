@@ -27,7 +27,7 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 
 | App | Folder | Current version | Status | Next to-do |
 |---|---|---|---|---|
-| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.19.0 (Beta: Publish Beta / Make public / Send to one person, Beta requests in People; Messages dot + photo preview fixes), app 0.6.0 (camera) | testing | Su pastes the Beta rule, updates Studio app, tries Beta; then notifications |
+| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.19.1 (Beta: Publish Beta / Make public / Send to one person, Beta requests in People; Messages dot + photo preview fixes), app 0.6.0 (camera) | testing | Su pastes the Beta rule, updates Studio app, tries Beta; then notifications |
 | App Vault | `hub/` (page) + `android/hub/` (app) | page 0.33.0 public, 0.36.0 in Studio (0.36.0: report photos load, files up to 10 MB, Save ⬇, badge on one row; 0.35.0 Join/Leave Beta, Try the Beta, BETA tags; 0.34.0 send-or-cancel tray); app 0.13.0 (save to Downloads) | testing | Su pastes the new rules, tries page 0.36.0, then Publishes page and app 0.13.0. Next: notifications |
 | Gambit (chess) | `apps/chess/` + `android/chess/` | 0.31.0 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
