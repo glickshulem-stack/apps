@@ -160,7 +160,8 @@
   <span class="sync" id="sync" hidden><span id="checked"></span><button class="ghost" id="reload" title="Check GitHub again">↻ Check again</button></span>
 </div>
 <nav class="tabs" id="tabs" hidden>
-  <button class="tab" data-tab="bench">Test bench <i id="bench-count" hidden></i></button>
+  <button class="tab" data-tab="bench">Apps <i id="bench-count" hidden></i></button>
+  <button class="tab" data-tab="vault">App Vault <i id="vault-count" hidden></i></button>
   <button class="tab" data-tab="public">Public</button>
   <button class="tab" data-tab="people">People <i hidden></i></button>
   <button class="tab" data-tab="add">+ Add app</button>
@@ -188,8 +189,14 @@
 
 <main id="home" hidden>
   <section id="t-bench" class="tabpage">
-    <p class="hint">All your apps. A gold card has a version your friends don't have yet: install it to try, then press Publish.</p>
+    <p class="hint">Your apps. A gold card has a version your friends don't have yet: install it to try, then press Publish.</p>
     <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
+  </section>
+  <section id="t-vault" class="tabpage" hidden>
+    <p class="hint">Everything about App Vault itself: the app, its page, and sharing it. Try first, then press Publish.</p>
+    <div class="apps" id="vault"><div class="empty">Loading…</div></div>
+    <div class="app" style="margin-top:14px"><div class="row2"><img src="${'{'}x{'}'}" alt="" id="share-ic"><div><b class="n">Share App Vault</b><small style="color:var(--muted)">Send App Vault to friends: the real Android share menu on the tablet, a link on the desktop.</small></div>
+      <div class="acts"><button class="gold" id="share4">Share App Vault</button></div></div></div>
   </section>
   <section id="t-public" class="tabpage" hidden>
     <div style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px"><p class="hint" style="margin:0">What your friends see in App Vault right now.</p><button class="gold" id="share">Share App Vault</button></div>
@@ -266,7 +273,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.11.0';
+const VERSION = '0.12.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -420,7 +427,7 @@ function shareAppVault() {
   shareBox();
 }
 window.shareReady = ok => { if (!ok) { toast('Could not get App Vault ready. Sending the link instead.'); bridge.share ? bridge.share('App Vault', SHARE_TEXT + SHARE_URL) : shareBox(); } };
-$('share').onclick = shareAppVault; $('share2').onclick = shareAppVault;
+$('share').onclick = shareAppVault; $('share4').onclick = shareAppVault; $('share2').onclick = shareAppVault;
 
 // Look: Ember Sunset (default) or Amethyst Dusk, remembered on this device.
 function setLook(l) {
@@ -457,7 +464,8 @@ function render() {
   const rank = a => { const st = stateOf(a, pub[a.id]); return needsPublish(st) ? 0 : st === 'live' ? 1 : 2; };
   const list = studio.apps.filter(a => !a.private).sort((a, b) => rank(a) - rank(b));   // Studio itself lives in Settings
   let waiting = 0;
-  $('apps').innerHTML = list.map(a => {
+  // App Vault itself (its app and its page) has its own tab; the Apps tab holds everything else.
+  const card = a => {
     const p = pub[a.id], st = stateOf(a, p), need = needsPublish(st);
     if (need) waiting++;
     const line = st === 'newer' ? `<div class="st">Newer in Studio · your friends still have ${esc(p.version)}</div>`
@@ -468,23 +476,28 @@ function render() {
       <img src="${esc(iconSrc(a))}" alt=""><div><b class="n">${esc(a.name)}</b>${pills(a, p)}${line}${a.note && need ? `<small style="color:var(--muted)">What's new: ${esc(a.note)}</small>` : ''}</div>
       <div class="acts">${tryButton(a)}${need ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div>
     </div></div>`;
-  }).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
+  };
+  $('apps').innerHTML = list.filter(a => a.id !== 'hub').map(card).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
+  $('bench-count').hidden = !waiting; $('bench-count').textContent = `${waiting} to publish`;
+  waiting = 0;
+  $('vault').innerHTML = list.filter(a => a.id === 'hub').map(card).join('');
+  $('share-ic').src = iconSrc(studio.apps.find(x => x.id === 'hub') || {});
   if (page) {
     const need = page.next !== page.live || page.getNew; if (need) waiting++;
     const card = `<div class="app${need ? ' ready' : ''}" data-id="hubpage"><div class="row2"><img src="${esc(iconSrc(studio.apps.find(x => x.id === 'hub') || {}))}" alt=""><div><b class="n">App Vault page</b>
       <div class="vers"><span class="v${need ? ' hi' : ''}">In Studio <strong>${esc(page.next)}</strong></span><span class="v">Public <strong>${esc(page.live)}</strong></span></div>
       ${need ? `<div class="st">Newer in Studio · your friends still see ${esc(page.live)}</div>` : `<div class="st ok">✓ Same as public</div>`}<small style="color:var(--muted)">The look and screens of App Vault itself, plus the friends download page</small></div>
       <div class="acts"><a class="btn" style="text-decoration:none" href="${esc(SITE + 'hub-next/?v=' + encodeURIComponent(page.next))}" ${bridge ? '' : 'target="_blank" rel="noopener"'}>Try</a>${need ? `<button class="gold" data-act="pagepub">Publish ${esc(page.next)}</button>` : ''}</div></div></div>`;
-    $('apps').insertAdjacentHTML(need ? 'afterbegin' : 'beforeend', card);
+    $('vault').insertAdjacentHTML('beforeend', card);
   }
   renderSelf();
-  $('bench-count').hidden = !waiting; $('bench-count').textContent = `${waiting} to publish`;
+  $('vault-count').hidden = !waiting; $('vault-count').textContent = `${waiting} to publish`;
   $('pubapps').innerHTML = catalog.apps.map(p => {
     const a = studio.apps.find(x => x.id === p.id), st = a ? stateOf(a, p) : 'live';
     const line = st === 'newer' ? `<div class="st">Studio has ${esc(a.version)} · not published yet</div>` : st === 'details' ? `<div class="st">New details in Studio · not published yet</div>` : `<div class="st ok">✓ Up to date</div>`;
     return `<div class="app${needsPublish(st) ? ' ready' : ''}" data-id="${esc(p.id)}"><div class="row2"><img src="${esc(iconSrc(p))}" alt=""><div><b class="n">${esc(p.name)}</b>${pills(a, p)}${line}</div>
       <div class="acts">${needsPublish(st) ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${p.id !== 'hub' ? `<button class="btn" data-act="hide">Take off</button>` : ''}</div></div></div>`;
-  }).join('') || '<div class="empty">Nothing published yet. Press Publish on an app in the Test bench.</div>';
+  }).join('') || '<div class="empty">Nothing published yet. Press Publish on an app in the Apps tab.</div>';
 }
 
 // Studio's own app: version and update, shown only in Settings.
@@ -517,7 +530,7 @@ window.refresh = () => { if (studio) render(); };
 setInterval(() => { if (bridge && studio && document.querySelector('[data-act="cancel"]')) render(); }, 1000);
 
 const appOf = el => { const c = el.closest('.app'); return c && studio.apps.find(x => x.id === c.dataset.id); };
-$('apps').onclick = e => {
+$('apps').onclick = $('vault').onclick = e => {
   const b = e.target.closest('button[data-act]'); if (!b) return;
   if (b.dataset.act === 'pagepub') return publishPage();
   const a = appOf(b), act = b.dataset.act;

@@ -7,14 +7,14 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - Studio reads `studio.json`. Publishing changes `catalog.json`.
 
 ## Current version
-- Studio page: 0.11.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
+- Studio page: 0.12.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
 - Studio app (APK): 0.5.0 (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
 
 ## Su's decisions
 - Renamed App Vault Studio on 2026-11-25 (was Play Hub Studio). Package `com.glickshulem.hubstudio`, id `hubstudio` and the `studio/` URL stay the same.
 - Su named it App Vault Studio. It is private: never shown on the friends page or in the public App Vault.
 - Every app update Claude makes goes only to Studio. Only Su's Publish changes the public App Vault.
-- Tabs: Test bench, Public, People, + Add app, Settings. Publish with buttons only, no drag.
+- Tabs: Apps (Gambit, Quillsong, future apps), App Vault (the App Vault app, the App Vault page, Share App Vault; Su asked 2026-11-25), Public, People, + Add app, Settings. Publish with buttons only, no drag.
 - Studio itself does not appear in the app lists; its version and update live in Settings.
 - Dark looks only (never light, never blue): Ember Sunset (default) and Amethyst Dusk.
 - Share App Vault (Settings and Public tab; Su removed the top-bar button in 0.9.1) opens the real Android share sheet with the App Vault APK.
