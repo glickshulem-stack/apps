@@ -58,14 +58,16 @@ service cloud.firestore {
         && request.resource.data.userUnread == false);
       allow delete: if isSu();
       // The chat under each message: Su's replies and the writer's answers.
-      // Both sides may add one photo (JPEG data URL) or one small file (App Vault page 0.33.0+, Studio 0.18.0+).
+      // Both sides may add one photo (JPEG data URL) or one file (App Vault page 0.33.0+, Studio 0.18.0+).
+      // A small file carries its data; a big one (page 0.35.0+, up to 10 MB) names its parts: key + parts, kept in /parts.
       function okAttach() {
         let d = request.resource.data;
         return (!('photo' in d) || (d.photo is string && d.photo.size() <= 900000))
-          && (!('file' in d) || (d.file is map && d.file.keys().hasOnly(['name', 'type', 'data'])
+          && (!('file' in d) || (d.file is map && d.file.keys().hasOnly(['name', 'type', 'data', 'size', 'key', 'parts'])
             && d.file.name is string && d.file.name.size() <= 200
             && d.file.type is string && d.file.type.size() <= 200
-            && d.file.data is string && d.file.data.size() <= 960000));
+            && (!('data' in d.file) || (d.file.data is string && d.file.data.size() <= 960000))
+            && (!('parts' in d.file) || (d.file.parts is int && d.file.parts <= 16))));
       }
       match /msgs/{mid} {
         allow read: if isSu() || (request.auth != null && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid);
@@ -80,6 +82,15 @@ service cloud.firestore {
             && request.resource.data.text.size() <= 2000
             && okAttach()
             && request.resource.data.keys().hasOnly(['from', 'uid', 'text', 'created', 'photo', 'file']));
+        allow delete: if isSu();
+      }
+      // Pieces of big files (up to 16 x 900k characters), written before their message
+      match /parts/{part} {
+        allow read: if isSu() || (request.auth != null && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid);
+        allow create: if (isSu() || (approved() && request.resource.data.uid == request.auth.uid
+            && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid))
+          && request.resource.data.data is string && request.resource.data.data.size() <= 950000
+          && request.resource.data.keys().hasOnly(['uid', 'from', 'data']);
         allow delete: if isSu();
       }
       match /photos/{pid} {
