@@ -1,4 +1,4 @@
-const VERSION = '0.27.2';
+const VERSION = '0.28.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -55,12 +55,14 @@ try { const v = JSON.parse(localStorage.getItem('gambit-time')); if (v === null 
 // This keeps the strength the same all game long (Stockfish's own Skill Level setting blundered pieces in the middlegame).
 // think = how long the computer pretends to think, in seconds [min, max].
 const LEVELS = [
-  { name:'Beginner', simple:'beginner', think:[1, 2] },
-  { name:'Easy',     simple:'easy',     think:[1.2, 2.5] },
-  { name:'Medium',   depth:5,  pv:6, margin:90, slip:[.15, 200], think:[1.5, 3] },
-  { name:'Hard',     depth:8,  pv:4, margin:40, slip:[.08, 100], think:[1.8, 3.5] },
-  { name:'Expert',   skill:12, ms:500,            think:[2, 4] },
-  { name:'Master',   skill:20, ms:1500,           think:[2.5, 5] } ];
+  { name:'Beginner', simple:'beginner', think:[1.3, 2.3] },
+  { name:'Easy',     simple:'easy',     think:[1.6, 2.8] },
+  { name:'Medium',   depth:5,  pv:6, margin:90,  slip:[.15, 200], think:[2, 3.5] },
+  { name:'Hard',     depth:7,  pv:5, margin:55,  slip:[.1, 120], think:[2.5, 4.2] },
+  { name:'Expert',   skill:12, ms:500,                          think:[3, 5] },
+  { name:'Master',   skill:20, ms:1500,                         think:[3.5, 6] } ];
+// Measured 2026-11-25 (average loss of winning chances per middlegame move vs a deep search):
+// Beginner ~28%, Easy ~14%, Medium ~4%, Hard ~2%, Expert ~1%, Master ~0.6%. Each level is a clear step up.
 let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
 try { const v = JSON.parse(localStorage.getItem('gambit-setup')); if (v && typeof v.cpu === 'boolean') setup = v; } catch {}
 let hintMove = null, hintBusy = false, review = null, reviewing = false, lastScore = null;
