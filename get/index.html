@@ -78,7 +78,12 @@ fetch('../catalog.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.json
     if (hub.windowsVersion) document.getElementById('win-ver').textContent = `Version ${hub.windowsVersion} · for Windows computers`;
     document.getElementById('win').hidden = false;
   }
-}).catch(() => {});
+}).catch(() => {}).finally(() => {
+  // Links shared from Play Hub Studio end in ?auto: on Android the download starts by itself.
+  if (!new URLSearchParams(location.search).has('auto') || !/Android/i.test(navigator.userAgent)) return;
+  document.getElementById('ver').textContent = 'Your download has started. If nothing happens, tap Download Play Hub.';
+  setTimeout(() => { location.href = document.getElementById('dl').href; }, 600);
+});
 </script>
 </body>
 </html>
