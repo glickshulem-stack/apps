@@ -220,11 +220,6 @@
     <div class="row"><span>Play Hub page<small>The screen you see. It updates when you check.</small></span><span class="vv" id="s-page"></span></div>
   </div>
   <div id="news-box"></div>
-  <h5>About</h5>
-  <div class="box">
-    <div class="row"><span>Apps available</span><span id="s-count"></span></div>
-    <div class="row"><span>Source</span><span>GitHub</span></div>
-  </div>
 </div>
 <div class="sheet sub" id="newsview">
   <div class="sheet-head"><button class="backbtn" id="news-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><h4 class="goldtext" style="text-align:right">What's new</h4></div>
@@ -248,7 +243,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.17.0';
+const PAGE_VER = '0.18.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -410,7 +405,7 @@ function render() {
   if (busy && !ticker) ticker = setInterval(render, 500);
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
   renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews(); renderRemoved(); updateDetail();
-  $('settings').classList.toggle('dot', !!hubUpd); $('s-count').textContent = apps.length;
+  $('settings').classList.toggle('dot', !!hubUpd);
   $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'}) : 'Not checked yet';
 }
 
