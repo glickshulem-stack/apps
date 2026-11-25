@@ -1,0 +1,26 @@
+// Copy of the Firestore rules Su pasted in the Firebase console (project app-vault-962b9 > Firestore > Rules).
+// SU_EMAIL = the email of Su's Email/Password user (kept out of this public repo). Change both copies together.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSu() {
+      return request.auth != null
+        && request.auth.token.email == 'SU_EMAIL'
+        && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+    match /members/{uid} {
+      allow read: if isSu() || (request.auth != null && request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 40
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 200
+        && request.resource.data.device is string
+        && request.resource.data.device.size() <= 80
+        && request.resource.data.keys().hasOnly(['name', 'note', 'device', 'status', 'created']);
+      allow update, delete: if isSu();
+    }
+  }
+}
