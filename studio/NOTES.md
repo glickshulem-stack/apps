@@ -8,7 +8,7 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 
 ## Current version
 - Studio page: 0.10.1 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
-- Studio app (APK): 0.4.0 (`android/hubstudio/app/build.gradle`), named App Vault Studio
+- Studio app (APK): 0.5.0 (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
 
 ## Su's decisions
 - Renamed App Vault Studio on 2026-11-25 (was Play Hub Studio). Package `com.glickshulem.hubstudio`, id `hubstudio` and the `studio/` URL stay the same.
