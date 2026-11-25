@@ -10,7 +10,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.content.ClipData;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -63,8 +66,36 @@ public class MainActivity extends Activity {
                 if (r.isForMainFrame()) v.loadUrl("file:///android_asset/index.html");
             }
         });
+        // Photo picker for bug reports (App Vault 0.11.0, bridge 5): the page's "Add photos" opens the Android picker.
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
+                if (picking != null) picking.onReceiveValue(null);
+                picking = cb;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*");
+                if (p != null && p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                try { startActivityForResult(Intent.createChooser(i, "Choose photos"), PICK); }
+                catch (Exception e) { picking = null; cb.onReceiveValue(null); return false; }
+                return true;
+            }
+        });
         web.loadUrl(SITE + "hub/");
         setContentView(web);
+    }
+
+    private static final int PICK = 41;
+    private ValueCallback<Uri[]> picking;
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        if (req != PICK || picking == null) { super.onActivityResult(req, res, data); return; }
+        Uri[] out = null;
+        if (res == RESULT_OK && data != null) {
+            ClipData c = data.getClipData();
+            if (c != null && c.getItemCount() > 0) { out = new Uri[c.getItemCount()]; for (int k = 0; k < out.length; k++) out[k] = c.getItemAt(k).getUri(); }
+            else if (data.getData() != null) out = new Uri[]{ data.getData() };
+        }
+        picking.onReceiveValue(out);
+        picking = null;
     }
 
     @Override
@@ -257,7 +288,7 @@ public class MainActivity extends Activity {
             if (i != null) startActivity(i);
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 4; }   // 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
+        @JavascriptInterface public int bridge() { return 5; }   // 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
         /** Open Android's "Uninstall this app?" question for an app that was taken off App Vault. */
         @JavascriptInterface public void uninstall(String pkg) {
             if (pkg == null || pkg.isEmpty() || pkg.equals(getPackageName())) return;

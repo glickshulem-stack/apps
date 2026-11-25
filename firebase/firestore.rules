@@ -30,5 +30,34 @@ service cloud.firestore {
         && request.resource.data.page.size() <= 20);
       allow delete: if isSu();
     }
+    function approved() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.status == 'approved';
+    }
+    // Notes and bug reports from App Vault app pages (App Vault 0.29.0+)
+    match /reports/{rid} {
+      allow read: if isSu() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow create: if approved()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'new'
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.photos is int
+        && request.resource.data.photos <= 4
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'app', 'appName', 'version', 'page', 'device', 'text', 'photos', 'status', 'created']);
+      allow update, delete: if isSu();
+      match /photos/{pid} {
+        allow read: if isSu() || (request.auth != null && resource.data.uid == request.auth.uid);
+        allow create: if approved()
+          && request.resource.data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid
+          && pid in ['0', '1', '2', '3']
+          && request.resource.data.data is string
+          && request.resource.data.data.size() <= 900000
+          && request.resource.data.keys().hasOnly(['uid', 'data']);
+        allow delete: if isSu();
+      }
+    }
   }
 }
