@@ -303,8 +303,29 @@ public class MainActivity extends Activity {
             Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
             if (i != null) startActivity(i);
         }
+        // Saves a photo or file from the developer chat into Downloads/App Vault (App Vault 0.13.0, bridge 7). Returns "ok" or the error.
+        @JavascriptInterface public String saveFile(String name, String type, String b64) {
+            Activity a = MainActivity.this;
+            try {
+                byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+                String safe = (name == null || name.isEmpty() ? "file" : name).replaceAll("[\\/:*?\"<>|]", "_");
+                if (Build.VERSION.SDK_INT >= 29) {
+                    android.content.ContentValues v = new android.content.ContentValues();
+                    v.put(MediaStore.MediaColumns.DISPLAY_NAME, safe);
+                    v.put(MediaStore.MediaColumns.MIME_TYPE, type == null || type.isEmpty() ? "application/octet-stream" : type);
+                    v.put(MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/App Vault");
+                    Uri u = a.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                    if (u == null) return "no place to save";
+                    try (OutputStream o = a.getContentResolver().openOutputStream(u)) { o.write(bytes); }
+                } else {
+                    File dir = new File(a.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), "App Vault"); dir.mkdirs();
+                    try (OutputStream o = new FileOutputStream(new File(dir, safe))) { o.write(bytes); }
+                }
+                return "ok";
+            } catch (Exception e) { return String.valueOf(e.getMessage()); }
+        }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 6; }   // 6 = camera + any file in the chat picker; 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
+        @JavascriptInterface public int bridge() { return 7; }   // 7 = saveFile(); 6 = camera + any file in the chat picker; 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
         /** Open Android's "Uninstall this app?" question for an app that was taken off App Vault. */
         @JavascriptInterface public void uninstall(String pkg) {
             if (pkg == null || pkg.isEmpty() || pkg.equals(getPackageName())) return;

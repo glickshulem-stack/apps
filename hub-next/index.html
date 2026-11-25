@@ -103,6 +103,7 @@
   .rl { display:flex; align-items:center; gap:14px; } .rl > span, .row.go .rl > span:last-child { color:var(--text); font-weight:600; font-size:1rem; line-height:1.3; }
   .ri { width:22px; height:22px; flex:none; fill:none; stroke:var(--gold2); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; color:var(--gold2); }
   .row.go span:last-child { color:var(--gold2); font-size:1.4rem; line-height:1; }
+  .row.go > .rl { flex:1; min-width:0; } .row.go > span:last-child { flex:none; display:flex; align-items:center; gap:4px; white-space:nowrap; margin-left:10px; }
   .sheet #s-upd-x { padding:0 0 10px; }
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
@@ -208,7 +209,7 @@
   .rp-bg { z-index:26; }
   .rp-item.go { display:block; width:100%; text-align:left; color:var(--text); font:inherit; cursor:pointer; }
   .rp-item .top b.new { color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); padding:1px 9px; border-radius:99px; } .rp-item .top b.wait { color:var(--muted); }
-  .rp-new { font-style:normal; font-size:.75rem; font-weight:800; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); padding:2px 9px; border-radius:99px; margin-right:6px; vertical-align:2px; }
+  .rp-new { font-style:normal; font-size:.75rem; font-weight:800; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); padding:3px 10px; border-radius:99px; margin-right:6px; white-space:nowrap; line-height:1.3; }
   .rp-state { text-align:center; font-size:.8rem; font-weight:700; color:var(--muted); margin:-4px 0 10px; } .rp-state.new { color:var(--gold2); }
   .rp-thread { display:flex; flex-direction:column; gap:10px; max-height:52vh; overflow-y:auto; padding:4px 2px 8px; }
   .bub { max-width:85%; padding:10px 14px; border-radius:16px; background:var(--surface2); border:1px solid var(--line); }
@@ -222,7 +223,7 @@
   .rp-card.chat .rp-thread { flex:1; max-height:none; padding:6px 4px 10px; }
   .rp-day { align-self:center; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); background:var(--surface); border:1px solid var(--line); padding:3px 12px; border-radius:99px; margin:6px 0 2px; }
   .bub.me { background:#26355a; border-color:#34467a; } .bub .pics img { cursor:zoom-in; width:150px; height:150px; }
-  .filechip { display:inline-flex; align-items:center; gap:6px; margin-top:6px; padding:8px 12px; border-radius:12px; background:var(--surface); border:1px solid var(--gold); color:var(--gold2); font-weight:600; text-decoration:none; word-break:break-all; }
+  .filechip { display:inline-flex; align-items:center; gap:6px; margin-top:6px; padding:8px 12px; border-radius:12px; background:var(--surface); border:1px solid var(--gold); color:var(--gold2); font-weight:600; text-decoration:none; overflow-wrap:anywhere; }
   .rp-empty { margin:auto; text-align:center; color:var(--muted); line-height:1.6; padding:20px; } .rp-empty img { width:56px; height:56px; opacity:.85; }
   .rp-comp { display:flex; align-items:flex-end; gap:8px; border-top:1px solid var(--line); padding-top:10px; }
   .rp-comp textarea { flex:1; min-height:46px; max-height:140px; resize:none; border:1px solid var(--line); border-radius:22px; background:var(--surface2); color:var(--text); padding:12px 16px; font:400 1rem/1.4 Inter,sans-serif; outline:none; }
@@ -236,6 +237,8 @@
   .rp-plus button { text-align:left; border:0; background:none; color:var(--text); font:600 1rem Inter,sans-serif; padding:12px 14px; border-radius:12px; cursor:pointer; } .rp-plus button:active { background:var(--surface2); }
   .rp-plus p { margin:6px 10px; color:var(--muted); font-size:.85rem; }
   .rp-zoom { position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.9); display:flex; align-items:center; justify-content:center; padding:16px; cursor:zoom-out; }
+  .rp-zoom .save { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); border:0; border-radius:99px; padding:12px 22px; font:700 1rem Inter,sans-serif; color:#2a1d10; background:linear-gradient(180deg,#f6dc9c,#c9993f); cursor:pointer; }
+  button.filechip { cursor:pointer; font:600 .95rem Inter,sans-serif; text-align:left; } .filechip small { color:var(--muted); font-weight:500; margin-left:6px; white-space:nowrap; flex:none; }
   .rp-zoom[hidden] { display:none; } .rp-zoom img { max-width:100%; max-height:100%; border-radius:12px; }
   .rp-tray { border-top:1px solid var(--line); padding:10px 0 0; }
   .rp-tray .items { display:flex; gap:10px; flex-wrap:wrap; }
@@ -292,7 +295,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.34.0';
+const PAGE_VER = '0.35.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -735,10 +738,11 @@ gateStart();
 // Firestore: reports/{id} (first message, + photos/0..3) and reports/{id}/msgs/{m} = { from:'su'|'user', uid, text, created, photo?, file? }.
 // photo = JPEG data URL; file = { name, type, data (data URL) }; their text is '📷 Photo' / '📎 name'. New messages go into the latest report.
 // reports.status: 'new' (waiting for Su) · 'replied' · 'done'; userUnread = Su wrote and this person has not opened the chat yet.
-// Photos and files are kept in the database itself (shrunk / up to 700 KB), so no paid storage is needed.
+// Photos and files are kept in the database itself (photos shrunk; files up to 10 MB, big ones split into parts), so no paid storage is needed.
 const bridgeLv = hasHub && typeof Hub.bridge === 'function' ? Hub.bridge() : 0;
 const canPick = !hasHub || bridgeLv >= 5;    // App Vault app 0.11.0+: photo picker
 const canMore = !hasHub || bridgeLv >= 6;    // App Vault app 0.12.0+: camera and any file
+// bridge 7 (App Vault app 0.13.0): Hub.saveFile() puts photos and files in Downloads › App Vault
 const rp = { draft:[], mine:[], off:null, msgs:{}, msgOffs:{}, pics:{}, picsLoading:{}, sending:0 };
 function shrink(file) {   // → JPEG data URL, longest side ≤ 1280 px, under ~850 KB
   return new Promise((ok, bad) => {
@@ -788,29 +792,31 @@ function rpItems() {
     // a chat that started with a file: the report only carries its name, the file itself is in the first message
     const dup = first && first.from === 'user' && first.file && first.text === r.text && !r.photos;
     if (!dup) out.push({ me:true, text:r.text, t:r.created, pics:r.photos ? (rp.pics[r.id] || null) : null, rid:r.id, nPics:r.photos || 0 });
-    for (const m of ms) out.push({ me:m.from !== 'su', text:m.text, t:m.created, photo:m.photo, file:m.file });
+    for (const m of ms) out.push({ me:m.from !== 'su', text:m.text, t:m.created, photo:m.photo, file:m.file ? { ...m.file, rid:r.id } : null });
   }
   return out.sort((a, b) => secs(a.t) - secs(b.t));
 }
-function rpLoadPics(r) {
+function rpLoadPics(r) {   // one by one: the rules allow reading each photo, not listing the folder
   if (!r.photos || rp.pics[r.id] || rp.picsLoading[r.id]) return;
   rp.picsLoading[r.id] = 1; const { F, db } = gate.fb;
-  F.getDocs(F.collection(db, 'reports', r.id, 'photos')).then(s => { rp.pics[r.id] = s.docs.sort((a, b) => +a.id - +b.id).map(d => d.data().data); })
-    .catch(x => { console.warn(x); rp.pics[r.id] = []; }).finally(() => { delete rp.picsLoading[r.id]; if (rpIsOpen()) rpRender(); });
+  Promise.all([...Array(Math.min(r.photos, 4)).keys()].map(i => F.getDoc(F.doc(db, 'reports', r.id, 'photos', String(i)))
+    .then(d => d.exists() ? d.data().data : null).catch(x => { console.warn(x); return null; })))
+    .then(a => { rp.pics[r.id] = a.filter(Boolean); }).finally(() => { delete rp.picsLoading[r.id]; if (rpIsOpen()) rpRender(); });
 }
 function rpRender() {
   const box = $('rp-thread'); if (!box) return;
   rp.mine.forEach(rpLoadPics);
   const items = rpItems(), atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
   let day = '';
-  box.innerHTML = items.length ? items.map(m => {
+  rp.view = items;
+  box.innerHTML = items.length ? items.map((m, i) => {
     const d = rpDayName(m.t), sep = d !== day ? `<div class="rp-day">${d}</div>` : ''; day = d;
     const isPhoto = (m.photo || m.nPics) && /^📷/.test(m.text || ''), isFile = m.file && /^📎/.test(m.text || '');
     const pics = m.pics ? m.pics : m.photo ? [m.photo] : [];
     return sep + `<div class="bub ${m.me ? 'me' : 'dev'}">${m.me ? '' : '<b>Developer</b>'}
       ${m.text && !isPhoto && !isFile ? `<p>${esc(m.text)}</p>` : ''}
-      ${pics.length ? `<div class="pics">${pics.map(p => `<img src="${p}" alt="">`).join('')}</div>` : m.nPics ? '<small>📷 Loading photos…</small>' : ''}
-      ${m.file ? `<a class="filechip" download="${esc(m.file.name || 'file')}" href="${esc(m.file.data || '')}">📎 ${esc(m.file.name || 'File')}</a>` : ''}
+      ${pics.length ? `<div class="pics">${pics.map(p => `<img src="${p}" alt="">`).join('')}</div>` : m.nPics ? `<small>${m.pics ? '📷 Photo could not be loaded' : '📷 Loading photos…'}</small>` : ''}
+      ${m.file ? `<button class="filechip" data-dl="${i}">📎 ${esc(m.file.name || 'File')}<small>${m.file.size ? rpSize(m.file.size) + ' · ' : ''}Save ⬇</small></button>` : ''}
       <small>${rpTime(m.t)}</small></div>`;
   }).join('') : `<div class="rp-empty"><img src="../vault-icon.svg" alt=""><p>Ask a question, report a problem, or leave a note.<br>Everything you write and every reply stays here, like text messages.</p></div>`;
   if (atEnd || rp.stick) box.scrollTop = box.scrollHeight; rp.stick = false;
@@ -849,25 +855,61 @@ function rpOpen() {
   $('rp-any').onchange = e => { const f = e.target.files[0]; e.target.value = ''; rpAttach(f); };
   $('rp-tray').onclick = e => { const x = e.target.closest('[data-rm]'); if (x) { rp.draft.splice(+x.dataset.rm, 1); rpTray(); }
     if (e.target.closest('.cancel')) { rp.draft = []; rpTray(); } };
-  $('rp-thread').onclick = e => { const img = e.target.closest('.pics img'); if (!img) return; $('rp-zoom').innerHTML = `<img src="${img.src}" alt="">`; $('rp-zoom').hidden = false; };
-  $('rp-zoom').onclick = () => { $('rp-zoom').hidden = true; $('rp-zoom').innerHTML = ''; };
+  $('rp-thread').onclick = e => {
+    const dl = e.target.closest('[data-dl]'); if (dl) { rpSaveFile(rp.view[+dl.dataset.dl].file); return; }
+    const img = e.target.closest('.pics img'); if (!img) return;
+    $('rp-zoom').innerHTML = `<img src="${img.src}" alt=""><button class="save">Save photo ⬇</button>`; $('rp-zoom').hidden = false; };
+  $('rp-zoom').onclick = e => { if (e.target.closest('.save')) { rpSave('photo-' + Date.now() + '.jpg', 'image/jpeg', $('rp-zoom').querySelector('img').src); return; }
+    $('rp-zoom').hidden = true; $('rp-zoom').innerHTML = ''; };
   try { history.pushState({ ...(history.state || {}), support:1 }, ''); } catch {}   // Android back closes it
 }
-const rpFail = x => { console.warn(x); $('rp-err').textContent = navigator.onLine ? 'That didn\'t go through. Please try again.' : 'No internet. Connect and try again.'; };
+const rpFail = x => { console.warn(x); $('rp-err').textContent = !navigator.onLine ? 'No internet. Connect and try again.'
+  : x && x.code === 'permission-denied' ? 'Not allowed yet: the developer needs to update App Vault\'s database rules.' : 'That didn\'t go through. Please try again.'; };
+const rpSize = n => n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+const MAX_FILE = 10 * 1048576, PART = 900000;   // big files are split into parts of 900k characters (Firestore keeps up to 1 MB per item)
+// Saves a photo or file: the App Vault app (0.13.0+) puts it in Downloads › App Vault; a browser downloads it.
+function rpSave(name, type, dataUrl) {
+  try {
+    if (hasHub && typeof Hub.saveFile === 'function') {
+      const r = Hub.saveFile(name, type || 'application/octet-stream', dataUrl.slice(dataUrl.indexOf(',') + 1));
+      if (r && r !== 'ok') throw new Error(r);
+      toast('✓', 'Saved', 'In Downloads › App Vault'); return;
+    }
+    if (hasHub) { toast('!', 'Update App Vault first', 'Saving needs App Vault app 0.13.0. Settings › Check for updates.'); return; }
+    const bin = atob(dataUrl.slice(dataUrl.indexOf(',') + 1)), u8 = new Uint8Array(bin.length);
+    for (let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+    const url = URL.createObjectURL(new Blob([u8], { type:type || 'application/octet-stream' })), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (x) { console.warn(x); toast('!', 'Could not save', 'Please try again.'); }
+}
+async function rpSaveFile(f) {
+  if (!f) return;
+  if (f.data) { rpSave(f.name || 'file', f.type, f.data); return; }
+  if (!f.key || !f.parts || !f.rid) return;
+  toast('↓', 'Getting the file…'); const { F, db } = gate.fb;
+  try {
+    const parts = await Promise.all([...Array(f.parts).keys()].map(i => F.getDoc(F.doc(db, 'reports', f.rid, 'parts', f.key + '-' + i)).then(d => d.data().data)));
+    rpSave(f.name || 'file', f.type, parts.join(''));
+  } catch (x) { console.warn(x); toast('!', 'Could not get the file', 'Please try again.'); }
+}
 // Writes one message: into the latest report, or (very first message) starts a report.
 async function rpPost(text, extra, firstPhoto) {
-  const { F, db } = gate.fb, last = rp.mine[0];
+  const { F, db } = gate.fb; let last = rp.mine[0], fresh = false;
   if (!last) {
     const ref = F.doc(F.collection(db, 'reports'));
     await F.setDoc(ref, { uid:gate.uid, name:gate.me.name, app:'general', appName:'General', version:'', page:PAGE_VER,
       device:gate.me.device || deviceName(), text, photos:firstPhoto ? 1 : 0, status:'new', created:F.serverTimestamp() });
     if (firstPhoto) { await F.setDoc(F.doc(db, 'reports', ref.id, 'photos', '0'), { uid:gate.uid, data:firstPhoto }); rp.pics[ref.id] = [firstPhoto]; }
-    if (extra) await F.addDoc(F.collection(db, 'reports', ref.id, 'msgs'), { from:'user', uid:gate.uid, text, created:F.serverTimestamp(), ...extra });
-    if (!rp.mine.length) rp.mine.unshift({ id:ref.id, uid:gate.uid, text, photos:firstPhoto ? 1 : 0, created:null });   // so the next item goes into it
-    return;
+    rp.mine.unshift(last = { id:ref.id, uid:gate.uid, text, photos:firstPhoto ? 1 : 0, created:null });   // so the next item goes into it
+    fresh = true; if (!extra) return;
+  }
+  if (extra && extra.file && extra.file.data && extra.file.data.length > PART) {   // big file: save it in parts first
+    const f = extra.file, key = Date.now().toString(36) + Math.random().toString(36).slice(2, 8), n = Math.ceil(f.data.length / PART);
+    for (let i = 0; i < n; i++) await F.setDoc(F.doc(db, 'reports', last.id, 'parts', key + '-' + i), { uid:gate.uid, data:f.data.slice(i * PART, (i + 1) * PART) });
+    extra = { file:{ name:f.name, type:f.type, size:f.size, key, parts:n } };
   }
   await F.addDoc(F.collection(db, 'reports', last.id, 'msgs'), { from:'user', uid:gate.uid, text, created:F.serverTimestamp(), ...(extra || {}) });
-  await F.updateDoc(F.doc(db, 'reports', last.id), { status:'new', lastAt:F.serverTimestamp(), userUnread:false });
+  if (!fresh) await F.updateDoc(F.doc(db, 'reports', last.id), { status:'new', lastAt:F.serverTimestamp(), userUnread:false });
 }
 // Picked photos and files wait in a tray above the box until Send (Su, page 0.34.0: never send straight away).
 function rpTray() {
@@ -882,9 +924,9 @@ async function rpAttach(file) {   // gets the photo or file ready and puts it in
   try {
     if (/^image\//.test(file.type)) rp.draft.push({ photo:await shrink(file) });
     else {
-      if (file.size > 700000) { $('rp-err').textContent = 'That file is too big. Files up to 700 KB can be sent.'; return; }
+      if (file.size > MAX_FILE) { $('rp-err').textContent = 'That file is too big. Files up to 10 MB can be sent.'; return; }
       const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(file); });
-      rp.draft.push({ file:{ name:file.name.slice(0, 120), type:file.type || '', data } });
+      rp.draft.push({ file:{ name:file.name.slice(0, 120), type:file.type || '', size:file.size, data } });
     }
     rpTray();
   } catch (x) { $('rp-err').textContent = 'That photo or file could not be opened. Try another one.'; console.warn(x); }
