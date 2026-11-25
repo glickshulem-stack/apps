@@ -242,7 +242,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.8.0';
+const VERSION = '0.9.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -255,6 +255,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 let token = store.get('studioKey');
 let studio = null, catalog = null, me = null;
+let page = null;   // Play Hub page: { next, live, nextSha, liveSha } read from hub-next/index.html and hub/index.html
 
 
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('show'), 3200); }
@@ -269,6 +270,12 @@ async function gh(path, opts = {}) {
 const b64ToText = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, '')), c => c.charCodeAt(0)));
 function textToB64(t) { const u = new TextEncoder().encode(t); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); }
 async function readFile(path) { const r = await gh(`/contents/${path}?ref=main&t=${Date.now()}`); return { data: JSON.parse(b64ToText(r.content)), sha: r.sha }; }
+// The Play Hub page: Claude works in hub-next/ (the test copy); Su's Publish copies it over hub/ (what everyone sees).
+async function readPage(dir) {
+  try { const r = await gh(`/contents/${dir}/index.html?ref=main&t=${Date.now()}`); const text = b64ToText(r.content);
+    const m = text.match(/const PAGE_VER = '([^']+)'/); return { ver: m ? m[1] : '?', content: r.content.replace(/\s/g, ''), sha: r.sha }; }
+  catch { return null; }
+}
 /** Change a JSON file on main. mutate(data) edits it in place; if someone else changed it meanwhile, read again and redo. */
 async function changeFile(path, mutate, message) {
   for (let i = 0; ; i++) {
@@ -319,8 +326,8 @@ const apkUrl = a => `https://github.com/${REPO}/releases/download/${a.id}-v${a.v
 
 async function load(quiet) {
   try {
-    const [s, c, u] = await Promise.all([readFile('studio.json'), readFile('catalog.json'), me ? me : gh('https://api.github.com/user')]);
-    studio = s.data; catalog = c.data; me = u;
+    const [s, c, u, pn, pl] = await Promise.all([readFile('studio.json'), readFile('catalog.json'), me ? me : gh('https://api.github.com/user'), readPage('hub-next'), readPage('hub')]);
+    studio = s.data; catalog = c.data; me = u; page = pn && pl ? { next: pn.ver, live: pl.ver } : null;
     // An older copy of this page (an open tab, or a cached one) must not change Play Hub: load the newest Studio first.
     // Claude raises studio.json "studioPage" whenever this page changes.
     const want = studio.studioPage, older = (x, y) => { const p = v => String(v).split('.').map(Number); const [a, b] = [p(x), p(y)]; for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
@@ -429,6 +436,14 @@ function render() {
       <div class="acts">${tryButton(a)}${need ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div>
     </div></div>`;
   }).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
+  if (page) {
+    const need = page.next !== page.live; if (need) waiting++;
+    const card = `<div class="app${need ? ' ready' : ''}" data-id="hubpage"><div class="row2"><img src="${esc(SITE + 'icon.svg')}" alt=""><div><b class="n">Play Hub page</b>
+      <div class="vers"><span class="v${need ? ' hi' : ''}">In Studio <strong>${esc(page.next)}</strong></span><span class="v">Public <strong>${esc(page.live)}</strong></span></div>
+      ${need ? `<div class="st">Newer in Studio · your friends still see ${esc(page.live)}</div>` : `<div class="st ok">✓ Same as public</div>`}<small style="color:var(--muted)">The look and screens of Play Hub itself</small></div>
+      <div class="acts"><a class="btn" style="text-decoration:none" href="${esc(SITE + 'hub-next/?v=' + encodeURIComponent(page.next))}" ${bridge ? '' : 'target="_blank" rel="noopener"'}>Try</a>${need ? `<button class="gold" data-act="pagepub">Publish ${esc(page.next)}</button>` : ''}</div></div></div>`;
+    $('apps').insertAdjacentHTML(need ? 'afterbegin' : 'beforeend', card);
+  }
   renderSelf();
   $('bench-count').hidden = !waiting; $('bench-count').textContent = `${waiting} to publish`;
   $('pubapps').innerHTML = catalog.apps.map(p => {
@@ -471,6 +486,7 @@ setInterval(() => { if (bridge && studio && document.querySelector('[data-act="c
 const appOf = el => { const c = el.closest('.app'); return c && studio.apps.find(x => x.id === c.dataset.id); };
 $('apps').onclick = e => {
   const b = e.target.closest('button[data-act]'); if (!b) return;
+  if (b.dataset.act === 'pagepub') return publishPage();
   const a = appOf(b), act = b.dataset.act;
   if (act === 'try') { bridge.download(a.id, apkUrl(a), a.version); toast('Downloading ' + a.name); setTimeout(render, 300); }
   else if (act === 'open') bridge.open(a.package);
@@ -493,6 +509,17 @@ function menu(a) {
   $('mm-no').onclick = closeModal;
 }
 
+function publishPage() {
+  confirmBox(`Publish Play Hub page ${page.next}?`, `Everyone's Play Hub switches to page ${page.next} the next time it opens (it is ${page.live} now).`, 'Publish', async () => {
+    const [n, l] = await Promise.all([readPage('hub-next'), readPage('hub')]);
+    if (!n || !l) throw new Error('could not read the Play Hub page');
+    await gh('/contents/hub/index.html', { method:'PUT', body: JSON.stringify({ message:`Publish Play Hub page ${n.ver} (from Studio)`, branch:'main', sha:l.sha, content:n.content }) });
+    const setLive = d => { const h = d.apps.find(x => x.id === 'hub'); if (h) h.live = n.ver; };
+    await changeFile('catalog.json', setLive, `Play Hub page ${n.ver} is live`);
+    await changeFile('studio.json', setLive, `Studio: Play Hub page ${n.ver} published`);
+    await load(); toast(`Play Hub page ${n.ver} is published. It reaches everyone in about a minute.`);
+  });
+}
 function publish(a) {
   const p = catalog.apps.find(x => x.id === a.id);
   const what = !p ? `${a.name} will appear in Play Hub for everyone.` : p.version !== a.version ? `Everyone's Play Hub will offer ${a.name} ${a.version} as an update.` : `Everyone's Play Hub will show the new details for ${a.name}.`;
