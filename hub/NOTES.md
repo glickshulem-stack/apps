@@ -1,0 +1,27 @@
+# Play Hub — notes
+
+## What it does
+Su's personal app store. It lists Su's apps from `catalog.json`, installs them and updates them, like the Play Store. Friends can get it from one link: https://glickshulem-stack.github.io/apps/get/
+
+- The page is `hub/index.html` (on GitHub Pages). The Android app in `android/hub/` is a shell that shows this page.
+- Changes to the page go live as soon as they are merged. Changes to the Android app need a new APK, which waits for Su to publish it from Studio.
+
+## Current version
+- Play Hub page: 0.16.0 (`PAGE_VER` in `hub/index.html`)
+- Play Hub app (APK): 0.8.0 (`android/hub/app/build.gradle`); in Studio, waiting for Su to publish
+
+## Su's decisions
+- The name is **Play Hub** (not App Hub, not "Su's Apps"). The catalog id stays `hub`.
+- Dark "Noir" look with gold is the default; "Ivory" light look is in Settings. No green anywhere.
+- Checks GitHub only when Su taps "Check for updates" (or pulls down at the top). Never add automatic checking.
+- Settings is a panel that slides in from the side: Check for updates, Look, "See what's new", and the versions of the app and the page shown separately.
+- Featured area is a carousel of every app (5 seconds each, swipe and dots).
+- Installs and updates whole apps silently (Android 12+), Play Store style.
+- Public Play Hub shows only the apps Su published from Studio. If Su takes an app off, Play Hub offers to uninstall it.
+- The friends page (`get/`) never mentions Play Hub Studio.
+
+## Known bugs
+- None known.
+
+## To-do
+- Su publishes app 0.8.0 from Studio and tests the "app was removed" card.
