@@ -32,7 +32,7 @@
       "name": "Gambit",
       "icon": "♞",
       "package": "com.glickshulem.chess",
-      "version": "0.29.0",
+      "version": "0.31.0",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
@@ -46,6 +46,12 @@
     }
   ],
   "news": [
+    {
+      "id": "chess",
+      "version": "0.31.0",
+      "date": "2026-11-25",
+      "text": "New game card with scroll wheels for Level, You play and Clock"
+    },
     {
       "id": "chess",
       "version": "0.29.0",
