@@ -26,23 +26,6 @@
         "shots/quillsong/2.jpg",
         "shots/quillsong/3.jpg"
       ]
-    },
-    {
-      "id": "chess",
-      "name": "Gambit",
-      "icon": "♞",
-      "package": "com.glickshulem.chess",
-      "version": "0.27.0",
-      "iconUrl": "apps/chess/logo.svg",
-      "tagline": "Classic chess, beautifully made",
-      "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
-      "category": "Board games",
-      "webPath": "apps/chess/",
-      "screenshots": [
-        "shots/chess/1.jpg",
-        "shots/chess/2.jpg",
-        "shots/chess/3.jpg"
-      ]
     }
   ],
   "news": [
@@ -119,5 +102,12 @@
       "text": "Voice power and Prepare ahead settings for a cooler tablet"
     }
   ],
-  "removed": []
+  "removed": [
+    {
+      "id": "chess",
+      "name": "Gambit",
+      "package": "com.glickshulem.chess",
+      "iconUrl": "apps/chess/logo.svg"
+    }
+  ]
 }
