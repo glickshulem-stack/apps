@@ -5,11 +5,11 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
       "live": "0.20.0",
-      "note": "Tells you when an app was removed and offers to uninstall it"
+      "note": "Now called App Vault"
     },
     {
       "id": "chess",
@@ -50,12 +50,12 @@
       "name": "App Vault Studio",
       "icon": "✦",
       "package": "com.glickshulem.hubstudio",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "iconUrl": "studio/icon.svg",
       "tagline": "Where Su makes and publishes apps",
       "private": true,
-      "note": "Share opens the full Android share menu"
+      "note": "Now called App Vault Studio"
     }
   ],
-  "studioPage": "0.9.2"
+  "studioPage": "0.10.0"
 }
