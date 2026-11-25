@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Get Play Hub</title>
-<meta name="description" content="Download Play Hub for Android: a small personal app store with Gambit chess and more.">
-<meta property="og:title" content="Get Play Hub">
-<meta property="og:description" content="Download Play Hub for Android: a small personal app store with Gambit chess and more.">
+<title>Get App Vault</title>
+<meta name="description" content="Download App Vault for Android: a small personal app store with Gambit chess and more.">
+<meta property="og:title" content="Get App Vault">
+<meta property="og:description" content="Download App Vault for Android: a small personal app store with Gambit chess and more.">
 <link rel="icon" href="../icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -42,10 +42,10 @@
 <body>
 <main>
   <img class="logo" src="../icon.svg" alt="">
-  <h1>Play Hub</h1>
+  <h1>App Vault</h1>
   <p class="lead">A little app store for Android. Get Gambit chess and more, and keep them up to date with one tap.</p>
   <a class="dl" id="dl" href="https://github.com/glickshulem-stack/apps/releases/download/hub-v0.7.0/hub.apk" download>
-    <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download Play Hub</a>
+    <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Download App Vault</a>
   <div class="small" id="ver">For Android phones and tablets · about 1.5 MB</div>
   <!-- Windows: shown only when catalog.json's "hub" entry has a "windows" download URL -->
   <div id="win" hidden>
@@ -56,18 +56,18 @@
   <div class="card">
     <h2>How to install</h2>
     <ol>
-      <li><span>Tap <b>Download Play Hub</b> above. If your phone asks, tap <b>Download</b> again.</span></li>
+      <li><span>Tap <b>Download App Vault</b> above. If your phone asks, tap <b>Download</b> again.</span></li>
       <li><span>When it's done, tap <b>Open</b> (or open <b>hub.apk</b> from your Downloads).</span></li>
       <li><span>If Android says your browser can't install apps, tap <b>Settings</b>, turn on <b>Allow from this source</b>, then go back.</span></li>
-      <li><span>Tap <b>Install</b>. If Google Play Protect shows a warning, tap <b>More details</b> and then <b>Install anyway</b>. Play Hub isn't from the Play Store, so this is normal.</span></li>
-      <li><span>Open <b>Play Hub</b>, pick an app, and tap <b>Install</b>. Play Hub keeps your apps updated.</span></li>
+      <li><span>Tap <b>Install</b>. If Google Play Protect shows a warning, tap <b>More details</b> and then <b>Install anyway</b>. App Vault isn't from the Play Store, so this is normal.</span></li>
+      <li><span>Open <b>App Vault</b>, pick an app, and tap <b>Install</b>. App Vault keeps your apps updated.</span></li>
     </ol>
-    <div class="note">Android only. Play Hub doesn't work on iPhone or iPad.</div>
+    <div class="note">Android only. App Vault doesn't work on iPhone or iPad.</div>
   </div>
-  <footer>Play Hub</footer>
+  <footer>App Vault</footer>
 </main>
 <script>
-// Always point at the newest Play Hub app listed in the store's catalog.
+// Always point at the newest App Vault app listed in the store's catalog.
 fetch('../catalog.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).then(c => {
   const hub = (c.apps || []).find(a => a.id === 'hub');
   if (!hub || !hub.version) return;
@@ -79,9 +79,9 @@ fetch('../catalog.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.json
     document.getElementById('win').hidden = false;
   }
 }).catch(() => {}).finally(() => {
-  // Links shared from Play Hub Studio end in ?auto: on Android the download starts by itself.
+  // Links shared from App Vault Studio end in ?auto: on Android the download starts by itself.
   if (!new URLSearchParams(location.search).has('auto') || !/Android/i.test(navigator.userAgent)) return;
-  document.getElementById('ver').textContent = 'Your download has started. If nothing happens, tap Download Play Hub.';
+  document.getElementById('ver').textContent = 'Your download has started. If nothing happens, tap Download App Vault.';
   setTimeout(() => { location.href = document.getElementById('dl').href; }, 600);
 });
 </script>
