@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - Changes to the page go live as soon as they are merged. Changes to the Android app need a new APK, which waits for Su to publish it from Studio.
 
 ## Current version
-- Play Hub page: 0.18.0 (`PAGE_VER` in `hub/index.html`)
+- Play Hub page: 0.19.0 (`PAGE_VER` in `hub/index.html`)
 - Play Hub app (APK): 0.8.0 (`android/hub/app/build.gradle`); in Studio, waiting for Su to publish
 
 ## Su's decisions
@@ -15,11 +15,11 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - Dark "Noir" look with gold is the default; "Ivory" light look is in Settings. No green anywhere.
 - Checks GitHub only when Su taps "Check for updates" (or pulls down at the top). Never add automatic checking.
 - Settings is a panel that slides in from the side: Check for updates, Look, "See what's new", and the versions of the app and the page shown separately.
-- Featured area is a carousel of every app (5 seconds each, swipe and dots).
+- No Featured banner: the page starts with the greeting and the apps (Su removed it in 0.19.0). The catalog field `hero` now only colors the card cover and app-page icon.
 - Installs and updates whole apps silently (Android 12+), Play Store style.
 - Public Play Hub shows only the apps Su published from Studio. If Su takes an app off, Play Hub offers to uninstall it.
 - The friends page (`get/`) never mentions Play Hub Studio.
-- Tapping an app (card or featured "See app") opens its own app page like a real store: icon, name, button, version facts, swipeable screenshots, About this app (`description`), What's new (catalog `news` for that app). Screenshots = optional catalog field `screenshots` (repo image paths, 16:10, kept in `shots/<id>/`, not inside `apps/` so they don't go into APKs). Since 0.17.0.
+- Tapping an app card opens its own app page like a real store: icon, name, button, version facts, swipeable screenshots, About this app (`description`), What's new (catalog `news` for that app). Screenshots = optional catalog field `screenshots` (repo image paths, 16:10, kept in `shots/<id>/`, not inside `apps/` so they don't go into APKs). Since 0.17.0.
 - No "About" box in Settings (removed in 0.18.0, Su's wish).
 
 ## Known bugs
