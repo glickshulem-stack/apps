@@ -2,7 +2,7 @@
   "apps": [
     {
       "id": "hub",
-      "name": "Play Hub",
+      "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
       "version": "0.8.0",
@@ -47,7 +47,7 @@
     },
     {
       "id": "hubstudio",
-      "name": "Play Hub Studio",
+      "name": "App Vault Studio",
       "icon": "✦",
       "package": "com.glickshulem.hubstudio",
       "version": "0.3.0",

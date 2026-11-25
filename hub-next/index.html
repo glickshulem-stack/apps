@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Play Hub</title>
+<title>App Vault</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -168,7 +168,7 @@
 <body>
 <header class="appbar">
   <img src="../icon.svg" alt="">
-  <h1 class="goldtext">Play Hub</h1>
+  <h1 class="goldtext">App Vault</h1>
   <button class="iconbtn" id="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
 </header>
 <main>
@@ -183,13 +183,13 @@
   <h5>Updates</h5>
   <button class="bigbtn" id="refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Check for updates</button>
   <div class="last" id="s-last"></div>
-  <div class="box" id="s-upd-box" style="display:none;margin-top:12px"><div class="row click" id="s-upd"><span>Update Play Hub</span><span id="s-updv"></span></div><div id="s-upd-x"></div></div>
+  <div class="box" id="s-upd-box" style="display:none;margin-top:12px"><div class="row click" id="s-upd"><span>Update App Vault</span><span id="s-updv"></span></div><div id="s-upd-x"></div></div>
   <h5>Look</h5>
   <div class="seg" id="s-theme"><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
   <h5>Versions</h5>
   <div class="box">
-    <div class="row"><span>Play Hub app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
-    <div class="row"><span>Play Hub page<small>The screen you see. It updates when you check.</small></span><span class="vv" id="s-page"></span></div>
+    <div class="row"><span>App Vault app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
+    <div class="row"><span>App Vault page<small>The screen you see. It updates when you check.</small></span><span class="vv" id="s-page"></span></div>
   </div>
   <div id="news-box"></div>
 </div>
@@ -215,18 +215,18 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.20.0';
-// Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
+const PAGE_VER = '0.21.0';
+// App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
 let ticker = null;
 
-function onStatus(id, text) { status[id] = text; render(); }          // old Play Hub
+function onStatus(id, text) { status[id] = text; render(); }          // old App Vault
 function hubEvent(id, what) {
   if (flow[id]) flow[id].phase = what; else flow[id] = { phase: what };
   render();
   const app = catalog && catalog.apps.find(x => x.id === id);
-  if (what === 'installed' && app) toast('✓', `${app.name} is updated`, 'Installed by Play Hub');
+  if (what === 'installed' && app) toast('✓', `${app.name} is updated`, 'Installed by App Vault');
 }
 function job(id) { try { const s = Hub.job(id); return s ? JSON.parse(s) : null; } catch { return null; } }
 function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB'; }
@@ -236,7 +236,7 @@ function act(a) {
   else { status[a.id] = 'Starting download…'; Hub.install(a.id, apkUrl(a)); }
   render();
 }
-// Play Hub came back to the front (e.g. the Android install screen closed)
+// App Vault came back to the front (e.g. the Android install screen closed)
 function onHubResume() { for (const id in flow) if (flow[id].phase === 'installer') flow[id].phase = 'back'; }
 
 /* What an app's card should show right now: a button (or none), a status line, and maybe a progress bar. */
@@ -247,7 +247,7 @@ function stateOf(a, have) {
   const open = a.package !== 'com.glickshulem.apphub' ? btn('Open', 'open', () => Hub.open(a.package)) : null;
   if (f && f.version && have && !newer(f.version, have))
     return { btn: open, status: `✓ ${have ? 'Updated' : 'Installed'} to v${f.version}`, cls: 'done' };
-  if (!kept2) {   // old Play Hub: text status only, bar parsed from it
+  if (!kept2) {   // old App Vault: text status only, bar parsed from it
     const t = status[a.id] || '', m = t.match(/Downloading (\d+)%/);
     if (m) return { btn: null, status: `Downloading… ${m[1]}%`, pct: +m[1] };
     if (t === 'Starting download…') return { btn: null, status: t, pct: -1 };
@@ -260,11 +260,11 @@ function stateOf(a, have) {
     return { btn: null, pct, status: j.total ? `Downloading… ${pct}%  ·  ${mb(j.done)} of ${mb(j.total)}` : (j.done ? `Downloading… ${mb(j.done)}` : 'Starting download…') };
   }
   if (f && f.phase === 'installing')
-    return { btn: null, pct: -1, status: a.id === 'hub' ? 'Installing… Play Hub closes for a moment to update itself. Open it again after.' : 'Installing… no need to tap anything.' };
+    return { btn: null, pct: -1, status: a.id === 'hub' ? 'Installing… App Vault closes for a moment to update itself. Open it again after.' : 'Installing… no need to tap anything.' };
   if (Hub.kept(a.id) === a.version) {
     const b = btn('Install', 'install', () => act(a));
     if (f && f.phase === 'failed') return { btn: btn('Try again', 'update', () => act(a)), status: 'The install didn\'t finish. Tap Try again.', cls: 'warn' };
-    if (f && f.phase === 'permission') return { btn: b, status: 'Turn on "Allow from this source" for Play Hub, then come back. It installs right after.', cls: 'warn' };
+    if (f && f.phase === 'permission') return { btn: b, status: 'Turn on "Allow from this source" for App Vault, then come back. It installs right after.', cls: 'warn' };
     if (f && f.phase === 'installer') return { btn: null, status: 'Downloaded ✓  Tap Install on the Android screen (only needed this once).' };
     if (f && f.phase === 'back') return { btn: b, status: 'Not installed yet. The download is saved, so tap Install whenever you\'re ready.' };
     return { btn: b, status: 'Downloaded and saved ✓  Tap Install when you\'re ready.' };
@@ -294,7 +294,7 @@ function renderTop() {
 // "What's new": the latest notes from catalog.json (field "news": [{ id, version, date, text }])
 function renderNews() {
   const byId = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
-  const items = (catalog.news || []).filter(n => byId[n.id]).slice(0, 20);   // only apps that are in Play Hub now
+  const items = (catalog.news || []).filter(n => byId[n.id]).slice(0, 20);   // only apps that are in App Vault now
   if (!items.length) { $('news-box').innerHTML = ''; return; }
   const day = d => { try { return new Date(d + 'T12:00').toLocaleDateString([], { month:'short', day:'numeric' }); } catch { return d; } };
   const top = items[0], ta = byId[top.id] || {};
@@ -303,14 +303,14 @@ function renderNews() {
   $('news-list').innerHTML = `<div class="news box">${items.map(n => { const a = byId[n.id] || {}; return `<div class="ni"><img src="../${a.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${a.name || n.id}</b><span>${n.text}</span></div><div class="v">v${n.version}<small>${day(n.date)}</small></div></div>`; }).join('')}</div>`;
 }
 
-// Apps Su took off Play Hub that are still on this device: say so, and offer to uninstall (Android asks once to confirm).
+// Apps Su took off App Vault that are still on this device: say so, and offer to uninstall (Android asks once to confirm).
 const canUninstall = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 4;
 function keptAnyway() { try { return JSON.parse(localStorage.getItem('hubKeepRemoved') || '[]'); } catch { return []; } }
 function renderRemoved() {
   const box = $('removed'); if (!box) return;
   const keep = keptAnyway();
   const gone = hasHub ? (catalog.removed || []).filter(r => r.package && !keep.includes(r.id) && !catalog.apps.some(a => a.id === r.id) && Hub.installedVersion(r.package)) : [];
-  box.innerHTML = gone.map(r => `<div class="gone" data-id="${r.id}"><img src="../${r.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${r.name} was removed</b><span>${r.name} is no longer in Play Hub. ${canUninstall ? 'You can remove it from this device.' : 'To remove it, press and hold its icon and choose Uninstall.'}</span></div><div class="acts">${canUninstall ? '<button class="un">Uninstall</button>' : ''}<button class="keep">Keep it</button></div></div>`).join('');
+  box.innerHTML = gone.map(r => `<div class="gone" data-id="${r.id}"><img src="../${r.iconUrl || 'icon.svg'}" alt=""><div class="t"><b>${r.name} was removed</b><span>${r.name} is no longer in App Vault. ${canUninstall ? 'You can remove it from this device.' : 'To remove it, press and hold its icon and choose Uninstall.'}</span></div><div class="acts">${canUninstall ? '<button class="un">Uninstall</button>' : ''}<button class="keep">Keep it</button></div></div>`).join('');
   box.onclick = e => {
     const card = e.target.closest('.gone'); if (!card) return;
     const r = (catalog.removed || []).find(x => x.id === card.dataset.id); if (!r) return;
@@ -345,7 +345,7 @@ function render() {
   $('s-upd-x').innerHTML = hs ? barHtml(hs) + (hs.status ? `<div class="status ${hs.cls || ''}">${hs.status}</div>` : '') : '';
   if (hubUpd) {
     $('s-updv').textContent = hs.btn ? hs.btn.label + ' v' + hub.version : '';
-    $('s-upd').querySelector('span').textContent = hs.btn && hs.btn.label === 'Install' ? 'Install Play Hub update' : 'Update Play Hub';
+    $('s-upd').querySelector('span').textContent = hs.btn && hs.btn.label === 'Install' ? 'Install App Vault update' : 'Update App Vault';
     $('s-upd').onclick = () => hs.btn && hs.btn.fn();
   }
   if (hs && hs.pct != null) busy = true;
@@ -372,7 +372,7 @@ function hideDetail() { detailId = null; $('detail').classList.remove('show'); }
 function closeDetail() { if (history.state && history.state.detail) history.back(); else hideDetail(); }
 function buildDetail(a) {
   const shots = a.screenshots || [], notes = (catalog.news || []).filter(n => n.id === a.id).slice(0, 6);
-  $('detail').innerHTML = `<div class="d-bar"><button class="backbtn" id="d-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Play Hub</button></div>
+  $('detail').innerHTML = `<div class="d-bar"><button class="backbtn" id="d-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>App Vault</button></div>
   <div class="d-wrap">
     <div class="d-top"><div class="d-icon"${a.hero ? ` style="background:${a.hero}"` : ''}><img src="../${a.iconUrl}" alt=""></div>
       <div class="d-t">${a.category ? `<div class="k">${a.category}</div>` : ''}<h2>${a.name}</h2><p>${a.tagline || ''}</p><div id="d-act"></div></div></div>
@@ -440,14 +440,14 @@ function news() {
     seen[a.id] = v;
   }
   const hub = catalog.apps.find(a => a.id === 'hub');
-  if (hasHub && hub && newer(hub.version, hubVer)) out.updates.push('Play Hub');
+  if (hasHub && hub && newer(hub.version, hubVer)) out.updates.push('App Vault');
   try { localStorage.setItem('seenLive', JSON.stringify(seen)); } catch {}
   return out;
 }
 
 // manual = Su tapped the refresh button (then we always say something). Automatic checks only speak up when there is news.
-// Play Hub only talks to GitHub when Su taps "Check for updates" (Su's wish). Opening or coming back
-// to Play Hub just shows the list saved from the last check. The very first open has nothing saved, so it checks once.
+// App Vault only talks to GitHub when Su taps "Check for updates" (Su's wish). Opening or coming back
+// to App Vault just shows the list saved from the last check. The very first open has nothing saved, so it checks once.
 async function refresh(manual) {
   manual = manual === true;
   if (!manual) {
@@ -464,17 +464,17 @@ async function refresh(manual) {
   } catch {
     try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
     offline = true;
-    if (!catalog) { $('list').innerHTML = '<div class="msg">No internet. Connect and reopen Play Hub.</div>'; }
+    if (!catalog) { $('list').innerHTML = '<div class="msg">No internet. Connect and reopen App Vault.</div>'; }
   }
   if (manual) { await wait(Math.max(0, 900 - (Date.now() - started))); $('refresh').classList.remove('spin'); }
   if (!catalog) { if (manual) toast('!', 'No internet', 'Connect to Wi-Fi and tap refresh again.'); return; }
   render();
   if (offline) { if (manual) toast('!', 'No internet', 'Showing your apps from last time.'); return; }
-  // A newer Play Hub page is online: load it right away (once per visit, so it can never loop).
+  // A newer App Vault page is online: load it right away (once per visit, so it can never loop).
   const hub = catalog.apps.find(a => a.id === 'hub');
   if (hub && hub.live && newer(hub.live, PAGE_VER) && (() => { try { return sessionStorage.getItem('hubReload'); } catch { return null; } })() !== hub.live) {
     try { sessionStorage.setItem('hubReload', hub.live); } catch {}
-    toast('↻', 'Play Hub updated', `Loading the new look (v${hub.live})…`);
+    toast('↻', 'App Vault updated', `Loading the new look (v${hub.live})…`);
     setTimeout(() => location.replace('./?v=' + hub.live), 1200); return;
   }
   const n = news();
@@ -537,7 +537,7 @@ window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHub
 refresh();
 </script>
 <script>
-// Studio preview: this same file lives in hub-next/ (Claude's test copy, opened from Play Hub Studio) until Su presses Publish,
+// Studio preview: this same file lives in hub-next/ (Claude's test copy, opened from App Vault Studio) until Su presses Publish,
 // which copies it over hub/. The ribbon shows only in the test copy.
 if (location.pathname.includes('/hub-next/')) document.body.insertAdjacentHTML('beforeend',
   `<div style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:999;background:linear-gradient(180deg,#fde6a8,#d4a64a);color:#1a1208;font:700 13px/1 Inter,sans-serif;letter-spacing:.06em;padding:9px 16px;border-radius:99px;box-shadow:0 6px 20px rgba(0,0,0,.4);pointer-events:none">STUDIO PREVIEW · page ${typeof PAGE_VER !== 'undefined' ? PAGE_VER : ''} · not public yet</div>`);

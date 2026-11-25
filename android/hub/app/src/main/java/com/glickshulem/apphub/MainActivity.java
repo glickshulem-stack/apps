@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MainActivity extends Activity {
     private static final String SITE = "https://glickshulem-stack.github.io/apps/";
     private WebView web;
-    /** The open Play Hub screen, so install results (which arrive in InstallResult) can reach the page. */
+    /** The open App Vault screen, so install results (which arrive in InstallResult) can reach the page. */
     static WeakReference<MainActivity> current = new WeakReference<>(null);
 
     /** One running download per app. Lives as long as App Hub's process, so the page can reload without losing it. */
@@ -120,8 +120,8 @@ public class MainActivity extends Activity {
     }
     private boolean canInstall() { return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls(); }
 
-    /** Install the kept file. Play Hub hands it to Android's package installer itself (like a store does).
-     *  On Android 12+ it asks for no confirm tap when Play Hub is the app's installer (or the app is Play Hub itself);
+    /** Install the kept file. App Vault hands it to Android's package installer itself (like a store does).
+     *  On Android 12+ it asks for no confirm tap when App Vault is the app's installer (or the app is App Vault itself);
      *  otherwise Android shows its usual Install screen once. If anything goes wrong, fall back to the classic Install screen. */
     private void openInstaller(String id) {
         File f = readyFile(id);
@@ -258,7 +258,7 @@ public class MainActivity extends Activity {
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
         @JavascriptInterface public int bridge() { return 4; }   // 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
-        /** Open Android's "Uninstall this app?" question for an app that was taken off Play Hub. */
+        /** Open Android's "Uninstall this app?" question for an app that was taken off App Vault. */
         @JavascriptInterface public void uninstall(String pkg) {
             if (pkg == null || pkg.isEmpty() || pkg.equals(getPackageName())) return;
             Intent i = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + pkg));

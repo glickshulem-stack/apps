@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Play Hub</title>
+<title>App Vault</title>
 <style>
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; font-family:system-ui,Roboto,sans-serif; background:#111827; color:#f9fafb; min-height:100vh; user-select:none; }
@@ -23,7 +23,7 @@
 </style>
 </head>
 <body>
-<header><h1>Play Hub</h1><div class="ver">v<span id="ver"></span></div></header>
+<header><h1>App Vault</h1><div class="ver">v<span id="ver"></span></div></header>
 <main id="list"><div class="msg">Loading apps…</div></main>
 <script>
 const REPO = 'glickshulem-stack/apps';
@@ -66,7 +66,7 @@ async function refresh() {
     try { localStorage.setItem('catalog', JSON.stringify(catalog)); } catch {}
   } catch {
     try { catalog = JSON.parse(localStorage.getItem('catalog')); } catch {}
-    if (!catalog) { document.getElementById('list').innerHTML = '<div class="msg">No internet. Connect and reopen Play Hub.</div>'; return; }
+    if (!catalog) { document.getElementById('list').innerHTML = '<div class="msg">No internet. Connect and reopen App Vault.</div>'; return; }
   }
   render();
 }

@@ -1,10 +1,10 @@
 name: Publish uploaded APK
-# For ready-made APKs too big to keep in the repo (like Quillsong). Play Hub Studio (or a person) pushes a
+# For ready-made APKs too big to keep in the repo (like Quillsong). App Vault Studio (or a person) pushes a
 # temporary branch named upload/<anything> holding the APK split into upload/part-* (each under 100 MB) plus
 # upload/app.txt containing "<id> <version>". Optional: upload/sha256.txt ("<hash>  ../<id>.apk") to check the
 # joined file, and upload/meta.json = the app's Studio entry, merged into studio.json on main once released.
 # This joins the parts, publishes release <id>-v<version> with <id>.apk, then deletes the branch.
-# It never touches catalog.json: only Su's Publish button in Play Hub Studio does that.
+# It never touches catalog.json: only Su's Publish button in App Vault Studio does that.
 on:
   push:
     branches: ['upload/**']
@@ -24,10 +24,10 @@ jobs:
           if gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "$tag already released"; else
             gh release create "$tag" "$id.apk" -R "$GITHUB_REPOSITORY" --target main --title "$id $ver" --notes "$id version $ver"; fi
           if [ -f upload/meta.json ]; then cp upload/meta.json "$RUNNER_TEMP/meta.json"; fi
-      - name: Offer it in Play Hub Studio
+      - name: Offer it in App Vault Studio
         if: hashFiles('upload/meta.json') != ''
         run: |
-          git config user.name "Play Hub Studio"; git config user.email "studio@users.noreply.github.com"
+          git config user.name "App Vault Studio"; git config user.email "studio@users.noreply.github.com"
           for try in 1 2 3 4 5; do
             git fetch -q origin main && git checkout -q -f -B studio-update FETCH_HEAD
             jq --slurpfile m "$RUNNER_TEMP/meta.json" '.apps |= (if any(.id == $m[0].id) then map(if .id == $m[0].id then . + $m[0] else . end) else . + $m else . end)' studio.json > studio.tmp

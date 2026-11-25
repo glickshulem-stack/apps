@@ -185,8 +185,8 @@ public class MainActivity extends Activity {
     }
     private boolean canInstall() { return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls(); }
 
-    /** Install the kept file. Play Hub hands it to Android's package installer itself (like a store does).
-     *  On Android 12+ it asks for no confirm tap when Play Hub is the app's installer (or the app is Play Hub itself);
+    /** Install the kept file. App Vault hands it to Android's package installer itself (like a store does).
+     *  On Android 12+ it asks for no confirm tap when App Vault is the app's installer (or the app is App Vault itself);
      *  otherwise Android shows its usual Install screen once. If anything goes wrong, fall back to the classic Install screen. */
     private void openInstaller(String id) {
         File f = readyFile(id);
@@ -317,7 +317,7 @@ public class MainActivity extends Activity {
             Intent i = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text).putExtra(Intent.EXTRA_SUBJECT, title);
             runOnUiThread(() -> { try { startActivity(Intent.createChooser(i, title)); } catch (Exception e) { } });
         }
-        /** Download a file (e.g. the Play Hub APK) and open Android's share menu with it, so Quick Share, Bluetooth,
+        /** Download a file (e.g. the App Vault APK) and open Android's share menu with it, so Quick Share, Bluetooth,
          *  WhatsApp, Gmail, Drive… can send the file itself. The page hears back through shareReady(ok). */
         @JavascriptInterface public void shareFile(String url, String name, String text) {
             new Thread(() -> {
@@ -336,7 +336,7 @@ public class MainActivity extends Activity {
                         .putExtra(Intent.EXTRA_STREAM, u).putExtra(Intent.EXTRA_TEXT, text)
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     i.setClipData(android.content.ClipData.newRawUri("", u));
-                    Intent ch = Intent.createChooser(i, "Share Play Hub").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    Intent ch = Intent.createChooser(i, "Share App Vault").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     runOnUiThread(() -> startActivity(ch));
                     js("window.shareReady && shareReady(true)");
                 } catch (Exception e) {

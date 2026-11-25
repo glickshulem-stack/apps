@@ -4,7 +4,7 @@
 A book reader with lifelike page turns and two pages side by side on the tablet. Opens PDF, EPUB, Word and text files and reads them aloud in a natural offline voice, highlighting each word.
 
 - This is Su's own app with its own signing key. Its source code is not in this repo (only the icon is here).
-- New versions are added through Play Hub Studio (+ Add app).
+- New versions are added through App Vault Studio (+ Add app).
 
 ## Current version
 1.9.0
