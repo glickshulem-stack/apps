@@ -316,3 +316,25 @@ body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,
 .dpclose:active { background:var(--b1); }
 .dpclose svg { color:#f3e2c4; }
 #inks button { border-color:rgba(46,32,22,.9); }
+
+/* 0.31.0: New game card with alarm-clock scroll wheels */
+#confirm .dialog { width:min(640px, calc(100vw - 32px)); }
+#oppchoices { grid-template-columns:1fr 1fr; }
+.wheels { display:flex; gap:12px; align-self:stretch; justify-content:center; }
+.wcol { flex:1 1 0; max-width:260px; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.wcol[hidden] { display:none; }
+.wcol .slabel { align-self:center; }
+.wheel { position:relative; height:220px; border-radius:16px; overflow:hidden; background:linear-gradient(180deg, rgba(0,0,0,.28), rgba(0,0,0,.12) 50%, rgba(0,0,0,.28)); border:1px solid rgba(230,199,154,.16); }
+.wheel::before, .wheel::after { content:''; position:absolute; left:0; right:0; height:70px; pointer-events:none; z-index:2; }
+.wheel::before { top:0; background:linear-gradient(180deg, var(--p2, var(--bg2)), transparent); }
+.wheel::after { bottom:0; background:linear-gradient(0deg, var(--p2, var(--bg2)), transparent); }
+.wband { position:absolute; left:8px; right:8px; top:88px; height:44px; border-radius:11px; background:rgba(230,199,154,.09); border-top:1px solid rgba(230,199,154,.55); border-bottom:1px solid rgba(230,199,154,.55); pointer-events:none; z-index:1; }
+.wscroll { position:relative; z-index:1; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; overscroll-behavior:contain; perspective:520px; touch-action:pan-y; cursor:grab; }
+.wscroll.drag { scroll-snap-type:none; cursor:grabbing; }
+.wscroll::-webkit-scrollbar { display:none; }
+.wpad { height:88px; }
+.witem { height:44px; scroll-snap-align:center; display:flex; align-items:center; justify-content:center; gap:8px; color:#cbb08a; font:600 1.02rem var(--display); white-space:nowrap; user-select:none; -webkit-user-select:none; transition:color .15s, font-size .15s; }
+.witem.on { color:#f0d29c; font-size:1.22rem; text-shadow:0 1px 8px rgba(230,180,100,.35); }
+.witem .wn { font-size:.75em; color:#9c8460; min-width:1em; }
+.witem.on .wn { color:#d9b47c; }
+.witem .ci { width:24px; height:24px; }

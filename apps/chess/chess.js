@@ -1,4 +1,4 @@
-const VERSION = '0.30.0';
+const VERSION = '0.31.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -463,7 +463,7 @@ document.getElementById('undo').onclick = () => {
   document.getElementById('settings').classList.remove('show');   // Undo lives in Settings: close it so you see the board
 };
 document.getElementById('flip').onclick = () => { flipped = !flipped; save(); render(); };
-document.getElementById('newgame').onclick = () => { renderTimes(); document.getElementById('confirm').classList.add('show'); };
+document.getElementById('newgame').onclick = () => { document.getElementById('confirm').classList.add('show'); renderTimes(); };
 document.getElementById('yes').onclick = () => { document.getElementById('confirm').classList.remove('show'); newGame(); };
 document.getElementById('no').onclick = () => document.getElementById('confirm').classList.remove('show');
 
@@ -535,16 +535,8 @@ function renderMoves() {
 // ---- chess clocks ----
 const tlabel = t => !t ? 'No clock' : t[1] ? `${t[0]} | ${t[1]}` : `${t[0]} min`;
 function renderTimes() {
+  pickSetup = { ...setup }; pickTime = timeCtl;
   renderSetup();
-  const box = document.getElementById('timechoices'); box.innerHTML = '';
-  pickTime = timeCtl;
-  for (const t of TIMES) {
-    const b = document.createElement('button');
-    b.className = 'timeopt' + (JSON.stringify(t) === JSON.stringify(pickTime) ? ' on' : '');
-    b.textContent = tlabel(t);
-    b.onclick = () => { pickTime = t; box.querySelectorAll('.timeopt').forEach(x => x.classList.toggle('on', x === b)); };
-    box.appendChild(b);
-  }
 }
 { const yes = document.getElementById('yes'), old = yes.onclick;
   yes.onclick = () => { setup = { ...pickSetup }; try { localStorage.setItem('gambit-setup', JSON.stringify(setup)); } catch {} timeCtl = pickTime === undefined ? timeCtl : pickTime; try { localStorage.setItem('gambit-time', JSON.stringify(timeCtl)); } catch {} old(); }; }
@@ -720,11 +712,48 @@ function chipRow(boxId, items, isOn, onPick) {
     b.onclick = () => { onPick(val); renderSetup(); }; box.appendChild(b);
   }
 }
+// Level, You play and Clock are scroll wheels, like an alarm clock: the choice in the middle band is the one picked.
+const WH = 44;   // height of one row in px (5 rows show; matches .witem in chess.css)
+function makeWheel(el, items, onPick) {
+  el.innerHTML = `<div class="wband"></div><div class="wscroll"><div class="wpad"></div>${items.map((h, i) => `<div class="witem" data-i="${i}">${h}</div>`).join('')}<div class="wpad"></div></div>`;
+  const sc = el.querySelector('.wscroll'), its = [...sc.querySelectorAll('.witem')];
+  let cur = -1, raf = 0;
+  const paint = () => {
+    raf = 0;
+    const f = sc.scrollTop / WH, i = Math.max(0, Math.min(its.length - 1, Math.round(f)));
+    its.forEach((it, j) => {
+      const d = j - f, a = Math.min(Math.abs(d), 2.6);
+      it.style.transform = `rotateX(${-d * 20}deg) scale(${1 - a * .09})`;
+      it.style.opacity = 1 - a * .32;
+      it.classList.toggle('on', j === i);
+    });
+    if (i !== cur) { cur = i; onPick(i); }
+  };
+  const go = i => sc.scrollTo({ top: Math.max(0, Math.min(its.length - 1, i)) * WH, behavior: 'smooth' });
+  sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(paint); }, { passive: true });
+  its.forEach(it => it.addEventListener('click', () => { if (!dragged) go(+it.dataset.i); }));
+  // mouse wheel: one notch = one row
+  let acc = 0;
+  sc.addEventListener('wheel', e => { e.preventDefault(); acc += e.deltaY; if (Math.abs(acc) >= 40) { go(cur + Math.sign(acc)); acc = 0; } }, { passive: false });
+  // mouse drag (fingers already scroll it natively)
+  let drag = null, dragged = false;
+  sc.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; drag = { y: e.clientY, top: sc.scrollTop }; dragged = false; sc.classList.add('drag'); });
+  addEventListener('pointermove', e => { if (!drag) return; if (Math.abs(e.clientY - drag.y) > 4) dragged = true; sc.scrollTop = drag.top - (e.clientY - drag.y); });
+  addEventListener('pointerup', () => { if (!drag) return; drag = null; sc.classList.remove('drag'); go(Math.round(sc.scrollTop / WH)); setTimeout(() => dragged = false, 0); });
+  return { set(i) { cur = i; sc.scrollTop = i * WH; paint(); } };
+}
+let wheels = null;
 function renderSetup() {
+  if (!wheels) wheels = {
+    level: makeWheel(document.querySelector('#wlevel .wheel'), LEVELS.map((L, i) => `<span class="wn">${i + 1}</span>${L.name}`), i => pickSetup.level = i + 1),
+    color: makeWheel(document.querySelector('#wcolor .wheel'), [piece('w', 'k', 'ci') + 'White', '<span class="ci rnd">?</span>Random', piece('b', 'k', 'ci') + 'Black'], i => pickSetup.color = 'wrb'[i]),
+    time: makeWheel(document.querySelector('#wtime .wheel'), TIMES.map(tlabel), i => pickTime = TIMES[i])
+  };
   chipRow('oppchoices', [[false, 'Two players'], [true, 'Computer']], v => pickSetup.cpu === v, v => pickSetup.cpu = v);
-  document.getElementById('cpuopts').hidden = !pickSetup.cpu;
-  chipRow('levelchoices', LEVELS.map((L, i) => [i + 1, `<b>${i + 1}</b><small>${L.name}</small>`]), v => pickSetup.level === v, v => pickSetup.level = v);
-  chipRow('colorchoices', [['w', piece('w', 'k', 'ci') + 'White'], ['r', '<span class="ci rnd">?</span>Random'], ['b', piece('b', 'k', 'ci') + 'Black']], v => pickSetup.color === v, v => pickSetup.color = v);
+  document.getElementById('wlevel').hidden = document.getElementById('wcolor').hidden = !pickSetup.cpu;
+  wheels.level.set((pickSetup.level || 2) - 1);
+  wheels.color.set(Math.max(0, 'wrb'.indexOf(pickSetup.color)));
+  wheels.time.set(Math.max(0, TIMES.findIndex(t => JSON.stringify(t) === JSON.stringify(pickTime))));
 }
 
 // ---- hints: ask the engine for the best move and show it with a gold arrow ----
