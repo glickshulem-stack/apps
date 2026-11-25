@@ -24,8 +24,11 @@
   :root[data-grad] body, :root[data-grad] .sheet, :root[data-grad] .detail { background:var(--grad) fixed, var(--bg); }
   :root[data-grad] .cover, :root[data-grad] .d-icon { background:var(--cover) !important; }
   :root[data-grad] .card { backdrop-filter:blur(6px); }
-  #s-theme { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
-  #s-theme button { font-size:.85rem; padding:10px; }
+  #s-theme { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #s-theme button { font-size:.95rem; padding:10px 10px 12px; }
+  #s-theme button i { height:70px; }
+  .look-hint { color:var(--muted); font-size:.88rem; margin:12px 4px 16px; }
+  .sheet-bg.show.look-on .sheet.sub { transform:none; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; font-family:Inter,system-ui,Roboto,sans-serif; color:var(--text); user-select:none; min-height:100vh;
     background:radial-gradient(1200px 500px at 85% -10%, var(--glow), transparent 60%), radial-gradient(900px 500px at -10% 110%, var(--glow), transparent 60%), linear-gradient(180deg,var(--bg),var(--bg2)); background-attachment:fixed; }
@@ -219,13 +222,18 @@
   <div class="last" id="s-last"></div>
   <div class="box" id="s-upd-box" style="display:none;margin-top:12px"><div class="row click" id="s-upd"><span>Update App Vault</span><span id="s-updv"></span></div><div id="s-upd-x"></div></div>
   <h5>Look</h5>
-  <div class="seg" id="s-theme"><button data-t="ember"><i style="background:linear-gradient(135deg,#240a10 0%,#5c1a1f 35%,#8a3a1a 65%,#3d1410 100%);"></i>Ember Sunset</button><button data-t="amethyst"><i style="background:linear-gradient(135deg,#17122a 0%,#3a1f5c 35%,#6b2a6e 65%,#8a3a4e 100%);"></i>Amethyst Dusk</button><button data-t="sapphire"><i style="background:linear-gradient(135deg,#070d22 0%,#132a5e 40%,#1f3f7a 65%,#0b1430 100%);"></i>Midnight Sapphire</button><button data-t="bordeaux"><i style="background:linear-gradient(135deg,#16050b 0%,#4a1024 40%,#6e1a30 65%,#1e0710 100%);"></i>Royal Bordeaux</button><button data-t="rosegold"><i style="background:linear-gradient(135deg,#1f0f18 0%,#5a2a3a 40%,#9a5a4e 70%,#2a1420 100%);"></i>Rose Gold Twilight</button><button data-t="onyx"><i style="background:linear-gradient(135deg,#070605,#3a2a12);"></i>Onyx Gold</button><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
+  <div class="box"><div class="row click go" id="look-open"><span>Colors<small id="look-name"></small></span><span>›</span></div></div>
   <div id="s-me"></div>
   <h5>Versions</h5>
   <div class="box">
     <div class="row"><span>App Vault app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
     <div class="row"><span>App Vault page<small>The screen you see. It updates when you check.</small></span><span class="vv" id="s-page"></span></div>
   </div>
+</div>
+<div class="sheet sub" id="lookview">
+  <div class="sheet-head"><button class="backbtn" id="look-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><h4 class="goldtext" style="text-align:right">Colors</h4></div>
+  <p class="look-hint">Tap a look. App Vault changes right away and remembers it on this device.</p>
+  <div class="seg" id="s-theme"><button data-t="ember"><i style="background:linear-gradient(135deg,#240a10 0%,#5c1a1f 35%,#8a3a1a 65%,#3d1410 100%);"></i>Ember Sunset</button><button data-t="amethyst"><i style="background:linear-gradient(135deg,#17122a 0%,#3a1f5c 35%,#6b2a6e 65%,#8a3a4e 100%);"></i>Amethyst Dusk</button><button data-t="sapphire"><i style="background:linear-gradient(135deg,#070d22 0%,#132a5e 40%,#1f3f7a 65%,#0b1430 100%);"></i>Midnight Sapphire</button><button data-t="bordeaux"><i style="background:linear-gradient(135deg,#16050b 0%,#4a1024 40%,#6e1a30 65%,#1e0710 100%);"></i>Royal Bordeaux</button><button data-t="rosegold"><i style="background:linear-gradient(135deg,#1f0f18 0%,#5a2a3a 40%,#9a5a4e 70%,#2a1420 100%);"></i>Rose Gold Twilight</button><button data-t="onyx"><i style="background:linear-gradient(135deg,#070605,#3a2a12);"></i>Onyx Gold</button><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
 </div>
 </div>
 <div class="gate" id="gate"><div class="gate-in" id="gate-in"></div></div>
@@ -239,7 +247,9 @@ const THEMES = { ember:1, amethyst:1, sapphire:1, bordeaux:1, rosegold:1, onyx:1
 function getTheme() { const q = new URLSearchParams(location.search).get('theme'); if (THEMES[q]) return q; try { const t = localStorage.getItem('hubLook'); if (THEMES[t]) return t; } catch {} return 'ember'; }
 function applyTheme(t) { const r = document.documentElement; r.dataset.theme = t; if (GRAD.includes(t)) r.dataset.grad = '1'; else delete r.dataset.grad; }
 function setTheme(t) { applyTheme(t); try { localStorage.setItem('hubLook', t); } catch {} markTheme(); }
-function markTheme() { document.querySelectorAll('#s-theme button').forEach(b => b.classList.toggle('on', b.dataset.t === document.documentElement.dataset.theme)); }
+function markTheme() { const t = document.documentElement.dataset.theme; let name = '';
+  document.querySelectorAll('#s-theme button').forEach(b => { const on = b.dataset.t === t; b.classList.toggle('on', on); if (on) name = b.textContent; });
+  const n = document.getElementById('look-name'); if (n) n.textContent = name; }
 applyTheme(getTheme());
 const REPO = 'glickshulem-stack/apps';
 const hasHub = typeof Hub !== 'undefined';
@@ -250,7 +260,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.26.0';
+const PAGE_VER = '0.27.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -533,16 +543,21 @@ $('refresh').onclick = () => refresh(true);
 // Settings panel: opens from the gear; closes with ✕, a tap outside, a swipe to the right, or the Android back button
 const isOpen = () => $('sheet').classList.contains('show');
 function openSettings() { if (isOpen()) return; $('sheet').classList.add('show'); try { history.pushState({ settings:1 }, ''); } catch {} }
-function closeSettings() { if (!isOpen()) return; const st = history.state || {}; if (st.settings) history.back(); else $('sheet').classList.remove('show'); }
+function closeSettings() { if (!isOpen()) return; const st = history.state || {}; if (st.settings) history.go(st.look ? -2 : -1); else $('sheet').classList.remove('show', 'look-on'); }
 addEventListener('popstate', () => {
   const st = history.state || {};
-  if (!st.settings) $('sheet').classList.remove('show');
+  if (!st.look) $('sheet').classList.remove('look-on');
+  if (!st.settings) $('sheet').classList.remove('show', 'look-on');
   if (!st.detail && detailId) hideDetail();
 });
+// Colors opens as its own page inside Settings (Su, 0.27.0); ‹ Settings or Android back returns.
+function openLook() { $('sheet').classList.add('look-on'); $('lookview').scrollTop = 0; try { history.pushState({ settings:1, look:1 }, ''); } catch {} }
+function closeLook() { if (history.state && history.state.look) history.back(); else $('sheet').classList.remove('look-on'); }
+$('look-open').onclick = openLook; $('look-back').onclick = closeLook;
 $('settings').onclick = openSettings;
 $('s-close').onclick = closeSettings;
 $('sheet').onclick = e => { if (e.target.id === 'sheet') closeSettings(); };
-addEventListener('keydown', e => { if (e.key === 'Escape') { if (isOpen()) closeSettings(); else if (detailId) closeDetail(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if ($('sheet').classList.contains('look-on')) closeLook(); else if (isOpen()) closeSettings(); else if (detailId) closeDetail(); } });
 { const p = $('panel'); let x0 = null, y0 = 0, dx = 0, horiz = null;
   p.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; horiz = null; }, { passive:true });
   p.addEventListener('touchmove', e => {
