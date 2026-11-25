@@ -8,10 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#120f0b; --bg2:#1b1611; --surface:#1d1813; --surface2:#262019; --text:#f4e8d2; --muted:#b09d80; --line:#3a2f22;
-    --gold:#d4a64a; --gold2:#e6c07a; --goldhi:#f6dc9c; --red:#e07a5f; --shadow:0 14px 34px rgba(0,0,0,.45); color-scheme:dark; }
+  /* Royal Blue & Gold (Su's pick, Studio 0.6.0): light page, white cards, navy bar, gold buttons */
+  :root { --bg:#eaf0fa; --bg2:#dfe8f8; --surface:#ffffff; --surface2:#eef3fb; --text:#14213d; --muted:#56657f; --line:#d2dcee;
+    --gold:#c0902f; --gold2:#8a5d1f; --goldhi:#f3d58f; --red:#b8462c; --shadow:0 8px 24px rgba(20,40,90,.10); color-scheme:light;
+    --glow:#dfe8f8; --tile:#e7eef9; --strong:#1f3566; --dangerline:#e0b4a4; --dangertext:#a2452c; --navy:#1f3566; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; min-height:100vh; background:radial-gradient(1200px 600px at 70% -10%,#2a2015,var(--bg)) fixed, var(--bg); color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
+  body { margin:0; min-height:100vh; background:radial-gradient(1200px 600px at 70% -10%,var(--glow),var(--bg)) fixed, var(--bg); color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
   button, input, textarea, select { font:inherit; color:inherit; }
   button { cursor:pointer; }
   .serif { font-family:Cinzel,Georgia,serif; }
@@ -46,10 +48,10 @@
   h3:after { content:""; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); }
   .drop { border:2px dashed var(--gold); border-radius:22px; background:linear-gradient(160deg,rgba(212,166,74,.10),rgba(212,166,74,.02)); min-height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; padding:24px; transition:background .2s, transform .2s; cursor:pointer; }
   .drop.over { background:rgba(212,166,74,.2); transform:scale(1.01); }
-  .drop .arrow { width:60px; height:60px; border-radius:50%; border:1px solid var(--gold); display:grid; place-items:center; font-size:28px; color:var(--goldhi); box-shadow:0 0 40px rgba(212,166,74,.25); }
+  .drop .arrow { width:60px; height:60px; border-radius:50%; border:1px solid var(--gold); display:grid; place-items:center; font-size:28px; color:var(--strong); box-shadow:0 0 40px rgba(212,166,74,.25); }
   .drop b { font:700 1.35rem Cinzel,Georgia,serif; } .drop span { color:var(--muted); }
   .file { margin-top:14px; display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 18px; }
-  .file .ic { width:44px; height:44px; border-radius:12px; background:#2b2218; display:grid; place-items:center; font-size:22px; flex:none; }
+  .file .ic { width:44px; height:44px; border-radius:12px; background:var(--tile); display:grid; place-items:center; font-size:22px; flex:none; }
   .file .t { flex:1; min-width:0; } .file .t b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .file .t small { color:var(--muted); }
   .ok { color:var(--gold2); font-weight:700; font-size:.85rem; } .bad { color:var(--red); font-weight:700; font-size:.85rem; }
   .card { background:var(--surface); border:1px solid var(--line); border-radius:22px; padding:22px 24px; box-shadow:var(--shadow); }
@@ -78,7 +80,7 @@
   .app { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
   .app.ready { border-color:rgba(212,166,74,.6); box-shadow:0 0 0 1px rgba(212,166,74,.25), var(--shadow); }
   .app .h { display:flex; align-items:center; gap:12px; }
-  .app .h img { width:50px; height:50px; border-radius:12px; background:#2b2218; padding:5px; flex:none; }
+  .app .h img { width:50px; height:50px; border-radius:12px; background:var(--tile); padding:5px; flex:none; }
   .app .h .t { flex:1; min-width:0; } .app .h b { font:700 1.06rem Cinzel,Georgia,serif; display:block; } .app .h small { color:var(--muted); }
   .status { font-size:.85rem; color:var(--muted); } .status b { color:var(--gold2); }
   .acts { display:flex; gap:8px; flex-wrap:wrap; }
@@ -95,29 +97,33 @@
   .modal h4 { margin:0 0 6px; font:700 1.3rem Cinzel,Georgia,serif; }
   .modal p { color:var(--muted); margin:6px 0 16px; }
   .modal .acts { justify-content:flex-end; margin-top:14px; }
-  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(30px); opacity:0; background:#2b2218; border:1px solid var(--gold); border-radius:14px; padding:12px 20px; transition:.25s; z-index:30; max-width:90vw; text-align:center; }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(30px); opacity:0; background:var(--tile); border:1px solid var(--gold); border-radius:14px; padding:12px 20px; transition:.25s; z-index:30; max-width:90vw; text-align:center; }
   .toast.show { opacity:1; transform:translateX(-50%); }
   .sync { color:var(--muted); font-size:.85rem; display:flex; align-items:center; gap:8px; }
   .tabs { display:flex; gap:6px; padding:14px clamp(16px,4vw,44px) 0; border-bottom:1px solid var(--line); overflow-x:auto; }
   .tab { border:1px solid transparent; border-bottom:0; background:none; padding:12px 20px; border-radius:14px 14px 0 0; color:var(--muted); font-weight:700; display:flex; gap:8px; align-items:center; white-space:nowrap; }
   .tab:hover { color:var(--gold2); }
-  .tab.on { color:var(--goldhi); background:var(--surface); border-color:var(--line); margin-bottom:-1px; padding-bottom:13px; }
+  .tab.on { color:var(--strong); background:var(--surface); border-color:var(--line); margin-bottom:-1px; padding-bottom:13px; }
   .tab i { font-style:normal; background:var(--gold); color:#1a1208; border-radius:99px; font-size:.74rem; padding:0 8px; }
   .tab.set { margin-left:auto; }
   .hint { color:var(--muted); margin:0 0 18px; }
   .row2 { display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; }
-  .row2 img { width:52px; height:52px; border-radius:12px; background:#2b2218; padding:5px; }
+  .row2 img { width:52px; height:52px; border-radius:12px; background:var(--tile); padding:5px; }
   .row2 b.n { font:700 1.1rem Cinzel,Georgia,serif; }
   .vers { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
   .v { border-radius:10px; padding:3px 11px; font-size:.83rem; border:1px solid var(--line); background:var(--surface2); color:var(--muted); white-space:nowrap; }
   .v strong { color:var(--text); }
-  .v.hi { border-color:var(--gold); color:var(--gold2); } .v.hi strong { color:var(--goldhi); }
+  .v.hi { border-color:var(--gold); color:var(--gold2); } .v.hi strong { color:var(--strong); }
   .st { margin-top:6px; font-size:.88rem; color:var(--gold2); font-weight:600; } .st.ok { color:var(--muted); font-weight:500; }
   .settings { max-width:640px; }
   .settings .line { display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--line); }
   .settings .line span { color:var(--muted); }
-  .danger { margin-top:26px; border:1px solid #5a3a2c; color:#f0b8a4; background:none; border-radius:12px; padding:10px 18px; font-weight:700; }
+  .danger { margin-top:26px; border:1px solid var(--dangerline); color:var(--dangertext); background:none; border-radius:12px; padding:10px 18px; font-weight:700; }
   @media (max-width:640px) { .row2 { grid-template-columns:auto 1fr; } .row2 .acts { grid-column:1/-1; } }
+  .bar, .tabs { background:var(--navy); border-color:var(--navy); }
+  .bar h1, .sync { color:#fff; } .bar .ghost { color:var(--goldhi); border-color:#3d5689; }
+  .tab { color:#c9d5ee; } .tab:hover { color:#fff; } .tab.on { background:var(--bg); border-color:var(--bg); color:var(--navy); }
+  .toast { color:var(--text); }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -213,7 +219,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
