@@ -241,7 +241,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.10.0';
+const VERSION = '0.10.1';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -446,7 +446,7 @@ function render() {
   }).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
   if (page) {
     const need = page.next !== page.live || page.getNew; if (need) waiting++;
-    const card = `<div class="app${need ? ' ready' : ''}" data-id="hubpage"><div class="row2"><img src="${esc(SITE + 'icon.svg')}" alt=""><div><b class="n">App Vault page</b>
+    const card = `<div class="app${need ? ' ready' : ''}" data-id="hubpage"><div class="row2"><img src="${esc(iconSrc(studio.apps.find(x => x.id === 'hub') || {}))}" alt=""><div><b class="n">App Vault page</b>
       <div class="vers"><span class="v${need ? ' hi' : ''}">In Studio <strong>${esc(page.next)}</strong></span><span class="v">Public <strong>${esc(page.live)}</strong></span></div>
       ${need ? `<div class="st">Newer in Studio · your friends still see ${esc(page.live)}</div>` : `<div class="st ok">✓ Same as public</div>`}<small style="color:var(--muted)">The look and screens of App Vault itself, plus the friends download page</small></div>
       <div class="acts"><a class="btn" style="text-decoration:none" href="${esc(SITE + 'hub-next/?v=' + encodeURIComponent(page.next))}" ${bridge ? '' : 'target="_blank" rel="noopener"'}>Try</a>${need ? `<button class="gold" data-act="pagepub">Publish ${esc(page.next)}</button>` : ''}</div></div></div>`;
