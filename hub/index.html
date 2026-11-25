@@ -33,29 +33,6 @@
   .chip { display:flex; align-items:center; gap:8px; padding:9px 14px; border-radius:999px; background:var(--surface); border:1px solid var(--line); font-size:.88rem; font-weight:600; box-shadow:var(--shadow); }
   .chip b { color:var(--gold2); }
   .chip i { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,var(--goldhi),var(--gold)); box-shadow:0 0 8px var(--gold); }
-  /* featured carousel */
-  .hero { position:relative; overflow:hidden; display:flex; align-items:center; gap:30px; padding:34px 40px; min-height:230px; border-radius:26px; color:#f3e2c4; cursor:pointer;
-    background:linear-gradient(120deg,#2b1d12 0%,#4a3422 55%,#6b4a2c 100%); }
-  .hero::before { content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; box-shadow:inset 0 0 0 1px rgba(230,199,122,.45), inset 0 0 0 6px rgba(0,0,0,.12), inset 0 0 0 7px rgba(230,199,122,.18); }
-  .hero::after { content:''; position:absolute; right:-40px; top:-40px; width:300px; height:300px; opacity:.12;
-    background:conic-gradient(#e6c79a 0 25%, transparent 0 50%, #e6c79a 0 75%, transparent 0) 0 0/65px 65px; transform:rotate(12deg); }
-  .hero .halo { position:relative; z-index:1; flex:none; width:150px; height:150px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle, rgba(243,213,143,.35), transparent 68%); }
-  .hero img { width:118px; height:118px; filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)); }
-  .hero .k { display:inline-flex; align-items:center; gap:8px; font-size:.75rem; letter-spacing:.2em; text-transform:uppercase; color:#e6c79a; font-weight:700; }
-  .hero .k::before { content:'✦'; font-size:.9rem; }
-  .hero h2 { margin:6px 0 8px; font:700 2.5rem/1.1 Cinzel,Georgia,serif; color:#fff3dc; }
-  .hero p { margin:0 0 18px; color:#e9d5b3; max-width:520px; line-height:1.5; }
-  .hero .z { z-index:1; flex:1; }
-  .hero .cta { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:999px; font-weight:700; color:#2a1d10; background:linear-gradient(135deg,#f6dc9c,#c9993f); box-shadow:0 6px 16px rgba(0,0,0,.3); }
-  .carousel { position:relative; }
-  .track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; border-radius:26px; scroll-behavior:smooth; box-shadow:0 18px 40px rgba(43,29,18,.28); }
-  .track::-webkit-scrollbar { display:none; }
-  .track .hero { flex:0 0 100%; scroll-snap-align:start; }
-  .hero:not([data-id="chess"])::after { display:none; }
-  .dots { display:flex; justify-content:center; gap:8px; margin-top:14px; }
-  .dots button { width:9px; height:9px; padding:0; border:0; border-radius:5px; background:var(--line); cursor:pointer; transition:width .25s, background .25s; }
-  .dots button.on { width:28px; background:linear-gradient(90deg,var(--goldhi),var(--gold)); }
   /* section titles with a gold rule */
   h3 { display:flex; align-items:center; gap:14px; margin:30px 4px 14px; font:700 1.15rem Cinzel,Georgia,serif; letter-spacing:.05em; }
   h3::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); opacity:.6; }
@@ -135,7 +112,7 @@
   .row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-top:1px solid var(--line); }
   .row span:last-child { color:var(--muted); }
   .iconbtn.dot { position:relative; } .iconbtn.dot::after { content:''; position:absolute; top:6px; right:6px; width:10px; height:10px; border-radius:50%; background:var(--gold); box-shadow:0 0 6px var(--gold); }
-  @media (max-width:640px) { .hero { flex-direction:column; text-align:center; padding:26px 20px; } .hero h2 { font-size:1.9rem; } .welcome h2 { font-size:1.5rem; } main { padding:16px; } }
+  @media (max-width:640px) { .welcome h2 { font-size:1.5rem; } main { padding:16px; } }
   /* refresh: the arrow spins while checking, then a toast says what happened */
   #refresh.spin { opacity:.85; }
   #refresh.spin svg { animation:spin .8s linear infinite; }
@@ -201,7 +178,6 @@
 <main>
   <section class="welcome"><div><div class="d" id="w-date"></div><h2 id="w-hi">Welcome</h2></div><div class="chips" id="chips"></div></section>
   <div id="removed"></div>
-  <div id="hero"></div>
   <h3>Your apps</h3>
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
 </main>
@@ -243,7 +219,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.18.0';
+const PAGE_VER = '0.19.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -313,26 +289,6 @@ function button(a, have) {
 }
 function barHtml(st) { return st && st.pct != null ? `<div class="bar${st.pct < 0 ? ' wait' : ''}"><i style="${st.pct >= 0 ? `width:${st.pct}%` : ''}"></i></div>` : ''; }
 
-// Featured: one slide per app, built only when the app list changes so it doesn't jump back while you watch.
-let featKey = '', featTimer = null, featIdx = 0;
-function renderFeatured(apps) {
-  const key = JSON.stringify(apps.map(a => [a.id, a.name, a.description, a.tagline, a.iconUrl, a.hero]));
-  if (key === featKey) return; featKey = key;
-  const box = $('hero');
-  if (!apps.length) { box.innerHTML = ''; return; }
-  box.innerHTML = `<div class="carousel"><div class="track">${apps.map(a => `<div class="hero" data-id="${a.id}"${a.hero ? ` style="background:${a.hero}"` : ''}><div class="halo"><img src="../${a.iconUrl}" alt=""></div><div class="z"><div class="k">Featured${a.category ? ' · ' + a.category : ''}</div><h2>${a.name}</h2><p>${a.description || a.tagline || ''}</p><span class="cta">See app ›</span></div></div>`).join('')}</div>${apps.length > 1 ? `<div class="dots">${apps.map((a, i) => `<button aria-label="${a.name}" data-i="${i}"></button>`).join('')}</div>` : ''}</div>`;
-  const track = box.querySelector('.track'), dots = [...box.querySelectorAll('.dots button')];
-  const go = i => { featIdx = (i + apps.length) % apps.length; track.scrollTo({ left: featIdx * track.clientWidth }); mark(); };
-  const mark = () => dots.forEach((d, i) => d.classList.toggle('on', i === featIdx));
-  const restart = () => { clearInterval(featTimer); if (apps.length > 1) featTimer = setInterval(() => go(featIdx + 1), 5000); };
-  dots.forEach(d => d.onclick = () => { go(+d.dataset.i); restart(); });
-  let t; track.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { featIdx = Math.round(track.scrollLeft / track.clientWidth); mark(); }, 120); });
-  track.addEventListener('pointerdown', restart);
-  // tapping a slide opens that app's page
-  track.querySelectorAll('.hero').forEach(h => h.onclick = () => openDetail(h.dataset.id));
-  featIdx = Math.min(featIdx, apps.length - 1); go(featIdx); restart();
-}
-
 // Greeting, date and the little summary chips at the top
 function renderTop(apps, inst, ups) {
   const now = new Date(), h = now.getHours();
@@ -372,7 +328,6 @@ function renderRemoved() {
 function render() {
   if (!catalog) return;
   const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
-  renderFeatured(apps);
   const list = $('list'); list.innerHTML = ''; let busy = false, inst = 0, ups = 0;
   if (!apps.length) list.innerHTML = '<div class="msg">No apps here yet. New apps will appear soon.</div>';
   for (const a of apps) {
@@ -540,7 +495,7 @@ $('refresh').onclick = () => refresh(true);
   const show = (d, rot) => { ptr.style.opacity = Math.min(1, d / 50); ptr.style.transform = `translateY(${Math.min(d, 130) - 60}px)`; ptr.querySelector('svg').style.transform = `rotate(${rot}deg)`; };
   const hide = () => { ptr.classList.add('back'); ptr.classList.remove('ready', 'spin'); ptr.style.opacity = 0; ptr.style.transform = 'translateY(-60px)'; ptr.querySelector('svg').style.transform = ''; };
   addEventListener('touchstart', e => {
-    if ($('sheet').classList.contains('show') || detailId || window.scrollY > 0 || e.touches.length > 1 || e.target.closest('.track')) { y0 = null; return; }
+    if ($('sheet').classList.contains('show') || detailId || window.scrollY > 0 || e.touches.length > 1) { y0 = null; return; }
     y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; pull = 0; active = false; ptr.classList.remove('back');
   }, { passive:true });
   addEventListener('touchmove', e => {
