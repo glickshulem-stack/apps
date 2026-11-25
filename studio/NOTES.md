@@ -7,7 +7,7 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - Studio reads `studio.json`. Publishing changes `catalog.json`.
 
 ## Current version
-- Studio page: 0.13.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
+- Studio page: 0.14.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
 - Studio app (APK): 0.5.0 (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
 
 ## Su's decisions
@@ -24,6 +24,8 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - **People tab (0.11.0, Su 2026-11-25):** Requests (name, note, device, date) with Approve / Decline; Approved with Remove access; Declined or removed with Approve / Delete (Delete lets them ask again). Badge on the tab counts new requests. Su signs in once per device with the Firebase email + password (Settings shows it, with Sign out). See `hub/NOTES.md` for how it works.
 
 - **Who has what (0.13.0):** People › Approved starts with a summary (each app: how many people have it, how many are behind the public version), and each person shows chips like "Gambit 0.28.1" ("behind" in red when older than public) plus when they last opened App Vault.
+
+- **Reports tab (0.14.0):** notes from App Vault app pages: app, version, who, device, date, text, photos (tap to enlarge). Filters New / Done / All / per app; Mark as done / Mark as new; Delete (with its photos). Badge counts new notes. Needs the People sign-in.
 
 ## Known bugs
 - Fixed in 0.9.2: a cached old Studio page could reload itself forever ("Loading apps" blinking). It now reloads once per version with a fresh address, then shows the apps with publishing paused until the new page arrives.

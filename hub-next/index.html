@@ -202,6 +202,28 @@
   .gate-wait b { font:700 1.15rem Cinzel,Georgia,serif; }
   .gate-wait span { color:var(--muted); font-size:.92rem; line-height:1.5; }
   .gate-link { margin-top:14px; border:0; background:none; color:var(--gold2); font:600 .9rem Inter,sans-serif; cursor:pointer; text-decoration:underline; }
+  /* Notes & bug reports (page 0.29.0): on each app page; the form opens over it */
+  .rp-box { padding:18px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .rp-box p { flex:1; min-width:220px; margin:0; color:var(--muted); line-height:1.5; }
+  .rp-list { margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+  .rp-item { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:12px 16px; }
+  .rp-item .top { display:flex; justify-content:space-between; gap:10px; font-size:.8rem; color:var(--muted); font-weight:600; }
+  .rp-item .top b { color:var(--gold2); } .rp-item .top b.done { color:var(--muted); }
+  .rp-item p { margin:6px 0 0; white-space:pre-wrap; line-height:1.45; user-select:text; }
+  .rp-bg { position:fixed; inset:0; z-index:25; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .rp-bg[hidden] { display:none; }
+  .rp-card { width:min(560px,100%); max-height:92vh; overflow-y:auto; background:var(--bg); border:1px solid var(--gold); border-radius:22px; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .rp-card .hd { display:flex; align-items:center; gap:12px; margin-bottom:12px; } .rp-card .hd img { width:40px; height:40px; }
+  .rp-card .hd h4 { flex:1; margin:0; font:700 1.3rem Cinzel,Georgia,serif; }
+  .rp-card textarea { width:100%; min-height:130px; resize:vertical; border:1px solid var(--line); border-radius:14px; background:var(--surface2); color:var(--text); padding:13px 14px; font:500 1rem/1.45 Inter,sans-serif; outline:none; user-select:text; }
+  .rp-card textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px var(--glow); }
+  .rp-photos { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
+  .rp-photos .ph { position:relative; width:92px; height:92px; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
+  .rp-photos .ph img { width:100%; height:100%; object-fit:cover; display:block; }
+  .rp-photos .ph button { position:absolute; top:4px; right:4px; width:26px; height:26px; border-radius:50%; border:0; background:rgba(0,0,0,.65); color:#fff; cursor:pointer; }
+  .rp-photos .add { width:92px; height:92px; border-radius:12px; border:2px dashed var(--gold); background:none; color:var(--gold2); font:700 .85rem Inter,sans-serif; cursor:pointer; }
+  .rp-hint { color:var(--muted); font-size:.82rem; margin:-4px 0 12px; }
+  .rp-err { color:#e08a5a; font-size:.9rem; min-height:1.2em; margin-top:8px; text-align:center; }
 </style>
 </head>
 <body>
@@ -217,6 +239,7 @@
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
 </main>
 <div class="detail" id="detail"></div>
+<div class="rp-bg" id="rp" hidden></div>
 <div class="sheet-bg" id="sheet"><div class="sheet" id="panel">
   <div class="sheet-head"><h4 class="goldtext">Settings</h4><button class="iconbtn" id="s-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="s-me"></div>
@@ -263,7 +286,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.28.0';
+const PAGE_VER = '0.29.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -706,6 +729,103 @@ function renderMe() {
 }
 renderMe();
 gateStart();
+</script>
+<script>
+// Notes & bug reports (page 0.29.0). Approved people write a note (with up to 4 photos) from any app's page; Su reads them in Studio › Reports.
+// Photos are shrunk and kept in the database itself (one document each), so no paid storage is needed. Firestore: reports/{id} + reports/{id}/photos/{n}.
+const canPick = !hasHub || (typeof Hub.bridge === 'function' && Hub.bridge() >= 5);   // App Vault app 0.11.0+ can open the photo picker
+const rp = { app:null, photos:[], mine:[], off:null };
+function shrink(file) {   // → JPEG data URL, longest side ≤ 1280 px, under ~850 KB
+  return new Promise((ok, bad) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let side = 1280, q = 0.75, out = '';
+      for (let k = 0; k < 6; k++) {
+        const r = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        out = c.toDataURL('image/jpeg', q); if (out.length < 850000) return ok(out);
+        side *= 0.8; q = Math.max(0.5, q - 0.08);
+      }
+      bad(new Error('too big'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('not a picture')); };
+    img.src = url;
+  });
+}
+// The section at the bottom of each app page, with this person's own notes for the app.
+function rpSection(a) {
+  const ok = gate.me && gate.me.status === 'approved';
+  return `<h3>Notes &amp; bug reports</h3><div class="box rp-box"><p>Found a bug, or have an idea for ${esc(a.name)}? Send a note to the developer. You can add photos of the problem.</p>
+    <button class="btn" id="rp-open"${ok ? '' : ' disabled'}>Write a note</button></div><div class="rp-list" id="rp-list"></div>`;
+}
+function rpRenderMine() {
+  const box = $('rp-list'); if (!box || !detailId) return;
+  const day = t => t && t.toDate ? t.toDate().toLocaleDateString([], { day:'numeric', month:'short' }) + ', ' + t.toDate().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'Just now';
+  const mine = rp.mine.filter(r => r.app === detailId);
+  box.innerHTML = mine.length ? `<div style="color:var(--muted);font-size:.85rem;font-weight:600;margin:4px 4px 0">Your notes</div>` + mine.map(r => `<div class="rp-item"><div class="top"><span>${day(r.created)}${r.photos ? ` · 📷 ${r.photos}` : ''}</span><b class="${r.status === 'done' ? 'done' : ''}">${r.status === 'done' ? '✓ Done' : 'Sent'}</b></div><p>${esc(r.text)}</p></div>`).join('') : '';
+}
+function rpListen() {
+  if (rp.off || !gate.fb || !gate.uid) return;
+  const { F, db } = gate.fb;
+  rp.off = F.onSnapshot(F.query(F.collection(db, 'reports'), F.where('uid', '==', gate.uid)), s => {
+    rp.mine = s.docs.map(d => ({ id:d.id, ...d.data() })).sort((x, y) => ((y.created && y.created.seconds) || 9e9) - ((x.created && x.created.seconds) || 9e9));
+    rpRenderMine();
+  }, x => console.warn('reports', x));
+}
+function rpDraw() {
+  $('rp-photos').innerHTML = rp.photos.map((p, i) => `<div class="ph"><img src="${p}" alt=""><button data-i="${i}" aria-label="Remove">✕</button></div>`).join('')
+    + (rp.photos.length < 4 && canPick ? `<button class="add" id="rp-add">+ Add photo</button>` : '');
+}
+function rpOpen(a) {
+  rp.app = a; rp.photos = [];
+  $('rp').innerHTML = `<div class="rp-card"><div class="hd"><img src="../${a.iconUrl}" alt=""><h4 class="goldtext">Note about ${esc(a.name)}</h4><button class="iconbtn" id="rp-x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <textarea id="rp-text" maxlength="2000" placeholder="What would you like to tell the developer? For a bug, say what you did and what went wrong."></textarea>
+    <div class="rp-photos" id="rp-photos"></div>
+    ${canPick ? '<div class="rp-hint">Up to 4 photos, such as screenshots of the problem.</div>' : '<div class="rp-hint">To add photos, first update App Vault in Settings.</div>'}
+    <button class="bigbtn" id="rp-send">Send note</button><div class="rp-err" id="rp-err"></div>
+    <input type="file" id="rp-file" accept="image/*" multiple hidden></div>`;
+  $('rp').hidden = false; rpDraw();
+  $('rp-x').onclick = rpClose;
+  $('rp-photos').onclick = e => { const x = e.target.closest('button[data-i]'); if (x) { rp.photos.splice(+x.dataset.i, 1); rpDraw(); } else if (e.target.id === 'rp-add') $('rp-file').click(); };
+  $('rp-file').onchange = async e => {
+    const files = [...e.target.files].slice(0, 4 - rp.photos.length); e.target.value = '';
+    for (const f of files) { try { rp.photos.push(await shrink(f)); } catch { $('rp-err').textContent = 'One picture could not be added.'; } }
+    rpDraw();
+  };
+  $('rp-send').onclick = rpSend;
+  setTimeout(() => $('rp-text') && $('rp-text').focus(), 200);
+}
+function rpClose() { $('rp').hidden = true; $('rp').innerHTML = ''; }
+async function rpSend() {
+  const text = $('rp-text').value.trim(), a = rp.app;
+  if (!text) { $('rp-err').textContent = 'Please write a few words first.'; return; }
+  $('rp-send').disabled = true; $('rp-send').textContent = rp.photos.length ? 'Sending note and photos…' : 'Sending…'; $('rp-err').textContent = '';
+  try {
+    const { F, db } = gate.fb, ref = F.doc(F.collection(db, 'reports'));
+    await F.setDoc(ref, { uid:gate.uid, name:gate.me.name, app:a.id, appName:a.name, version:(hasHub && Hub.installedVersion(a.package)) || '', page:PAGE_VER,
+      device:gate.me.device || deviceName(), text, photos:rp.photos.length, status:'new', created:F.serverTimestamp() });
+    for (let i = 0; i < rp.photos.length; i++) await F.setDoc(F.doc(db, 'reports', ref.id, 'photos', String(i)), { uid:gate.uid, data:rp.photos[i] });
+    rpClose(); toast('✓', 'Note sent', 'Thank you! The developer will see it in Studio.');
+  } catch (x) {
+    console.warn(x); $('rp-send').disabled = false; $('rp-send').textContent = 'Send note';
+    $('rp-err').textContent = navigator.onLine ? 'That didn\'t go through. Please try again.' : 'No internet. Connect and try again.';
+  }
+}
+// Hook into the app page: add the section after the page is built, and start listening once signed in.
+const buildDetailBase = buildDetail;
+buildDetail = function (a) {
+  buildDetailBase(a);
+  $('detail').querySelector('.d-wrap').insertAdjacentHTML('beforeend', rpSection(a));
+  $('rp-open').onclick = () => rpOpen(a);
+  rpListen(); rpRenderMine();
+};
+const hideDetailBase = hideDetail;
+hideDetail = function () { if (!$('rp').hidden) rpClose(); hideDetailBase(); };   // Android back closes the note too
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('rp').hidden) { e.stopImmediatePropagation(); rpClose(); } }, true);
+const gateApplyBase = gateApply;
+gateApply = function (d) { gateApplyBase(d); if (d && d.status === 'approved') rpListen(); };
 </script>
 <script>
 // Studio preview: this same file lives in hub-next/ (Claude's test copy, opened from App Vault Studio) until Su presses Publish,
