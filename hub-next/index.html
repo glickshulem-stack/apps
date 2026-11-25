@@ -237,6 +237,14 @@
   .rp-plus p { margin:6px 10px; color:var(--muted); font-size:.85rem; }
   .rp-zoom { position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.9); display:flex; align-items:center; justify-content:center; padding:16px; cursor:zoom-out; }
   .rp-zoom[hidden] { display:none; } .rp-zoom img { max-width:100%; max-height:100%; border-radius:12px; }
+  .rp-tray { border-top:1px solid var(--line); padding:10px 0 0; }
+  .rp-tray .items { display:flex; gap:10px; flex-wrap:wrap; }
+  .rp-tray .it { position:relative; }
+  .rp-tray .it img { width:96px; height:96px; object-fit:cover; border-radius:12px; border:1px solid var(--line); display:block; }
+  .rp-tray .it .filechip { margin:0; max-width:240px; }
+  .rp-tray .it .rm { position:absolute; top:-8px; right:-8px; width:28px; height:28px; border-radius:50%; border:1px solid var(--gold); background:var(--surface); color:var(--gold2); font-weight:800; line-height:1; cursor:pointer; }
+  .rp-tray .acts { display:flex; justify-content:space-between; align-items:center; margin-top:10px; color:var(--muted); font-size:.9rem; }
+  .rp-tray .cancel { background:none; border:1px solid var(--line); color:var(--text); border-radius:99px; padding:8px 16px; font-weight:600; cursor:pointer; }
   .rp-err { color:#e08a5a; font-size:.9rem; min-height:1.2em; margin-top:8px; text-align:center; }
   .bt { display:inline-block; font:800 .62rem/1 Inter,sans-serif; font-style:normal; letter-spacing:.08em; padding:3px 6px; border-radius:5px; color:#2a1d10; background:linear-gradient(180deg,#f6dc9c,#c9993f); vertical-align:middle; }
   .btn .bt { background:#2a1d10; color:#f3d58f; margin-left:4px; }
@@ -296,7 +304,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.34.0';
+const PAGE_VER = '0.35.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -321,7 +329,7 @@ function act(a) {
 // App Vault came back to the front (e.g. the Android install screen closed)
 function onHubResume() { for (const id in flow) if (flow[id].phase === 'installer') flow[id].phase = 'back'; }
 
-/* Beta (page 0.34.0). catalog.json apps[i].beta = { version, note } is a Beta of a public app; betaApps = apps only in Beta.
+/* Beta (page 0.35.0). catalog.json apps[i].beta = { version, note } is a Beta of a public app; betaApps = apps only in Beta.
    members/{uid}.beta === 'yes' = this person is in Beta (they asked with Join Beta, Su approved in Studio);
    members/{uid}.early = { appId: entry } = a version Su sent to just this person. Both show a gold BETA tag.
    A person on the normal version is offered normal updates, and can install the Beta from the app page (after a warning).
@@ -798,7 +806,7 @@ function renderMe() {
   box.innerHTML = m && m.status === 'approved' ? `<h5>Account</h5><div class="box"><div class="row"><span class="rl"><svg class="ri" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>${esc(m.name)}<small>Approved · ${esc(gate.me && gate.me.device || deviceName())}</small></span></span><span class="vv">✓</span></div></div>` : '';
 }
 renderMe();
-// Join / Leave Beta (page 0.34.0). The rules let a person set members/{uid}.beta only to 'asked' or 'no'; Su approves ('yes') in Studio.
+// Join / Leave Beta (page 0.35.0). The rules let a person set members/{uid}.beta only to 'asked' or 'no'; Su approves ('yes') in Studio.
 function renderBeta() {
   const m = vaultMe(), box = $('s-beta'); if (!box) return;
   if (!m) { box.innerHTML = ''; return; }
@@ -826,7 +834,7 @@ gateStart();
 const bridgeLv = hasHub && typeof Hub.bridge === 'function' ? Hub.bridge() : 0;
 const canPick = !hasHub || bridgeLv >= 5;    // App Vault app 0.11.0+: photo picker
 const canMore = !hasHub || bridgeLv >= 6;    // App Vault app 0.12.0+: camera and any file
-const rp = { mine:[], off:null, msgs:{}, msgOffs:{}, pics:{}, picsLoading:{}, sending:0 };
+const rp = { draft:[], mine:[], off:null, msgs:{}, msgOffs:{}, pics:{}, picsLoading:{}, sending:0 };
 function shrink(file) {   // → JPEG data URL, longest side ≤ 1280 px, under ~850 KB
   return new Promise((ok, bad) => {
     const url = URL.createObjectURL(file), img = new Image();
@@ -917,13 +925,14 @@ function rpOpen() {
       ${canPick ? '<button data-do="photo">🖼️ Add photo</button>' : ''}${canMore ? '<button data-do="camera">📷 Take photo</button><button data-do="file">📎 Add file</button>' : ''}
       ${!canMore ? '<p>To take photos or add files, first update App Vault in Settings.</p>' : ''}
     </div>
+    <div class="rp-tray" id="rp-tray" hidden></div>
     <div class="rp-comp"><button class="plusbtn" id="rp-plus" aria-label="Add a photo or file">+</button>
       <textarea id="rp-text" maxlength="2000" rows="1" placeholder="Message"></textarea>
       <button class="sendbtn" id="rp-send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-7z"/></svg></button></div>
     <div class="rp-err" id="rp-err"></div>
     <input type="file" id="rp-pick" accept="image/*" multiple hidden><input type="file" id="rp-cam" accept="image/*" capture="environment" hidden><input type="file" id="rp-any" hidden>
   </div><div class="rp-zoom" id="rp-zoom" hidden></div>`;
-  $('rp').hidden = false; rp.stick = true; rpRender(); rpSeen();
+  $('rp').hidden = false; rp.stick = true; rp.draft = []; rpRender(); rpSeen();
   $('rp-x').onclick = rpBack; $('rp-send').onclick = rpSendText;
   const ta = $('rp-text'), grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; };
   ta.oninput = grow;
@@ -933,6 +942,8 @@ function rpOpen() {
   $('rp-pick').onchange = e => { const fs = [...e.target.files].slice(0, 4); e.target.value = ''; fs.forEach(f => rpAttach(f)); };
   $('rp-cam').onchange = e => { const f = e.target.files[0]; e.target.value = ''; rpAttach(f); };
   $('rp-any').onchange = e => { const f = e.target.files[0]; e.target.value = ''; rpAttach(f); };
+  $('rp-tray').onclick = e => { const x = e.target.closest('[data-rm]'); if (x) { rp.draft.splice(+x.dataset.rm, 1); rpTray(); }
+    if (e.target.closest('.cancel')) { rp.draft = []; rpTray(); } };
   $('rp-thread').onclick = e => { const img = e.target.closest('.pics img'); if (!img) return; $('rp-zoom').innerHTML = `<img src="${img.src}" alt="">`; $('rp-zoom').hidden = false; };
   $('rp-zoom').onclick = () => { $('rp-zoom').hidden = true; $('rp-zoom').innerHTML = ''; };
   try { history.pushState({ ...(history.state || {}), support:1 }, ''); } catch {}   // Android back closes it
@@ -947,33 +958,46 @@ async function rpPost(text, extra, firstPhoto) {
       device:gate.me.device || deviceName(), text, photos:firstPhoto ? 1 : 0, status:'new', created:F.serverTimestamp() });
     if (firstPhoto) { await F.setDoc(F.doc(db, 'reports', ref.id, 'photos', '0'), { uid:gate.uid, data:firstPhoto }); rp.pics[ref.id] = [firstPhoto]; }
     if (extra) await F.addDoc(F.collection(db, 'reports', ref.id, 'msgs'), { from:'user', uid:gate.uid, text, created:F.serverTimestamp(), ...extra });
+    if (!rp.mine.length) rp.mine.unshift({ id:ref.id, uid:gate.uid, text, photos:firstPhoto ? 1 : 0, created:null });   // so the next item goes into it
     return;
   }
   await F.addDoc(F.collection(db, 'reports', last.id, 'msgs'), { from:'user', uid:gate.uid, text, created:F.serverTimestamp(), ...(extra || {}) });
   await F.updateDoc(F.doc(db, 'reports', last.id), { status:'new', lastAt:F.serverTimestamp(), userUnread:false });
 }
-async function rpSendText() {
-  const ta = $('rp-text'), text = ta.value.trim(); if (!text) return;
-  $('rp-send').disabled = true; $('rp-err').textContent = '';
-  try { await rpPost(text); ta.value = ''; ta.style.height = ''; rp.stick = true; rpRender(); } catch (x) { rpFail(x); }
-  $('rp-send').disabled = false; ta.focus();
+// Picked photos and files wait in a tray above the box until Send (Su, page 0.34.0: never send straight away).
+function rpTray() {
+  const t = $('rp-tray'); if (!t) return;
+  t.hidden = !rp.draft.length;
+  t.innerHTML = rp.draft.length ? `<div class="items">${rp.draft.map((d, i) => `<div class="it">${d.photo ? `<img src="${d.photo}" alt="">` : `<span class="filechip">📎 ${esc(d.file.name)}</span>`}<button class="rm" data-rm="${i}" aria-label="Remove">✕</button></div>`).join('')}</div>
+    <div class="acts"><span>Not sent yet. Tap ➤ to send${rp.draft.length > 1 ? ' them' : ''}.</span><button class="cancel">Cancel</button></div>` : '';
 }
-// A picked photo or file is shown first with Send / Not now (page 0.34.0); nothing goes out until Send.
-async function rpAttach(file) {
+async function rpAttach(file) {   // gets the photo or file ready and puts it in the tray; nothing is sent yet
   if (!file) return; $('rp-err').textContent = '';
+  if (rp.draft.length >= 4) { $('rp-err').textContent = 'Up to 4 at a time. Send these first.'; return; }
   try {
-    if (/^image\//.test(file.type)) {
-      const photo = await shrink(file);
-      ask('Send this photo?', `<img src="${photo}" alt="" style="display:block;max-width:100%;max-height:55vh;margin:0 auto;border-radius:12px">`, 'Send', async () => {
-        try { toast('↑', 'Sending photo…'); if (rp.mine.length) await rpPost('📷 Photo', { photo }); else await rpPost('📷 Photo', null, photo); toast('✓', 'Photo sent'); rp.stick = true; rpRender(); } catch (x) { rpFail(x); } });
-    } else {
+    if (/^image\//.test(file.type)) rp.draft.push({ photo:await shrink(file) });
+    else {
       if (file.size > 700000) { $('rp-err').textContent = 'That file is too big. Files up to 700 KB can be sent.'; return; }
       const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(file); });
-      const name = file.name.slice(0, 120);
-      ask('Send this file?', `<p>📎 <b>${esc(name)}</b> · ${Math.max(1, Math.round(file.size / 1024))} KB</p>`, 'Send', async () => {
-        try { toast('↑', 'Sending file…'); await rpPost('📎 ' + name, { file:{ name, type:file.type || '', data } }); toast('✓', 'File sent'); rp.stick = true; rpRender(); } catch (x) { rpFail(x); } });
+      rp.draft.push({ file:{ name:file.name.slice(0, 120), type:file.type || '', data } });
     }
+    rpTray();
+  } catch (x) { $('rp-err').textContent = 'That photo or file could not be opened. Try another one.'; console.warn(x); }
+}
+async function rpSendText() {
+  const ta = $('rp-text'), text = ta.value.trim(); if (!text && !rp.draft.length) return;
+  $('rp-send').disabled = true; $('rp-err').textContent = '';
+  try {
+    while (rp.draft.length) {
+      const d = rp.draft[0];
+      if (d.photo) { if (rp.mine.length) await rpPost('📷 Photo', { photo:d.photo }); else await rpPost('📷 Photo', null, d.photo); }
+      else await rpPost('📎 ' + d.file.name, { file:d.file });
+      rp.draft.shift(); rpTray();
+    }
+    if (text) { await rpPost(text); ta.value = ''; ta.style.height = ''; }
+    rp.stick = true; rpRender();
   } catch (x) { rpFail(x); }
+  $('rp-send').disabled = false; ta.focus();
 }
 function rpBack() { if (history.state && history.state.support) history.back(); else rpClose(); }
 addEventListener('popstate', () => { if (!(history.state && history.state.support) && rpIsOpen()) rpClose(); });
