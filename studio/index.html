@@ -200,7 +200,7 @@
     <h3>Settings</h3>
     <div class="line"><span>Signed in as</span><b id="set-who"></b></div>
     <div class="line"><span>Studio page</span><b id="set-page"></b></div>
-    <div class="line" id="set-app-line" hidden><span>Studio app on this tablet</span><b id="set-app"></b></div>
+    <div class="line"><span>Studio app</span><span id="set-app" style="display:flex;gap:10px;align-items:center"></span></div>
     <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
     <button class="danger" id="signout">Sign out of Studio</button>
     <p class="hint" style="margin-top:10px">Only needed if you want to stop using Studio on this device. You will have to paste your GitHub key again.</p>
@@ -212,7 +212,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.4.0';
+const VERSION = '0.4.1';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -313,7 +313,7 @@ function showChecked() {
 }
 setInterval(showChecked, 30000);
 $('set-page').textContent = VERSION;
-if (bridge && bridge.hubVersion) { $('set-app-line').hidden = false; $('set-app').textContent = bridge.hubVersion(); }
+
 
 // Tabs
 function showTab(t) {
@@ -339,7 +339,7 @@ function pills(a, p) {
 function render() {
   const pub = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
   const rank = a => { const st = stateOf(a, pub[a.id]); return needsPublish(st) ? 0 : st === 'live' ? 1 : 2; };
-  const list = studio.apps.slice().sort((a, b) => rank(a) - rank(b));
+  const list = studio.apps.filter(a => !a.private).sort((a, b) => rank(a) - rank(b));   // Studio itself lives in Settings
   let waiting = 0;
   $('apps').innerHTML = list.map(a => {
     const p = pub[a.id], st = stateOf(a, p), need = needsPublish(st);
@@ -353,6 +353,7 @@ function render() {
       <div class="acts">${tryButton(a)}${need ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div>
     </div></div>`;
   }).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
+  renderSelf();
   $('bench-count').hidden = !waiting; $('bench-count').textContent = `${waiting} to publish`;
   $('pubapps').innerHTML = catalog.apps.map(p => {
     const a = studio.apps.find(x => x.id === p.id), st = a ? stateOf(a, p) : 'live';
@@ -361,6 +362,18 @@ function render() {
       <div class="acts">${needsPublish(st) ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${p.id !== 'hub' ? `<button class="btn" data-act="hide">Take off</button>` : ''}</div></div></div>`;
   }).join('') || '<div class="empty">Nothing published yet. Press Publish on an app in the Test bench.</div>';
 }
+
+// Studio's own app: version and update, shown only in Settings.
+function renderSelf() {
+  const self = studio.apps.find(a => a.id === "hubstudio"); if (!self) return;
+  const have = bridge && bridge.hubVersion ? bridge.hubVersion() : '';
+  $('set-app').innerHTML = have
+    ? `<b>${esc(have)}</b>${have !== self.version ? `<span style="color:var(--muted)">newest ${esc(self.version)}</span>` : ''}${tryButton(self)}`
+    : `<b>${esc(self.version)}</b><span style="color:var(--muted)">on the tablet</span>`;
+}
+$('set-app').onclick = e => { const b = e.target.closest('button[data-act]'); if (!b) return; const me = studio.apps.find(a => a.id === 'hubstudio');
+  if (b.dataset.act === 'try') { bridge.download(me.id, apkUrl(me), me.version); toast('Downloading the new Studio'); setTimeout(render, 300); }
+  else if (b.dataset.act === 'cancel') { bridge.cancel(me.id); setTimeout(render, 500); } };
 
 // Try on the tablet: Studio app downloads and installs the test version, like Play Hub does.
 function tryButton(a) {
