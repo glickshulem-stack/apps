@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (App Vault page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html`. Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.30.0); test copy `hub-next/index.html` 0.33.0 (one chat per person with + button for photo/camera/file, on top of 0.32.0 Navy & Gold) waiting for Su's Publish
+- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.32.0); test copy `hub-next/index.html` 0.33.0 (one chat per person with + button for photo/camera/file, on top of 0.32.0 Navy & Gold) waiting for Su's Publish
 - App Vault app (APK): 0.12.0 (bridge 6: chat picker can take a photo with the camera or pick any file; 0.11.0 = photo picker, bridge 5) (`android/hub/app/build.gradle`)
 
 ## Su's decisions
