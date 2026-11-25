@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
 
-/** Android tells Play Hub here how an install went (done, needs a tap, or failed). */
+/** Android tells App Vault here how an install went (done, needs a tap, or failed). */
 public class InstallResult extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
@@ -14,7 +14,7 @@ public class InstallResult extends BroadcastReceiver {
         Intent confirm = i.getParcelableExtra(Intent.EXTRA_INTENT);
         MainActivity a = MainActivity.current.get();
         if (a != null && !a.isDestroyed()) { a.installResult(id, status, confirm); return; }
-        // Play Hub's screen is gone: still show Android's Install screen if it asked for a tap.
+        // App Vault's screen is gone: still show Android's Install screen if it asked for a tap.
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION && confirm != null) {
             confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             c.startActivity(confirm);
