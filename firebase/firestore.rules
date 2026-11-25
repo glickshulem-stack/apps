@@ -52,18 +52,29 @@ service cloud.firestore {
         && request.resource.data.status in ['new', resource.data.status]
         && request.resource.data.userUnread == false);
       allow delete: if isSu();
-      // The chat under each message: Su's replies and the writer's answers
+      // The chat under each message: Su's replies and the writer's answers.
+      // Both sides may add one photo (JPEG data URL) or one small file (App Vault page 0.33.0+, Studio 0.18.0+).
+      function okAttach() {
+        let d = request.resource.data;
+        return (!('photo' in d) || (d.photo is string && d.photo.size() <= 900000))
+          && (!('file' in d) || (d.file is map && d.file.keys().hasOnly(['name', 'type', 'data'])
+            && d.file.name is string && d.file.name.size() <= 200
+            && d.file.type is string && d.file.type.size() <= 200
+            && d.file.data is string && d.file.data.size() <= 960000));
+      }
       match /msgs/{mid} {
         allow read: if isSu() || (request.auth != null && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid);
         allow create: if (isSu() && request.resource.data.from == 'su'
-            && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000)
+            && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+            && okAttach())
           || (approved() && request.resource.data.from == 'user'
             && request.resource.data.uid == request.auth.uid
             && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid
             && request.resource.data.text is string
             && request.resource.data.text.size() > 0
             && request.resource.data.text.size() <= 2000
-            && request.resource.data.keys().hasOnly(['from', 'uid', 'text', 'created']));
+            && okAttach()
+            && request.resource.data.keys().hasOnly(['from', 'uid', 'text', 'created', 'photo', 'file']));
         allow delete: if isSu();
       }
       match /photos/{pid} {

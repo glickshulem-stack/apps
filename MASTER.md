@@ -28,7 +28,7 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 | App | Folder | Current version | Status | Next to-do |
 |---|---|---|---|---|
 | App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.18.0 (tidy-up: no Public tab, Messages inbox with one chat per person, People rows), app 0.5.0 | testing | Su tries the tidy-up; next step 2 = notifications for new messages and replies |
-| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.30.0 public, 0.32.0 in Studio (chat with the developer + one Navy & Gold look); app 0.11.0 public (photo picker) | testing | Su pastes the new rules, tries page 0.31.0 (send a message, Su replies in Studio › Messages, answer back), then Publishes. Next: publish to chosen people |
+| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.30.0 public, 0.33.0 in Studio (one chat per person with + photo/camera/file, Navy & Gold look); app 0.12.0 in Studio (camera + any file) | testing | Su pastes the new rules, tries page 0.33.0, then Publishes page and app 0.12.0. Next: publish to chosen people |
 | Gambit (chess) | `apps/chess/` + `android/chess/` | 0.31.0 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
 | App Vault for Windows | `hub/` installed from Edge/Chrome | (uses the App Vault page) | in progress | PR #26 waits for Su's go |

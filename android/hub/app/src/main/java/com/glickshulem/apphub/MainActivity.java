@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.provider.MediaStore;
 import android.content.ClipData;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -66,15 +67,28 @@ public class MainActivity extends Activity {
                 if (r.isForMainFrame()) v.loadUrl("file:///android_asset/index.html");
             }
         });
-        // Photo picker for bug reports (App Vault 0.11.0, bridge 5): the page's "Add photos" opens the Android picker.
+        // Picker for the developer chat (bridge 5: photos; bridge 6, App Vault 0.12.0: camera and any file).
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
                 if (picking != null) picking.onReceiveValue(null);
-                picking = cb;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*");
-                if (p != null && p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                try { startActivityForResult(Intent.createChooser(i, "Choose photos"), PICK); }
-                catch (Exception e) { picking = null; cb.onReceiveValue(null); return false; }
+                picking = cb; shot = null;
+                String type = "*/*";
+                if (p != null && p.getAcceptTypes() != null && p.getAcceptTypes().length > 0 && p.getAcceptTypes()[0] != null && !p.getAcceptTypes()[0].isEmpty()) type = p.getAcceptTypes()[0];
+                try {
+                    if (p != null && p.isCaptureEnabled()) {   // "Take photo": open the camera, it saves into our cache
+                        File dir = new File(getCacheDir(), "camera"); dir.mkdirs();
+                        File[] old = dir.listFiles(); if (old != null) for (File f : old) f.delete();
+                        File f = new File(dir, "shot-" + System.currentTimeMillis() + ".jpg");
+                        shot = FileProvider.getUriForFile(MainActivity.this, "com.glickshulem.apphub.files", f); shotFile = f;
+                        Intent c = new Intent(MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, shot)
+                            .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivityForResult(c, PICK);
+                        return true;
+                    }
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType(type);
+                    if (p != null && p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    startActivityForResult(Intent.createChooser(i, type.startsWith("image") ? "Choose photos" : "Choose a file"), PICK);
+                } catch (Exception e) { picking = null; shot = null; cb.onReceiveValue(null); return false; }
                 return true;
             }
         });
@@ -84,18 +98,20 @@ public class MainActivity extends Activity {
 
     private static final int PICK = 41;
     private ValueCallback<Uri[]> picking;
+    private Uri shot; private File shotFile;   // camera photo being taken
 
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         if (req != PICK || picking == null) { super.onActivityResult(req, res, data); return; }
         Uri[] out = null;
-        if (res == RESULT_OK && data != null) {
+        if (shot != null) { if (res == RESULT_OK && shotFile != null && shotFile.length() > 0) out = new Uri[]{ shot }; }
+        else if (res == RESULT_OK && data != null) {
             ClipData c = data.getClipData();
             if (c != null && c.getItemCount() > 0) { out = new Uri[c.getItemCount()]; for (int k = 0; k < out.length; k++) out[k] = c.getItemAt(k).getUri(); }
             else if (data.getData() != null) out = new Uri[]{ data.getData() };
         }
         picking.onReceiveValue(out);
-        picking = null;
+        picking = null; shot = null;
     }
 
     @Override
@@ -288,7 +304,7 @@ public class MainActivity extends Activity {
             if (i != null) startActivity(i);
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 5; }   // 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
+        @JavascriptInterface public int bridge() { return 6; }   // 6 = camera + any file in the chat picker; 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
         /** Open Android's "Uninstall this app?" question for an app that was taken off App Vault. */
         @JavascriptInterface public void uninstall(String pkg) {
             if (pkg == null || pkg.isEmpty() || pkg.equals(getPackageName())) return;
