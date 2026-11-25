@@ -312,6 +312,38 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        /** Android's share menu with a text/link. */
+        @JavascriptInterface public void share(String title, String text) {
+            Intent i = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text).putExtra(Intent.EXTRA_SUBJECT, title);
+            runOnUiThread(() -> { try { startActivity(Intent.createChooser(i, title)); } catch (Exception e) { } });
+        }
+        /** Download a file (e.g. the Play Hub APK) and open Android's share menu with it, so Quick Share, Bluetooth,
+         *  WhatsApp, Gmail, Drive… can send the file itself. The page hears back through shareReady(ok). */
+        @JavascriptInterface public void shareFile(String url, String name, String text) {
+            new Thread(() -> {
+                try {
+                    File d = new File(getCacheDir(), "apks"); d.mkdirs();
+                    File f = new File(d, name.replaceAll("[^A-Za-z0-9._-]", ""));
+                    HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                    c.setInstanceFollowRedirects(true); c.setConnectTimeout(20000); c.setReadTimeout(30000);
+                    if (c.getResponseCode() != 200) throw new Exception("HTTP " + c.getResponseCode());
+                    try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(f)) {
+                        byte[] buf = new byte[65536]; int n;
+                        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                    }
+                    Uri u = FileProvider.getUriForFile(MainActivity.this, "com.glickshulem.hubstudio.files", f);
+                    Intent i = new Intent(Intent.ACTION_SEND).setType("application/vnd.android.package-archive")
+                        .putExtra(Intent.EXTRA_STREAM, u).putExtra(Intent.EXTRA_TEXT, text)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    i.setClipData(android.content.ClipData.newRawUri("", u));
+                    Intent ch = Intent.createChooser(i, "Share Play Hub").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    runOnUiThread(() -> startActivity(ch));
+                    js("window.shareReady && shareReady(true)");
+                } catch (Exception e) {
+                    js("window.shareReady && shareReady(false)");
+                }
+            }).start();
+        }
         /** {"name","url"} of an APK opened with / shared to Studio that the page has not taken yet, or "". */
         @JavascriptInterface public String incoming() {
             if (!incomingNew || incoming == null) return "";
