@@ -7,7 +7,7 @@ Chess for the tablet, played in landscape. Two players on one device, or against
 - Version lives in `const VERSION` in `apps/chess/chess.js`.
 
 ## Current version
-0.27.0 (in Studio and public)
+0.27.1 in Studio (0.27.0 public)
 
 ## Su's decisions
 - Name Gambit, gold knight in a shield logo. Cinzel font. Saddle tan leather background.
@@ -21,7 +21,7 @@ Chess for the tablet, played in landscape. Two players on one device, or against
 - Pieces glide when moving, stepping through moves and on Undo. Captured pieces fly off. Win celebration with gold confetti.
 - Clocks are picked in New game; they start after White's first move and pause when the app is hidden.
 - Computer levels: Beginner and Easy use a simple built-in player; Medium and up use Stockfish.
-- Draw on the board: a pen that opens a gold Drawing card with 4 colors, Undo and Clear.
+- Draw on the board: a pen that opens a Drawing card with 4 colors, Undo and Clear. The card is dark brown like the other cards; gold only on the pen icon, the title and a thin border (Su said the yellow header didn't belong, 0.27.1).
 
 ## Known bugs
 - None known.

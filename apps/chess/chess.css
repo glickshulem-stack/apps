@@ -305,3 +305,14 @@ body.tinted .sq svg.pc.cb { filter:url(#tintb) drop-shadow(0 2px 2px rgba(0,0,0,
 .actions.solo #hint { grid-column:1 / -1 !important; flex-direction:row; gap:10px; }
 #settings .undorow { align-self:stretch; flex-direction:row; justify-content:flex-start; gap:12px; padding:12px 16px; background:var(--chip); border:1px solid var(--p3); color:#f3e2c4; }
 #settings .undorow span { text-align:left; display:flex; flex-direction:column; align-items:flex-start; }
+
+/* 0.27.1: Drawing card in the same dark brown as the other cards; gold only on the pen, the title and a thin border */
+.drawpanel { background:var(--well); border:1px solid rgba(233,185,73,.55); box-shadow:0 6px 18px rgba(0,0,0,.3); }
+.dphead { background:none; color:#f3e2c4; border-bottom:1px solid var(--p3); padding:10px 10px 10px 14px; }
+.dphead svg { color:var(--gold); }
+.dphead b { background:linear-gradient(180deg,var(--gold2),var(--gold)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.dphead small { color:var(--soft); opacity:1; }
+.dpclose { background:var(--b2); border:1px solid var(--p3); color:#f3e2c4; }
+.dpclose:active { background:var(--b1); }
+.dpclose svg { color:#f3e2c4; }
+#inks button { border-color:rgba(46,32,22,.9); }
