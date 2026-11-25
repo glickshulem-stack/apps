@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (App Vault page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html`. Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.21.0); test copy `hub-next/index.html` 0.23.0 (Tile vault icon + sign-in and approval) waiting for Su's Publish
+- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.21.0); test copy `hub-next/index.html` 0.24.0 (Tile vault icon + sign-in and approval + no See what's new) waiting for Su's Publish
 - App Vault app (APK): 0.9.0 public; 0.10.0 (new home-screen icon) goes to Studio for Su to publish (`android/hub/app/build.gradle`)
 
 ## Su's decisions
@@ -16,12 +16,13 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - Icon = **Tile vault** (Su picked 2026-11-25): gold square vault door with hinges, 2x2 tiles inside, one tile is the dial. File `vault-icon.svg` (repo root), launcher PNG `android/hub/.../mipmap-xxxhdpi/ic_launcher.png`. Old `icon.svg` (grid) is still used by the old root launcher page only.
 - Dark "Noir" look with gold is the default; "Ivory" light look is in Settings. No green anywhere.
 - Checks GitHub only when Su taps "Check for updates" (or pulls down at the top). Never add automatic checking.
-- Settings is a panel that slides in from the side: Check for updates, Look, "See what's new", and the versions of the app and the page shown separately.
+- Settings is a panel that slides in from the side: Check for updates, Look, and the versions of the app and the page shown separately.
 - No Featured banner: the page starts with the greeting and the apps (Su removed it in 0.19.0). The catalog field `hero` now only colors the card cover and app-page icon.
 - Installs and updates whole apps silently (Android 12+), Play Store style.
 - Public App Vault shows only the apps Su published from Studio. If Su takes an app off, App Vault offers to uninstall it.
 - The friends page (`get/`) never mentions App Vault Studio.
 - Tapping an app card opens its own app page like a real store: icon, name, button, version facts, swipeable screenshots, About this app (`description`), What's new (catalog `news` for that app). Screenshots = optional catalog field `screenshots` (repo image paths, 16:10, kept in `shots/<id>/`, not inside `apps/` so they don't go into APKs). Since 0.17.0.
+- No "See what's new" button/list in Settings (Su removed it in 0.24.0). What's new now shows only on each app's page.
 - No summary pills under the greeting (0.20.0) and no "About" box in Settings (0.18.0).
 
 - **Sign-in + approval (page 0.23.0, Su 2026-11-25):** everyone types a name (+ optional note) once; the device model is read from the browser. They see "Waiting for approval" until Su approves them in Studio › People. Declined / removed people see a short message. Approved people open App Vault right away, even offline (status saved as `vaultMember`). Backend: Firebase project `app-vault-962b9` (Su's Google account): anonymous sign-in per device + Firestore `members/{uid}` = {name, note, device, status pending|approved|declined|removed, created, decided}. Security rules (pasted by Su in the Firebase console, admin = Su's email + password sign-in) let people write only their own pending request. The web config in the page is public on purpose. Note: approval only hides the Vault; app files are still on public GitHub.
