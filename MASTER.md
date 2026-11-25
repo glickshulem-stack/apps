@@ -29,7 +29,7 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 |---|---|---|---|---|
 | App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.13.0 (People shows who has which apps), app 0.5.0 | testing | Su pastes the new database rules, opens App Vault page 0.25.0 from Studio, then checks People › Approved |
 | App Vault | `hub/` (page) + `android/hub/` (app) | page 0.24.1 public (sign-in + approval live), 0.25.0 in Studio (reports installed apps); app 0.10.0 public | testing | Su tries page 0.25.0 and Publishes. Next steps (one at a time): bug reports with photos (notes), chat, publish to chosen people |
-| Gambit (chess) | `apps/chess/` + `android/chess/` | 0.28.1 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
+| Gambit (chess) | `apps/chess/` + `android/chess/` | 0.29.0 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
 | App Vault for Windows | `hub/` installed from Edge/Chrome | (uses the App Vault page) | in progress | PR #26 waits for Su's go |
 | Aurum Studio (video/audio editor) | `apps/studio/` + `android/studio/` | 0.2.0 | paused | Removed from App Vault; nothing to do unless Su asks |

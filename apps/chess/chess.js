@@ -1,4 +1,4 @@
-const VERSION = '0.28.1';
+const VERSION = '0.29.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -53,14 +53,15 @@ try { const v = JSON.parse(localStorage.getItem('gambit-time')); if (v === null 
 // Medium and Hard: the engine looks at its top `pv` moves (to `depth`) and the computer picks any move that is at most
 // `margin` centipawns worse than the best one; with chance slip[0] it allows up to slip[1] (a human-like slip).
 // This keeps the strength the same all game long (Stockfish's own Skill Level setting blundered pieces in the middlegame).
-// think = how long the computer pretends to think, in seconds [min, max].
+// think = how long the computer thinks on a normal move, in seconds [min, max] (Medium = Su's chosen pace).
+// The real time depends on the move (see thinkTime): obvious moves come fast, tricky ones and mating attacks take longer.
 const LEVELS = [
-  { name:'Beginner', simple:'beginner', think:[1.3, 2.3] },
-  { name:'Easy',     simple:'easy',     think:[1.6, 2.8] },
-  { name:'Medium',   depth:5,  pv:6, margin:90,  slip:[.15, 200], think:[2, 3.5] },
-  { name:'Hard',     depth:7,  pv:5, margin:55,  slip:[.1, 120], think:[2.5, 4.2] },
-  { name:'Expert',   skill:12, ms:500,                          think:[3, 5] },
-  { name:'Master',   skill:20, ms:1500,                         think:[3.5, 6] } ];
+  { name:'Beginner', simple:'beginner', think:[1.8, 3] },
+  { name:'Easy',     simple:'easy',     think:[2.3, 3.8] },
+  { name:'Medium',   depth:5,  pv:6, margin:90,  slip:[.15, 200], think:[3, 5] },
+  { name:'Hard',     depth:7,  pv:5, margin:55,  slip:[.1, 120], think:[3.6, 6] },
+  { name:'Expert',   skill:12, ms:500,                          think:[4.2, 7] },
+  { name:'Master',   skill:20, ms:1500,                         think:[5, 8] } ];
 // Measured 2026-11-25 (average loss of winning chances per middlegame move vs a deep search):
 // Beginner ~28%, Easy ~14%, Medium ~4%, Hard ~2%, Expert ~1%, Master ~0.6%. Each level is a clear step up.
 let mode = { cpu:false }, setup = { cpu:false, level:2, color:'w' };
@@ -620,23 +621,49 @@ function maybeCpu() {
     cpuBusy = false;
     if (id !== thinkId || !m || !cpuTurn() || result(S)) return;
     viewIdx = null; doMove(m);
-  }, Math.max(0, wait - (performance.now() - t0)));
-  // a quick reply looks natural early in the game and when there is only one move
-  const [lo, hi] = L.think, early = history.length < 4 || legal.length === 1;
-  const wait = (early ? lo * .6 : lo + Math.random() * (hi - lo)) * 1000;
+  }, Math.max(0, thinkTime(L, m, legal) * 1000 - (performance.now() - t0)));
   if (L.simple) return play(simpleMove(legal, L.simple));
   const eng = getEngine();
   onBest = uci => {
     if (!uci || uci === '(none)') { cpuBusy = false; return; }
     if (L.pv) uci = pickNearBest(L) || uci;
+    pickedUci = uci;
     const F = 'abcdefgh', fc = F.indexOf(uci[0]), fr = 8 - +uci[1], tc = F.indexOf(uci[2]), tr = 8 - +uci[3], pr = uci[4];
     play(legal.find(m => m.fr === fr && m.fc === fc && m.tr === tr && m.tc === tc && (!pr || m.promo === pr)) || legal[0]);
   };
   eng.postMessage(`setoption name Skill Level value ${L.skill ?? 20}`);
-  eng.postMessage(`setoption name MultiPV value ${L.pv || 1}`);
+  // Expert/Master also look at their 2nd-best move, so we can tell an obvious move from a hard choice
+  eng.postMessage(`setoption name MultiPV value ${L.pv || 2}`);
   eng.postMessage('position fen ' + fen(S));
-  searching = true; pvLines = {};
+  searching = true; pvLines = {}; pickedUci = null;
   eng.postMessage(L.depth ? `go depth ${L.depth}` : `go movetime ${L.ms}`);
+}
+
+// How long the computer "thinks", in seconds, like a person would:
+// - fast: the only move, taking straight back, or a move that clearly wins (a free queen, a fork)
+// - longer: several moves look about equal, or it is in check
+// - longest: it sees a checkmate coming and plays it out
+let pickedUci = null;
+function thinkTime(L, m, legal) {
+  const [lo, hi] = L.think, jitter = (Math.random() - .5) * .6;
+  if (legal.length === 1) return .7;
+  if (history.length < 4) return lo * .5 + Math.random() * .4;             // opening moves come quickly
+  const prev = history[history.length - 1], tookLast = prev && S.last && (S.captured.w.length + S.captured.b.length) > (prev.captured.w.length + prev.captured.b.length);
+  const recapture = tookLast && m.tr === S.last.tr && m.tc === S.last.tc;
+  const lines = Object.values(pvLines).sort((a, b) => b.cp - a.cp), mine = lines.find(l => l.move === pickedUci);
+  let c;   // 0 = obvious ... 1 = very hard
+  if (L.simple) {
+    // the simple players: grabbing a big piece or taking back is quick, everything else normal
+    c = recapture || capValue(S, m) >= 5 ? -1 : .3 + Math.random() * .5;
+  } else if (mine && mine.cp > 20000) c = 1.4;                               // playing for checkmate
+  else if (lines.length > 1 && lines[0].cp - lines[1].cp >= 250 && (!mine || mine === lines[0])) c = -1;   // one move clearly wins
+  else if (recapture && lines.length > 1 && lines[0].cp - lines[1].cp >= 120) c = -1;
+  else {
+    const close = lines.filter(l => lines[0].cp - l.cp <= 40).length;     // several good choices = harder to decide
+    c = (close >= 3 ? .75 : close === 2 ? .55 : .35) + (inCheck(S, S.turn) ? .15 : 0) + Math.random() * .25;
+  }
+  const t = c < 0 ? lo * .45 + Math.random() * .4 : lo + c * (hi - lo) + jitter;
+  return Math.max(.6, t);
 }
 
 // Medium/Hard: choose among the engine's top moves that are nearly as good as the best one
