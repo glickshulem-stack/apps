@@ -149,7 +149,9 @@
   .prow .icons img { width:24px; height:24px; border-radius:6px; background:var(--tile); }
   .chatbtn { padding:8px 14px; font-size:1.1rem; } .chatbtn:disabled { opacity:.35; }
   .pdetail { display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--line); padding-top:12px; } .pdetail small { color:var(--muted); }
-  .prow.open { border-color:var(--gold); } #ppl-no-wrap { margin-top:24px; } #ppl-no-box { margin-top:6px; }
+  .prow.open { border-color:var(--gold); }
+  .betatag { display:inline-block; font:800 .66rem/1 Inter,sans-serif; letter-spacing:.08em; padding:3px 6px; border-radius:5px; color:#2a1d10; background:linear-gradient(180deg,#f6dc9c,#c9993f); vertical-align:middle; }
+  .v.beta { border-color:var(--gold); color:var(--gold2); } .sent { display:block; color:var(--gold2); margin-top:4px; } #ppl-no-wrap { margin-top:24px; } #ppl-no-box { margin-top:6px; }
   .ib { display:grid; grid-template-columns:320px 1fr; gap:0; height:calc(100vh - 190px); min-height:420px; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--surface); }
   .iblist { overflow-y:auto; border-right:1px solid var(--line); } .iblist .empty, .ibchat > .empty { padding:30px 20px; }
   .ibrow { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border-bottom:1px solid var(--line); cursor:pointer; }
@@ -168,6 +170,7 @@
   .m p { margin:0; white-space:pre-wrap; line-height:1.45; overflow-wrap:anywhere; } .m small { display:block; color:var(--muted); font-size:.75rem; margin-top:4px; }
   .m .tick.read { color:var(--gold2); font-weight:700; }
   .m .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; } .m .thumbs img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--line); cursor:zoom-in; background:var(--surface); }
+  .filechip.big { display:block; font-size:1.05rem; padding:16px; margin:6px 0 4px; } .filechip.big small { color:var(--muted); margin-left:6px; }
   .filechip { display:inline-block; margin-top:6px; padding:8px 12px; border-radius:10px; border:1px solid var(--line); color:var(--goldhi); text-decoration:none; overflow-wrap:anywhere; }
   .ibcomp { position:relative; display:flex; gap:10px; align-items:flex-end; padding:12px 14px; border-top:1px solid var(--line); }
   .ibcomp textarea { flex:1; min-height:48px; max-height:160px; } .ibcomp .gold { padding:12px 22px; } .ibcomp .plus { font-size:1.4rem; padding:8px 16px; }
@@ -299,7 +302,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.18.0';
+const VERSION = '0.19.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -378,7 +381,18 @@ async function showHome() {
 // ---------- apps ----------
 const PUBLIC_SKIP = ['note', 'private'];
 function publicEntry(a) { const o = {}; for (const k of Object.keys(a)) if (!PUBLIC_SKIP.includes(k)) o[k] = a[k]; return o; }
-const sameEntry = (a, b) => { const n = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]])); return n(publicEntry(a)) === n(b); };
+const sameEntry = (a, b) => { const n = o => JSON.stringify(Object.keys(o).filter(k => k !== 'beta').sort().map(k => [k, o[k]])); return n(publicEntry(a)) === n(b); };
+const verNewer = (x, y) => { const p = v => String(v || 0).split('.').map(Number), a = p(x), b = p(y); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); return false; };
+// Beta (Studio 0.19.0). catalog.json: apps[i].beta = { version, note, date } is a Beta of a public app;
+// betaApps = [entry] holds apps that are only in Beta so far. Old App Vault pages ignore both.
+// Who is in Beta lives in Firestore members/{uid}.beta ('asked' | 'yes' | 'no'); members/{uid}.early = { appId: entry } is a version sent to one person.
+function betaOf(id) {
+  const p = catalog.apps.find(x => x.id === id);
+  if (p && p.beta && verNewer(p.beta.version, p.version)) return p.beta;
+  const b = (catalog.betaApps || []).find(x => x.id === id);
+  return b && !p ? { version:b.version, note:(b.beta && b.beta.note) || '', only:true } : null;
+}
+const earlyTo = a => (typeof ppl === 'undefined' ? [] : ppl.list).filter(m => m.status === 'approved' && m.early && m.early[a.id] && m.early[a.id].version);
 const iconSrc = a => a.iconUrl ? (/^https?:/.test(a.iconUrl) ? a.iconUrl : SITE + a.iconUrl) : 'icon.svg';
 const apkUrl = a => `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`;
 
@@ -462,6 +476,7 @@ function showTab(t) {
   document.querySelectorAll('.tabpage').forEach(p => p.hidden = p.id !== 't-' + t);
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === (t === 'add' ? 'bench' : t)));
   store.set('studioTab', t);
+  if (t === 'reports' && typeof rep !== 'undefined' && rep.sel) setTimeout(repRender);
 }
 $('tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) showTab(b.dataset.tab); };
 
@@ -473,9 +488,11 @@ function stateOf(a, p) {
 }
 const needsPublish = st => st === 'none' || st === 'newer' || st === 'details';
 function pills(a, p) {
-  const sv = a ? `<span class="v${a && (!p || p.version !== a.version) ? ' hi' : ''}">In Studio <strong>${esc(a.version)}</strong></span>` : '';
+  const bt = a && betaOf(a.id), inBeta = bt && bt.version === a.version;
+  const sv = a ? `<span class="v${a && (!p || p.version !== a.version) && !inBeta ? ' hi' : ''}">In Studio <strong>${esc(a.version)}</strong></span>` : '';
+  const bv = bt ? `<span class="v beta"><b class="betatag">BETA</b> <strong>${esc(bt.version)}</strong></span>` : '';
   const pv = `<span class="v">Public <strong>${p ? esc(p.version) : 'not published'}</strong></span>`;
-  return `<div class="vers">${sv}${a && a.private ? '' : pv}</div>`;
+  return `<div class="vers">${sv}${bv}${a && a.private ? '' : pv}</div>`;
 }
 function render() {
   try { if (ppl.list.length) setTimeout(pplRender); } catch {}   // People shows app names and public versions too
@@ -485,15 +502,20 @@ function render() {
   let waiting = 0;
   // App Vault itself (its app and its page) has its own tab; the Apps tab holds everything else.
   const card = a => {
-    const p = pub[a.id], st = stateOf(a, p), need = needsPublish(st);
-    if (need) waiting++;
-    const line = st === 'newer' ? `<div class="st">Newer in Studio · your friends still have ${esc(p.version)}</div>`
+    const p = pub[a.id], st = stateOf(a, p), need = needsPublish(st), bt = a.id === 'hub' ? null : betaOf(a.id), inBeta = bt && bt.version === a.version;
+    if (need && !inBeta) waiting++;
+    const sent = a.id === 'hub' ? [] : earlyTo(a);
+    const line = inBeta && st === 'newer' ? `<div class="st">In Beta · Beta testers have ${esc(a.version)}, everyone else has ${esc(p.version)}</div>`
+      : inBeta && st === 'none' ? `<div class="st">Beta only · only your Beta testers can see it</div>`
+      : st === 'newer' ? `<div class="st">Newer in Studio · your friends still have ${esc(p.version)}</div>`
       : st === 'none' ? `<div class="st">Only in Studio · nobody else can see it</div>`
       : st === 'details' ? `<div class="st">Details or pictures changed · not published yet</div>`
       : st === 'live' ? `<div class="st ok">✓ Same as public</div>` : `<div class="st ok">Studio itself · only for you</div>`;
     return `<div class="app${need ? ' ready' : ''}" data-id="${esc(a.id)}"><div class="row2">
-      <img src="${esc(iconSrc(a))}" alt=""><div><b class="n">${esc(a.name)}</b>${pills(a, p)}${line}${a.note && need ? `<small style="color:var(--muted)">What's new: ${esc(a.note)}</small>` : ''}</div>
-      <div class="acts">${tryButton(a)}${need ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div>
+      <img src="${esc(iconSrc(a))}" alt=""><div><b class="n">${esc(a.name)}</b>${pills(a, p)}${line}${a.note && need ? `<small style="color:var(--muted)">What's new: ${esc(a.note)}</small>` : ''}${sent.length ? `<small class="sent">Sent early to ${sent.map(m => `${esc(m.name)} (${esc(m.early[a.id].version)})`).join(', ')}</small>` : ''}</div>
+      <div class="acts">${tryButton(a)}${!need ? '' : st === 'details' || a.id === 'hub' ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>`
+        : inBeta ? `<button class="gold" data-act="publish" title="Give this Beta to everyone">Make public</button>`
+        : `<button class="btn" data-act="beta">Publish Beta</button><button class="gold" data-act="publish">Publish to everyone</button>`}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div>
     </div></div>`;
   };
   $('apps').innerHTML = list.filter(a => a.id !== 'hub').map(card).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
@@ -550,13 +572,20 @@ $('apps').onclick = $('vault').onclick = e => {
   else if (act === 'open') bridge.open(a.package);
   else if (act === 'cancel') { bridge.cancel(a.id); setTimeout(render, 500); }
   else if (act === 'publish') publish(a);
+  else if (act === 'beta') publishBeta(a);
   else if (act === 'menu') menu(a);
 };
 function menu(a) {
   const st = stateOf(a, catalog.apps.find(x => x.id === a.id));
+  const bt = a.id === 'hub' ? null : betaOf(a.id), sent = a.id === 'hub' ? [] : earlyTo(a);
   modal(`<h4>${esc(a.name)} ${esc(a.version)}</h4><p>Change the name, icon, screenshots, text or What's new line.</p><div class="menu">
-    <button class="btn" id="mm-edit">Edit details</button>${st === 'live' && a.id !== 'hub' ? '<button class="btn" id="mm-off">Take off App Vault</button>' : ''}<button class="btn" id="mm-no">Cancel</button></div>`);
+    <button class="btn" id="mm-edit">Edit details</button>${a.id !== 'hub' ? `<button class="btn" id="mm-one">Send ${esc(a.version)} to one person…</button>` : ''}
+    ${sent.length ? `<button class="btn" id="mm-back">Take back early versions (${sent.length})</button>` : ''}${bt ? `<button class="btn" id="mm-stopbeta">Stop the Beta</button>` : ''}
+    ${st === 'live' && a.id !== 'hub' ? '<button class="btn" id="mm-off">Take off App Vault</button>' : ''}<button class="btn" id="mm-no">Cancel</button></div>`);
   $('mm-edit').onclick = () => edit(a);
+  if ($('mm-one')) $('mm-one').onclick = () => sendEarly(a);
+  if ($('mm-back')) $('mm-back').onclick = () => takeBackEarly(a, sent);
+  if ($('mm-stopbeta')) $('mm-stopbeta').onclick = () => stopBeta(a, bt);
   if ($('mm-off')) $('mm-off').onclick = () => hide(catalog.apps.find(x => x.id === a.id));
   $('mm-no').onclick = closeModal;
 }
@@ -581,8 +610,10 @@ function publish(a) {
   confirmBox(`Publish ${a.name}?`, what, 'Publish', async () => {
     const today = new Date().toISOString().slice(0, 10);
     await changeFile('catalog.json', c => {
-      const i = c.apps.findIndex(x => x.id === a.id), old = c.apps[i];
-      if (i >= 0) c.apps[i] = publicEntry(a); else c.apps.push(publicEntry(a));
+      const i = c.apps.findIndex(x => x.id === a.id), old = c.apps[i], entry = publicEntry(a);
+      if (old && old.beta && verNewer(old.beta.version, a.version)) entry.beta = old.beta;   // a newer Beta keeps going
+      if (i >= 0) c.apps[i] = entry; else c.apps.push(entry);
+      if (c.betaApps) { c.betaApps = c.betaApps.filter(x => x.id !== a.id); if (!c.betaApps.length) delete c.betaApps; }
       if (c.removed) c.removed = c.removed.filter(r => r.id !== a.id);   // back in App Vault: no more "removed" message
       if (!old || old.version !== a.version) {
         c.news = c.news || [];
@@ -591,6 +622,49 @@ function publish(a) {
       }
     }, `Publish ${a.name} ${a.version} to App Vault (from Studio)`);
     await load(); toast(`${a.name} is published. App Vault shows it after Check for updates.`);
+  });
+}
+function publishBeta(a) {
+  if (!notStale()) return;
+  const p = catalog.apps.find(x => x.id === a.id);
+  confirmBox(`Publish ${a.name} ${a.version} as Beta?`, p ? `Only your Beta testers get ${a.version}, with a gold BETA tag. Everyone else keeps ${p.version}.` : `${a.name} appears only for your Beta testers, with a gold BETA tag. Nobody else can see it yet.`, 'Publish Beta', async () => {
+    const beta = { version:a.version, note:a.note || 'A new Beta version', date:new Date().toISOString().slice(0, 10) };
+    await changeFile('catalog.json', c => {
+      const i = c.apps.findIndex(x => x.id === a.id);
+      if (i >= 0) c.apps[i].beta = beta;
+      else { c.betaApps = (c.betaApps || []).filter(x => x.id !== a.id); c.betaApps.push({ ...publicEntry(a), beta }); }
+    }, `Publish ${a.name} ${a.version} as Beta (from Studio)`);
+    await load(); toast(`${a.name} ${a.version} is out for your Beta testers. They see it after Check for updates.`);
+  });
+}
+function stopBeta(a, bt) {
+  if (!notStale()) return;
+  confirmBox(`Stop the ${a.name} Beta?`, bt.only ? `${a.name} disappears for your Beta testers. People who installed it keep it.` : `Beta testers stop being offered ${bt.version}. People who installed it keep it until a newer normal version comes out.`, 'Stop the Beta', async () => {
+    await changeFile('catalog.json', c => {
+      const i = c.apps.findIndex(x => x.id === a.id); if (i >= 0) delete c.apps[i].beta;
+      if (c.betaApps) { c.betaApps = c.betaApps.filter(x => x.id !== a.id); if (!c.betaApps.length) delete c.betaApps; }
+    }, `Stop the ${a.name} Beta (from Studio)`);
+    await load(); toast(`The ${a.name} Beta is stopped`);
+  });
+}
+// Send to one person: only that person's App Vault offers this version (with the BETA tag). Stored in their members doc.
+function sendEarly(a) {
+  const ok = ppl.list.filter(m => m.status === 'approved');
+  if (!ppl.fb || !ok.length) { toast(ppl.fb ? 'Nobody is approved yet.' : 'Sign in on the People tab first.'); return; }
+  modal(`<h4>Send ${esc(a.name)} ${esc(a.version)} to one person</h4><p>Only that person sees this version in App Vault, with a gold BETA tag. Everyone else keeps what they have.</p><div class="menu">
+    ${ok.map(m => `<button class="btn" data-uid="${esc(m.uid)}">${esc(m.name)}${m.early && m.early[a.id] ? ` · has ${esc(m.early[a.id].version)} early` : ''}</button>`).join('')}<button class="btn" id="mm-no">Cancel</button></div>`);
+  $('mm-no').onclick = closeModal;
+  $('modal-box').querySelectorAll('[data-uid]').forEach(b => b.onclick = async () => {
+    const m = ok.find(x => x.uid === b.dataset.uid); b.disabled = true;
+    try { const { F, db } = ppl.fb; await F.updateDoc(F.doc(db, 'members', m.uid), { ['early.' + a.id]:publicEntry(a) }); closeModal(); render(); toast(`${a.name} ${a.version} is sent to ${m.name}. They see it after Check for updates.`); }
+    catch (x) { console.warn(x); b.disabled = false; toast('That did not work. Check the internet and try again.'); }
+  });
+}
+function takeBackEarly(a, sent) {
+  confirmBox(`Take back early ${a.name}?`, `${sent.map(m => m.name).join(', ')} will no longer be offered the early version. Anyone who installed it keeps it until a newer normal version comes out.`, 'Take back', async () => {
+    const { F, db } = ppl.fb;
+    for (const m of sent) await F.updateDoc(F.doc(db, 'members', m.uid), { ['early.' + a.id]:F.deleteField() });
+    render(); toast('Early versions taken back');
   });
 }
 function hide(a) {
@@ -921,10 +995,10 @@ function pplCard(p) {
     const icons = pplAppList().filter(a => p.apps && p.apps[a.id]).map(a => `<img src="${esc(iconSrc(a))}" alt="" title="${esc(a.name)}">`).join('');
     const has = typeof rep !== 'undefined' && rep.list.some(r => r.uid === p.uid), open = ppl.open === p.uid;
     return `<div class="app person prow${open ? ' open' : ''}" data-uid="${esc(p.uid)}"><div class="h" data-do="toggle">
-      <div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(p.name)}</b><small>Opened App Vault ${p.seen ? pplDay(p.seen) : 'not yet'}</small></div>
+      <div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(p.name)}${p.beta === 'yes' ? ' <span class="betatag">BETA</span>' : ''}</b><small>Opened App Vault ${p.seen ? pplDay(p.seen) : 'not yet'}</small></div>
       <div class="icons">${icons}</div><button class="btn chatbtn" data-do="chat" ${has ? '' : 'disabled title="No messages yet"'}>💬</button></div>
       ${open ? `<div class="pdetail"><small>📱 ${esc(p.device || 'Unknown device')} · Approved ${pplDay(p.decided)}</small>${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}
-        <div class="acts"><button class="btn" data-do="removed">Remove access</button></div></div>` : ''}</div>`;
+        <div class="acts">${p.beta === 'yes' ? '<button class="btn" data-do="betaout">Take out of Beta</button>' : '<button class="btn" data-do="betain">Add to Beta</button>'}<button class="btn" data-do="removed">Remove access</button></div></div>` : ''}</div>`;
   }
   const acts = p.status === 'pending' ? `<button class="gold" data-do="approved">Approve</button><button class="btn" data-do="declined">Decline</button>`
     : `<button class="btn" data-do="approved">Approve</button><button class="btn" data-do="delete" title="They can ask again">Delete</button>`;
@@ -935,13 +1009,19 @@ function pplCard(p) {
 }
 // Who has what (0.13.0): App Vault 0.25.0+ reports each approved person's apps and versions (members/{uid}.apps, seen).
 function pplAppList() { return ((studio && studio.apps) || []).filter(a => !a.private); }
+// Beta requests (Studio 0.19.0): an approved person tapped Join Beta in App Vault (members/{uid}.beta = 'asked').
+function betaReqCard(p) {
+  return `<div class="app person ready" data-uid="${esc(p.uid)}"><div class="h"><div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div>
+    <div class="t"><b>${esc(p.name)} <span class="betatag">BETA</span></b><small>Wants to join Beta · gets early versions before everyone else</small></div></div>
+    <div class="acts"><button class="gold" data-do="betayes">Approve Beta</button><button class="btn" data-do="betano">Decline</button></div></div>`;
+}
 function showPerson(uid) { ppl.open = uid; showTab('people'); pplRender(); const el = document.querySelector(`.person[data-uid="${CSS.escape(uid)}"]`); if (el) el.scrollIntoView({ block:'center' }); }
 function pplRender() {
-  const L = ppl.list, req = L.filter(p => p.status === 'pending'), ok = L.filter(p => p.status === 'approved'), no = L.filter(p => p.status === 'declined' || p.status === 'removed');
-  $('ppl-req').innerHTML = req.map(pplCard).join('') || '<div class="empty" style="padding:24px">No new requests. When someone asks to join App Vault, they show up here.</div>';
+  const L = ppl.list, req = L.filter(p => p.status === 'pending'), breq = L.filter(p => p.status === 'approved' && p.beta === 'asked'), ok = L.filter(p => p.status === 'approved'), no = L.filter(p => p.status === 'declined' || p.status === 'removed');
+  $('ppl-req').innerHTML = (req.map(pplCard).join('') + breq.map(betaReqCard).join('')) || '<div class="empty" style="padding:24px">No new requests. When someone asks to join App Vault, they show up here.</div>';
   $('ppl-ok').innerHTML = ok.map(pplCard).join('') || '<div class="empty" style="padding:24px">Nobody approved yet.</div>';
   $('ppl-no').innerHTML = no.map(pplCard).join(''); $('ppl-no-wrap').hidden = !no.length;
-  pplCount(req.length);
+  pplCount(req.length + breq.length);
 }
 $('t-people').onclick = e => {
   if (e.target.closest('#ppl-showno')) { const box = $('ppl-no-box'); box.hidden = !box.hidden; $('ppl-showno').textContent = box.hidden ? 'Show removed' : 'Hide removed'; return; }
@@ -950,6 +1030,11 @@ $('t-people').onclick = e => {
   if (b.dataset.do === 'chat') { e.stopPropagation(); return openChat(p.uid); }
   if (b.dataset.do === 'toggle') { ppl.open = ppl.open === p.uid ? null : p.uid; return pplRender(); }
   const { F, db } = ppl.fb, ref = F.doc(db, 'members', p.uid), to = b.dataset.do;
+  if (/^beta/.test(to)) {
+    const yes = to === 'betayes' || to === 'betain', go = async () => { await F.updateDoc(ref, { beta: yes ? 'yes' : 'no' }); toast(yes ? `${p.name} is in Beta` : to === 'betano' ? `${p.name}'s Beta request was declined` : `${p.name} is out of Beta`); };
+    if (to === 'betaout') return confirmBox(`Take ${p.name} out of Beta?`, `${p.name} stops getting Beta versions. What they already installed stays until a newer normal version comes out.`, 'Take out', go);
+    b.disabled = true; return go().catch(x => { b.disabled = false; console.warn(x); toast('That did not work. Check the internet and try again.'); });
+  }
   const set = () => to === 'delete' ? F.deleteDoc(ref) : F.updateDoc(ref, { status:to, decided:F.serverTimestamp() });
   const msg = { approved:`${p.name} is approved`, declined:`${p.name} was declined`, removed:`${p.name} can no longer use App Vault`, delete:`${p.name} was deleted` }[to];
   const run = async () => { await set(); toast(msg); };
@@ -962,7 +1047,7 @@ function pplListen() {
   if (ppl.off) ppl.off();
   ppl.off = F.onSnapshot(F.collection(db, 'members'), s => {
     ppl.list = s.docs.map(d => ({ uid:d.id, ...d.data() })).sort((a, b) => ((b.created && b.created.seconds) || 9e9) - ((a.created && a.created.seconds) || 9e9));
-    pplRender(); pplView('list'); if (typeof repRender === 'function') repRender();
+    pplRender(); pplView('list'); if (typeof repRender === 'function') repRender(); try { if (studio && catalog) render(); } catch {}
   }, x => {
     console.warn(x); pplView('error');
     $('ppl-load').textContent = x.code === 'permission-denied' ? 'This account is not allowed to see people. Sign out in Settings and sign in with the right email.' : 'Could not reach the people list. Check the internet.';
@@ -997,13 +1082,22 @@ $('ppl-out').onclick = () => confirmBox('Sign out of People?', 'You will need yo
 const rep = { list:[], off:null, sel:null, photos:{}, msgs:{}, msgOff:{}, draft:{} };
 const tsec = t => (t && t.seconds) || 9e9;   // a time still on its way to the server counts as "now"
 const repWhen = r => Math.max(r.lastAt ? tsec(r.lastAt) : 0, tsec(r.created));
+addEventListener('visibilitychange', () => { if (!document.hidden && rep.sel) repRender(); });
+markSeen.done = new Set();
 const first = n => esc((n || '').trim().split(' ')[0]);
+// Gold dot = they wrote something you have not opened yet. Opening their chat stamps suSeenAt on their reports (Studio 0.19.0).
+const unseen = r => r.status === 'new' && !(r.suSeenAt && tsec(r.suSeenAt) >= repWhen(r)) && !(markSeen.done && markSeen.done.has(r.id + ':' + repWhen(r)));
+function markSeen(c) {
+  if (!c || document.hidden || $('t-reports').hidden) return;
+  const { F, db } = ppl.fb;
+  for (const r of c.reps) if (unseen(r) && !markSeen.done.has(r.id + ':' + repWhen(r))) { markSeen.done.add(r.id + ':' + repWhen(r)); F.updateDoc(F.doc(db, 'reports', r.id), { suSeenAt:F.serverTimestamp() }).catch(console.warn); }
+}
 function repConvs() {
   const by = {};
   for (const r of rep.list) { const k = r.uid || r.id; (by[k] = by[k] || { uid:k, name:r.name, device:r.device, reps:[] }).reps.push(r); }
   return Object.values(by).map(c => {
     c.reps.sort((a, b) => tsec(a.created) - tsec(b.created)); c.last = c.reps[c.reps.length - 1];
-    c.when = Math.max(...c.reps.map(repWhen)); c.waiting = c.reps.some(r => r.status === 'new');
+    c.when = Math.max(...c.reps.map(repWhen)); c.waiting = c.reps.some(r => r.status === 'new'); c.unseen = c.reps.some(unseen);
     const m = ppl.list.find(p => p.uid === c.uid); if (m) { c.name = m.name || c.name; c.device = m.device || c.device; }
     const items = repItems(c), l = items[items.length - 1]; c.preview = l ? (l.me ? 'You: ' : '') + (l.text || '') : '';
     return c;
@@ -1019,18 +1113,18 @@ function repItems(c) {   // every message of every report, oldest first
 }
 const shortDay = ts => { const d = ts && ts.toDate ? ts.toDate() : null; if (!d) return 'now'; const now = new Date();
   return d.toDateString() === now.toDateString() ? d.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : d.toLocaleDateString([], { day:'numeric', month:'short' }); };
-function repCount(cs) { const t = document.querySelector('.tab[data-tab="reports"] i'), n = cs.filter(c => c.waiting).length; t.hidden = !n; t.textContent = n; }
+function repCount(cs) { const t = document.querySelector('.tab[data-tab="reports"] i'), n = cs.filter(c => c.unseen).length; t.hidden = !n; t.textContent = n; }
 function repRender() {
   const cs = repConvs(); repCount(cs);
-  $('ib-list').innerHTML = cs.map(c => `<button class="ibrow${c.uid === rep.sel ? ' on' : ''}${c.waiting ? ' new' : ''}" data-uid="${esc(c.uid)}">
+  $('ib-list').innerHTML = cs.map(c => `<button class="ibrow${c.uid === rep.sel ? ' on' : ''}${c.unseen ? ' new' : ''}" data-uid="${esc(c.uid)}">
       <div class="av">${esc((c.name || '?').trim().charAt(0).toUpperCase())}</div>
       <div class="t"><b>${esc(c.name)}</b><small>${esc(c.preview)}</small></div>
-      <div class="w"><small>${shortDay(c.last.lastAt || c.last.created)}</small>${c.waiting ? '<i class="dot" title="Waiting for your reply"></i>' : ''}</div></button>`).join('')
+      <div class="w"><small>${shortDay(c.last.lastAt || c.last.created)}</small>${c.unseen ? '<i class="dot" title="New message"></i>' : ''}</div></button>`).join('')
     || '<div class="empty">No messages yet. When someone writes from App Vault, they show up here.</div>';
   if (typeof pplRender === 'function' && ppl.list.length) pplRender();
   for (const r of rep.list) if (!rep.msgOff[r.id]) repListenMsgs(r.id);
   const c = cs.find(x => x.uid === rep.sel);
-  if (rep.sel && !c) { rep.sel = null; chatEmpty(); } else if (c) chatMsgs(c);
+  if (rep.sel && !c) { rep.sel = null; chatEmpty(); } else if (c) { chatMsgs(c); markSeen(c); }
 }
 function chatEmpty() { $('ib').classList.remove('chatting'); $('ib-chat').innerHTML = '<div class="empty">Pick a person on the left to see your chat.</div>'; }
 function openChat(uid) {
@@ -1099,14 +1193,23 @@ function shrinkPhoto(file) {
       ok(out); };
     img.onerror = () => { URL.revokeObjectURL(u); no(new Error('not an image')); }; img.src = u; });
 }
+// Picking a photo or file first shows it with Send and Cancel (Su, 2026-11-25); nothing is sent until Send.
 async function repAttach(file, kind) {
   if (!file) return;
+  const who = (repConvs().find(x => x.uid === rep.sel) || {}).name || '';
   try {
-    if (kind === 'photo') { toast('Sending photo…'); if (await repPost({ text:'📷 Photo', photo:await shrinkPhoto(file) })) toast('Photo sent'); return; }
-    if (file.size > 700000) { toast('That file is too big. Files up to 700 KB can be sent.'); return; }
-    const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(file); });
-    toast('Sending file…'); if (await repPost({ text:'📎 ' + file.name, file:{ name:file.name, type:file.type || '', data } })) toast('File sent');
-  } catch (x) { console.warn(x); toast('That could not be sent. Try another photo or file.'); }
+    let msg, view;
+    if (kind === 'photo') { const photo = await shrinkPhoto(file); msg = { text:'📷 Photo', photo }; view = `<img class="bigphoto" src="${photo}" alt="">`; }
+    else {
+      if (file.size > 700000) { toast('That file is too big. Files up to 700 KB can be sent.'); return; }
+      const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(file); });
+      msg = { text:'📎 ' + file.name, file:{ name:file.name, type:file.type || '', data } };
+      view = `<div class="filechip big">📎 ${esc(file.name)} <small>${Math.max(1, Math.round(file.size / 1024))} KB</small></div>`;
+    }
+    modal(`<h4>Send to ${esc(who)}?</h4>${view}<div class="acts"><button class="btn" id="m-no">Cancel</button><button class="gold" id="m-ok">Send</button></div>`);
+    $('m-no').onclick = closeModal;
+    $('m-ok').onclick = async () => { $('m-ok').disabled = true; $('m-ok').textContent = 'Sending…'; if (await repPost(msg)) { closeModal(); toast(kind === 'photo' ? 'Photo sent' : 'File sent'); } else { $('m-ok').disabled = false; $('m-ok').textContent = 'Send'; } };
+  } catch (x) { console.warn(x); toast('That could not be opened. Try another photo or file.'); }
 }
 $('pick-photo').onchange = e => { repAttach(e.target.files[0], 'photo'); e.target.value = ''; };
 $('take-photo').onchange = e => { repAttach(e.target.files[0], 'photo'); e.target.value = ''; };
@@ -1121,7 +1224,7 @@ $('t-reports').onclick = e => {
   if (what === 'back') { rep.sel = null; chatEmpty(); return repRender(); }
   if (what === 'plus') { menu.hidden = !menu.hidden; return; }
   if (what === 'photo') return $('pick-photo').click();
-  if (what === 'camera') return $('take-photo').click();
+  if (what === 'camera') { if (bridge && !(bridge.bridge && bridge.bridge() >= 4)) { toast('Update Studio in Settings first. Then Take photo opens the camera.'); return; } return $('take-photo').click(); }
   if (what === 'file') return $('pick-file').click();
   if (what === 'send') return repSend();
   if (!c) return;

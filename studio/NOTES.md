@@ -7,8 +7,8 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - Studio reads `studio.json`. Publishing changes `catalog.json`.
 
 ## Current version
-- Studio page: 0.18.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
-- Studio app (APK): 0.5.0 (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
+- Studio page: 0.19.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
+- Studio app (APK): 0.6.0, camera for Take photo in Messages (bridge 4) (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
 
 ## Su's decisions
 - Renamed App Vault Studio on 2026-11-25 (was Play Hub Studio). Package `com.glickshulem.hubstudio`, id `hubstudio` and the `studio/` URL stay the same.
@@ -26,6 +26,9 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - **People rows (0.18.0):** Requests on top with Approve / Decline. Approved people are short rows: name, when they last opened App Vault, small icons of the apps they have (no versions, Su's choice), and 💬 to open their chat. Tap a row for device, note and Remove access. Removed and declined people hide behind **Show removed**.
 
 - **Messages tab (inbox since 0.18.0):** ONE chat per person, like texting (all of a person's reports merged by uid, oldest first). List on the left (newest on top, gold dot = waiting for your reply), chat on the right; on narrow screens the list opens the chat with a ‹ back button. Header: Person info (jumps to People) and ⋯ (Mark as answered, Delete the whole chat). Composer: + (Add photo / Take photo / Add file), text, Send (Enter sends on desktop). Su's messages go into the person's latest report: `{from:'su', text, created}` plus `photo` (JPEG data URL ≤ ~850 KB) or `file {name,type,data}` (≤ 700 KB). Ticks: ✓ Sent, ✓✓ Read (report `userUnread` false). Photos small, tap to enlarge. Badge = people waiting. Needs the People sign-in.
+
+- **Beta (0.19.0, Su 2026-11-25):** each app card shows In Studio · BETA · Public. Buttons: **Publish Beta** (catalog `apps[i].beta`, or `betaApps` for an app not public yet) + **Publish to everyone**; when the Studio version is the Beta: **Make public** (one tap, same version to everyone, clears the Beta). ⋯ menu: Send <ver> to one person… (writes `members/{uid}.early.<id>` = the public entry; needs People sign-in), Take back early versions, Stop the Beta. Card shows "Sent early to …". People: Beta requests (beta 'asked') at the top with Approve Beta / Decline; approved rows show a BETA tag; row details have Add to Beta / Take out of Beta. See `hub/NOTES.md` for the App Vault side.
+- **Messages fixes (0.19.0):** the gold dot clears when Su opens that person's chat (stamps `suSeenAt` on their reports; dot = status 'new' and not seen since the last message). Picked photos/files show a preview with Send / Cancel first. Take photo opens the camera in Studio app 0.6.0+ (older app: toast to update).
 
 ## Known bugs
 - Fixed in 0.9.2: a cached old Studio page could reload itself forever ("Loading apps" blinking). It now reloads once per version with a fresh address, then shows the apps with publishing paused until the new page arrives.
