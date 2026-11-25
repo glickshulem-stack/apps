@@ -16,7 +16,7 @@
       "name": "Gambit",
       "icon": "♞",
       "package": "com.glickshulem.chess",
-      "version": "0.29.0",
+      "version": "0.30.0",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
@@ -27,7 +27,7 @@
         "shots/chess/2.jpg",
         "shots/chess/3.jpg"
       ],
-      "note": "The computer thinks like a person: quick on obvious moves, longer on hard choices and checkmates"
+      "note": "In speed games the computer plays fast to match the clock (1 min = bullet)"
     },
     {
       "id": "quillsong",
