@@ -46,7 +46,26 @@ service cloud.firestore {
         && request.resource.data.photos is int
         && request.resource.data.photos <= 4
         && request.resource.data.keys().hasOnly(['uid', 'name', 'app', 'appName', 'version', 'page', 'device', 'text', 'photos', 'status', 'created']);
-      allow update, delete: if isSu();
+      // The writer may only mark a reply as read, or reopen it by writing back (App Vault 0.31.0+)
+      allow update: if isSu() || (request.auth != null && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastAt', 'userUnread'])
+        && request.resource.data.status in ['new', resource.data.status]
+        && request.resource.data.userUnread == false);
+      allow delete: if isSu();
+      // The chat under each message: Su's replies and the writer's answers
+      match /msgs/{mid} {
+        allow read: if isSu() || (request.auth != null && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid);
+        allow create: if (isSu() && request.resource.data.from == 'su'
+            && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000)
+          || (approved() && request.resource.data.from == 'user'
+            && request.resource.data.uid == request.auth.uid
+            && get(/databases/$(database)/documents/reports/$(rid)).data.uid == request.auth.uid
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 2000
+            && request.resource.data.keys().hasOnly(['from', 'uid', 'text', 'created']));
+        allow delete: if isSu();
+      }
       match /photos/{pid} {
         allow read: if isSu() || (request.auth != null && resource.data.uid == request.auth.uid);
         allow create: if approved()

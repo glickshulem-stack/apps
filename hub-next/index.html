@@ -223,11 +223,18 @@
   .rp-photos .ph button { position:absolute; top:4px; right:4px; width:26px; height:26px; border-radius:50%; border:0; background:rgba(0,0,0,.65); color:#fff; cursor:pointer; }
   .rp-photos .add { width:92px; height:92px; border-radius:12px; border:2px dashed var(--gold); background:none; color:var(--gold2); font:700 .85rem Inter,sans-serif; cursor:pointer; }
   .rp-hint { color:var(--muted); font-size:.82rem; margin:-4px 0 12px; }
-  .rp-about { margin:14px 0 0; } .rp-about > span { display:block; font-weight:700; font-size:.88rem; color:var(--gold2); margin-bottom:8px; } .rp-about small { color:var(--muted); font-weight:500; }
-  .rp-chips { display:flex; gap:8px; flex-wrap:wrap; }
-  .rp-chips button { display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:99px; border:1px solid var(--line); background:var(--surface2); color:var(--text); font:600 .88rem Inter,sans-serif; cursor:pointer; }
-  .rp-chips button img { width:20px; height:20px; } .rp-chips button.on { border-color:var(--gold); color:var(--gold2); box-shadow:0 0 0 1px var(--gold); }
   .rp-bg { z-index:26; }
+  .rp-item.go { display:block; width:100%; text-align:left; color:var(--text); font:inherit; cursor:pointer; }
+  .rp-item .top b.new { color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); padding:1px 9px; border-radius:99px; } .rp-item .top b.wait { color:var(--muted); }
+  .rp-new { font-style:normal; font-size:.75rem; font-weight:800; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); padding:2px 9px; border-radius:99px; margin-right:6px; vertical-align:2px; }
+  .rp-state { text-align:center; font-size:.8rem; font-weight:700; color:var(--muted); margin:-4px 0 10px; } .rp-state.new { color:var(--gold2); }
+  .rp-thread { display:flex; flex-direction:column; gap:10px; max-height:52vh; overflow-y:auto; padding:4px 2px 8px; }
+  .bub { max-width:85%; padding:10px 14px; border-radius:16px; background:var(--surface2); border:1px solid var(--line); }
+  .bub.me { align-self:flex-end; border-bottom-right-radius:4px; } .bub.dev { align-self:flex-start; border-color:var(--gold); border-bottom-left-radius:4px; }
+  .bub b { display:block; font-size:.75rem; color:var(--gold2); letter-spacing:.06em; text-transform:uppercase; margin-bottom:2px; }
+  .bub p { margin:0; white-space:pre-wrap; line-height:1.45; user-select:text; } .bub small { display:block; color:var(--muted); font-size:.72rem; margin-top:4px; }
+  .bub .pics { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; } .bub .pics img { width:84px; height:84px; object-fit:cover; border-radius:10px; }
+  .rp-reply { display:flex; gap:10px; align-items:flex-end; margin-top:10px; } .rp-reply textarea { min-height:52px; flex:1; } .rp-reply .bigbtn { width:auto; padding:14px 22px; }
   .rp-err { color:#e08a5a; font-size:.9rem; min-height:1.2em; margin-top:8px; text-align:center; }
 </style>
 </head>
@@ -259,7 +266,7 @@
   <h5>Look</h5>
   <div class="box"><div class="row click go" id="look-open"><span class="rl"><svg class="ri" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18z" fill="currentColor" stroke="none"/></svg><span>Colors<small id="look-name"></small></span></span><span>›</span></div></div>
   <h5>Support</h5>
-  <div class="box"><div class="row click go" id="support-open"><span class="rl"><svg class="ri" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Contact the developer<small>Questions, problems or notes</small></span></span><span>›</span></div></div>
+  <div class="box"><div class="row click go" id="support-open"><span class="rl"><svg class="ri" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Contact the developer<small>Questions, problems or notes</small></span></span><span><em class="rp-new" id="support-new" hidden></em> ›</span></div></div>
   <h5>Share</h5>
   <div class="box"><div class="row click go" id="share-open"><span class="rl"><svg class="ri" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>Share App Vault<small>Send a friend the download link</small></span></span><span>›</span></div></div>
 </div>
@@ -293,7 +300,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.30.0';
+const PAGE_VER = '0.31.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -420,7 +427,7 @@ function render() {
   if (busy && !ticker) ticker = setInterval(render, 500);
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
   renderTop(); renderRemoved(); updateDetail();
-  $('settings').classList.toggle('dot', !!hubUpd);
+  $('settings').classList.toggle('dot', !!hubUpd || (typeof rpUnread === 'function' && rpUnread()));
   $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'}) : 'Not checked yet';
 }
 
@@ -738,10 +745,13 @@ renderMe();
 gateStart();
 </script>
 <script>
-// Notes & bug reports (page 0.29.0). Approved people write a note (with up to 4 photos) from any app's page; Su reads them in Studio › Reports.
-// Photos are shrunk and kept in the database itself (one document each), so no paid storage is needed. Firestore: reports/{id} + reports/{id}/photos/{n}.
+// Contact the developer (page 0.31.0). Settings › Support opens a page: write a new message (text + up to 4 photos),
+// and below it your conversations. Tap one to read Su's replies and answer back, like a chat.
+// Firestore: reports/{id} (the first message) + reports/{id}/photos/0..3 + reports/{id}/msgs/{m} = { from:'su'|'user', uid, text, created }.
+// reports.status: 'new' (waiting for Su) · 'replied' · 'done'; userUnread = Su replied and this person has not opened it yet.
+// Photos are shrunk and kept in the database itself, so no paid storage is needed.
 const canPick = !hasHub || (typeof Hub.bridge === 'function' && Hub.bridge() >= 5);   // App Vault app 0.11.0+ can open the photo picker
-const rp = { app:null, photos:[], mine:[], off:null };
+const rp = { photos:[], mine:[], off:null, conv:null, msgs:[], msgOff:null, pics:{} };
 function shrink(file) {   // → JPEG data URL, longest side ≤ 1280 px, under ~850 KB
   return new Promise((ok, bad) => {
     const url = URL.createObjectURL(file), img = new Image();
@@ -761,44 +771,46 @@ function shrink(file) {   // → JPEG data URL, longest side ≤ 1280 px, under 
     img.src = url;
   });
 }
-// Support (page 0.30.0, Su's wish): one general "Contact the developer" in Settings, not on each app page.
-// It opens a page with the message form on top and this person's earlier messages below.
 const rpDay = t => t && t.toDate ? t.toDate().toLocaleDateString([], { day:'numeric', month:'short' }) + ', ' + t.toDate().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'Just now';
-function rpRenderMine() {
-  const box = $('rp-list'); if (!box) return;
-  box.innerHTML = rp.mine.length ? `<h5 style="margin:22px 4px 10px">Your messages</h5>` + rp.mine.map(r => `<div class="rp-item"><div class="top"><span>${rpDay(r.created)}${r.app && r.app !== 'general' ? ` · ${esc(r.appName || r.app)}` : ''}${r.photos ? ` · 📷 ${r.photos}` : ''}</span><b class="${r.status === 'done' ? 'done' : ''}">${r.status === 'done' ? '✓ Done' : 'Sent'}</b></div><p>${esc(r.text)}</p></div>`).join('') : '';
+const rpWhen = r => (r.lastAt && r.lastAt.seconds) || (r.created && r.created.seconds) || 9e9;
+const rpUnread = () => rp.mine.some(r => r.userUnread);
+function rpBadge() {   // gold dot on the gear and "New reply" on the Support row
+  const n = rp.mine.filter(r => r.userUnread).length, s = $('support-new');
+  if (s) { s.hidden = !n; s.textContent = n === 1 ? 'New reply' : `${n} new replies`; }
+  if (typeof render === 'function' && catalog) $('settings').classList.toggle('dot', $('settings').classList.contains('dot') || !!n);
 }
 function rpListen() {
   if (rp.off || !gate.fb || !gate.uid) return;
   const { F, db } = gate.fb;
   rp.off = F.onSnapshot(F.query(F.collection(db, 'reports'), F.where('uid', '==', gate.uid)), s => {
-    rp.mine = s.docs.map(d => ({ id:d.id, ...d.data() })).sort((x, y) => ((y.created && y.created.seconds) || 9e9) - ((x.created && x.created.seconds) || 9e9));
-    rpRenderMine();
+    rp.mine = s.docs.map(d => ({ id:d.id, ...d.data() })).sort((x, y) => rpWhen(y) - rpWhen(x));
+    rpBadge(); if (!$('rp').hidden) (rp.conv ? rpConvHead() : rpRenderMine());
   }, x => console.warn('reports', x));
 }
+const rpState = r => r.userUnread ? ['new', 'New reply'] : r.status === 'done' ? ['done', '✓ Done'] : r.status === 'replied' ? ['', 'Replied'] : ['wait', 'Waiting for reply'];
+function rpRenderMine() {
+  const box = $('rp-list'); if (!box) return;
+  box.innerHTML = rp.mine.length ? `<h5 style="margin:22px 4px 10px">Your messages</h5>` + rp.mine.map(r => { const [c, t] = rpState(r);
+    return `<button class="rp-item go" data-id="${esc(r.id)}"><div class="top"><span>${rpDay(r.lastAt || r.created)}${r.photos ? ` · 📷 ${r.photos}` : ''}</span><b class="${c}">${t}</b></div><p>${esc(r.text)}</p></button>`; }).join('') : '';
+}
+const rpHead = (title, back) => `<div class="hd">${back ? `<button class="backbtn" id="rp-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>All messages</button><span style="flex:1"></span>` : `<img src="../vault-icon.svg" alt=""><h4 class="goldtext">${title}</h4>`}<button class="iconbtn" id="rp-x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
 function rpDraw() {
   $('rp-photos').innerHTML = rp.photos.map((p, i) => `<div class="ph"><img src="${p}" alt=""><button data-i="${i}" aria-label="Remove">✕</button></div>`).join('')
     + (rp.photos.length < 4 && canPick ? `<button class="add" id="rp-add">+ Add photo</button>` : '');
 }
-function rpOpen() {
-  if (!gate.me || gate.me.status !== 'approved' || !gate.fb) { toast('!', 'Not signed in yet', 'Connect to the internet and try again.'); return; }
-  rp.app = null; rp.photos = [];
-  const apps = ((catalog && catalog.apps) || []).filter(a => a.id !== 'hub');
-  $('rp').innerHTML = `<div class="rp-card"><div class="hd"><img src="../vault-icon.svg" alt=""><h4 class="goldtext">Contact the developer</h4><button class="iconbtn" id="rp-x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+// Main page: new message form + your conversations
+function rpHome() {
+  rp.conv = null; if (rp.msgOff) { rp.msgOff(); rp.msgOff = null; }
+  $('rp').innerHTML = `<div class="rp-card">${rpHead('Contact the developer')}
     <p class="rp-hint" style="margin:0 0 12px">Ask a question, report a problem, or leave a note. You can add photos.</p>
     <textarea id="rp-text" maxlength="2000" placeholder="Write your message here"></textarea>
-    ${apps.length ? `<div class="rp-about"><span>About an app? <small>(optional)</small></span><div class="rp-chips" id="rp-chips">${apps.map(a => `<button data-id="${esc(a.id)}"><img src="../${a.iconUrl}" alt="">${esc(a.name)}</button>`).join('')}</div></div>` : ''}
     <div class="rp-photos" id="rp-photos"></div>
     ${canPick ? '<div class="rp-hint">Up to 4 photos, such as screenshots.</div>' : '<div class="rp-hint">To add photos, first update App Vault in Settings.</div>'}
     <button class="bigbtn" id="rp-send">Send message</button><div class="rp-err" id="rp-err"></div>
     <input type="file" id="rp-file" accept="image/*" multiple hidden>
     <div id="rp-list"></div></div>`;
-  $('rp').hidden = false; rpDraw(); rpListen(); rpRenderMine();
-  try { history.pushState({ ...(history.state || {}), support:1 }, ''); } catch {}   // Android back closes it
+  rpDraw(); rpRenderMine();
   $('rp-x').onclick = rpBack;
-  if ($('rp-chips')) $('rp-chips').onclick = e => { const b = e.target.closest('button[data-id]'); if (!b) return;
-    const a = apps.find(x => x.id === b.dataset.id); rp.app = rp.app === a ? null : a;
-    $('rp-chips').querySelectorAll('button').forEach(x => x.classList.toggle('on', !!rp.app && x.dataset.id === rp.app.id)); };
   $('rp-photos').onclick = e => { const x = e.target.closest('button[data-i]'); if (x) { rp.photos.splice(+x.dataset.i, 1); rpDraw(); } else if (e.target.id === 'rp-add') $('rp-file').click(); };
   $('rp-file').onchange = async e => {
     const files = [...e.target.files].slice(0, 4 - rp.photos.length); e.target.value = '';
@@ -806,20 +818,70 @@ function rpOpen() {
     rpDraw();
   };
   $('rp-send').onclick = rpSend;
+  $('rp-list').onclick = e => { const b = e.target.closest('.rp-item[data-id]'); if (b) rpOpenConv(b.dataset.id); };
+}
+function rpOpen() {
+  if (!gate.me || gate.me.status !== 'approved' || !gate.fb) { toast('!', 'Not signed in yet', 'Connect to the internet and try again.'); return; }
+  rp.photos = []; rpListen(); rpHome(); $('rp').hidden = false;
+  try { history.pushState({ ...(history.state || {}), support:1 }, ''); } catch {}   // Android back closes it
+}
+// One conversation: your first message (with photos), then the replies, and a box to answer.
+function rpConvHead() {
+  const r = rp.mine.find(x => x.id === rp.conv); if (!r || !$('rp-thread')) return;
+  const [c, t] = rpState(r); $('rp-state').className = 'rp-state ' + c; $('rp-state').textContent = t;
+}
+function rpRenderThread() {
+  const r = rp.mine.find(x => x.id === rp.conv), box = $('rp-thread'); if (!r || !box) return;
+  const pics = rp.pics[r.id] || [];
+  box.innerHTML = `<div class="bub me"><p>${esc(r.text)}</p>${pics.length ? `<div class="pics">${pics.map(p => `<img src="${p}" alt="">`).join('')}</div>` : r.photos ? '<small>📷 Loading photos…</small>' : ''}<small>${rpDay(r.created)}</small></div>`
+    + rp.msgs.map(m => `<div class="bub ${m.from === 'su' ? 'dev' : 'me'}">${m.from === 'su' ? '<b>Developer</b>' : ''}<p>${esc(m.text)}</p><small>${rpDay(m.created)}</small></div>`).join('');
+  box.scrollTop = box.scrollHeight;
+}
+async function rpOpenConv(id) {
+  const r = rp.mine.find(x => x.id === id); if (!r) return;
+  rp.conv = id; rp.msgs = [];
+  $('rp').innerHTML = `<div class="rp-card">${rpHead('', true)}<div class="rp-state" id="rp-state"></div><div class="rp-thread" id="rp-thread"></div>
+    ${r.status === 'done' ? '<p class="rp-hint" style="text-align:center">This message is marked as done. You can still write if you need more help.</p>' : ''}
+    <div class="rp-reply"><textarea id="rp-rtext" maxlength="2000" placeholder="Write a reply"></textarea><button class="bigbtn" id="rp-rsend">Send</button></div><div class="rp-err" id="rp-err"></div></div>`;
+  $('rp-x').onclick = rpBack; $('rp-back').onclick = rpHome; $('rp-rsend').onclick = rpReply;
+  rpConvHead(); rpRenderThread();
+  const { F, db } = gate.fb;
+  if (rp.msgOff) rp.msgOff();
+  rp.msgOff = F.onSnapshot(F.collection(db, 'reports', id, 'msgs'), s => {
+    rp.msgs = s.docs.map(d => d.data()).sort((a, b) => ((a.created && a.created.seconds) || 9e9) - ((b.created && b.created.seconds) || 9e9));
+    rpRenderThread();
+  }, x => console.warn('msgs', x));
+  if (r.userUnread) F.updateDoc(F.doc(db, 'reports', id), { userUnread:false }).catch(x => console.warn(x));
+  if (r.photos && !rp.pics[id]) {
+    try { const s = await F.getDocs(F.collection(db, 'reports', id, 'photos')); rp.pics[id] = s.docs.sort((a, b) => +a.id - +b.id).map(d => d.data().data); } catch (x) { console.warn(x); rp.pics[id] = []; }
+    if (rp.conv === id) rpRenderThread();
+  }
+}
+async function rpReply() {
+  const text = $('rp-rtext').value.trim(), id = rp.conv; if (!text) return;
+  $('rp-rsend').disabled = true; $('rp-err').textContent = '';
+  try {
+    const { F, db } = gate.fb;
+    await F.addDoc(F.collection(db, 'reports', id, 'msgs'), { from:'user', uid:gate.uid, text, created:F.serverTimestamp() });
+    await F.updateDoc(F.doc(db, 'reports', id), { status:'new', lastAt:F.serverTimestamp(), userUnread:false });
+    $('rp-rtext').value = '';
+  } catch (x) { console.warn(x); $('rp-err').textContent = navigator.onLine ? 'That didn\'t go through. Please try again.' : 'No internet. Connect and try again.'; }
+  $('rp-rsend').disabled = false;
 }
 function rpBack() { if (history.state && history.state.support) history.back(); else rpClose(); }
 addEventListener('popstate', () => { if (!(history.state && history.state.support) && !$('rp').hidden) rpClose(); });
-function rpClose() { $('rp').hidden = true; $('rp').innerHTML = ''; }
+function rpClose() { $('rp').hidden = true; $('rp').innerHTML = ''; rp.conv = null; if (rp.msgOff) { rp.msgOff(); rp.msgOff = null; } }
 async function rpSend() {
-  const text = $('rp-text').value.trim(), a = rp.app;
+  const text = $('rp-text').value.trim();
   if (!text) { $('rp-err').textContent = 'Please write a few words first.'; return; }
   $('rp-send').disabled = true; $('rp-send').textContent = rp.photos.length ? 'Sending message and photos…' : 'Sending…'; $('rp-err').textContent = '';
   try {
     const { F, db } = gate.fb, ref = F.doc(F.collection(db, 'reports'));
-    await F.setDoc(ref, { uid:gate.uid, name:gate.me.name, app:a ? a.id : 'general', appName:a ? a.name : 'General', version:(a && hasHub && Hub.installedVersion(a.package)) || '', page:PAGE_VER,
+    await F.setDoc(ref, { uid:gate.uid, name:gate.me.name, app:'general', appName:'General', version:'', page:PAGE_VER,
       device:gate.me.device || deviceName(), text, photos:rp.photos.length, status:'new', created:F.serverTimestamp() });
     for (let i = 0; i < rp.photos.length; i++) await F.setDoc(F.doc(db, 'reports', ref.id, 'photos', String(i)), { uid:gate.uid, data:rp.photos[i] });
-    rpBack(); toast('✓', 'Message sent', 'Thank you! You\'ll find it under Contact the developer.');
+    rp.pics[ref.id] = rp.photos.slice(); rp.photos = [];
+    rpHome(); toast('✓', 'Message sent', 'You\'ll see the reply here, under Your messages.');
   } catch (x) {
     console.warn(x); $('rp-send').disabled = false; $('rp-send').textContent = 'Send message';
     $('rp-err').textContent = navigator.onLine ? 'That didn\'t go through. Please try again.' : 'No internet. Connect and try again.';

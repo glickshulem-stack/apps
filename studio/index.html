@@ -150,6 +150,13 @@
   .rep.done { opacity:.7; } .rep .txt { margin:0; white-space:pre-wrap; line-height:1.5; }
   .rep .meta2 { color:var(--muted); font-size:.82rem; }
   .rep .thumbs { display:flex; gap:8px; flex-wrap:wrap; } .rep .thumbs img { width:110px; height:110px; object-fit:cover; border-radius:10px; border:1px solid var(--line); cursor:zoom-in; background:var(--surface2); }
+  .rep .h .v.hi { border-color:var(--gold); color:var(--strong); }
+  .rep .chat { display:flex; flex-direction:column; gap:8px; }
+  .rep .bub { max-width:80%; padding:10px 14px; border-radius:16px; background:var(--surface2); border:1px solid var(--line); }
+  .rep .bub.them { align-self:flex-start; border-bottom-left-radius:4px; } .rep .bub.mine { align-self:flex-end; border-color:var(--gold); border-bottom-right-radius:4px; }
+  .rep .bub p { margin:0; white-space:pre-wrap; line-height:1.45; } .rep .bub small { display:block; color:var(--muted); font-size:.75rem; margin-top:4px; }
+  .rep .bub .thumbs { margin-top:8px; }
+  .rep .replyrow { display:flex; gap:10px; align-items:flex-end; } .rep .replyrow textarea { min-height:52px; flex:1; } .rep .replyrow .gold { padding:12px 22px; }
   .repfilter { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
   .repfilter button.on { border-color:var(--gold); color:var(--strong); }
   .bigphoto { max-width:100%; max-height:80vh; display:block; margin:0 auto; border-radius:12px; }
@@ -219,7 +226,7 @@
     <div class="apps" id="pubapps"></div>
   </section>
   <section id="t-reports" class="tabpage" hidden>
-    <p class="hint">Messages people send from App Vault › Settings › Contact the developer: questions, problems and notes. Sign in on the People tab to see them.</p>
+    <p class="hint">Messages people send from App Vault › Settings › Contact the developer. Reply right here; they see your answer in App Vault and can write back. Sign in on the People tab first.</p>
     <div class="repfilter" id="rep-filter"></div>
     <div class="apps" id="rep-list"><div class="empty">Loading notes…</div></div>
   </section>
@@ -294,7 +301,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.15.0';
+const VERSION = '0.16.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -1013,25 +1020,38 @@ $('ppl-out').onclick = () => confirmBox('Sign out of People?', 'You will need yo
 })();
 </script>
 <script>
-// ---------- Reports (Studio 0.14.0) ----------
-// reports/{id} = { uid, name, app, appName, version, page, device, text, photos, status 'new'|'done', created } + reports/{id}/photos/{n} = { data }.
-const rep = { list:[], off:null, filter:'new', photos:{} };
-function repCount() { const t = document.querySelector('.tab[data-tab="reports"] i'), n = rep.list.filter(r => r.status !== 'done').length; t.hidden = !n; t.textContent = n; }
-function repIcon(id) { if (id === 'general') return SITE + 'vault-icon.svg'; const a = ((studio && studio.apps) || []).find(x => x.id === id); return a ? iconSrc(a) : 'icon.svg'; }
+// ---------- Messages (Studio 0.16.0: a chat per message) ----------
+// reports/{id} = { uid, name, device, text, photos, status 'new'|'replied'|'done', created, lastAt, userUnread } + photos/{n} = { data } + msgs/{m} = { from:'su'|'user', text, created }.
+// 'new' = the person wrote last and waits for you. Your reply sets 'replied' and userUnread (App Vault shows "New reply").
+const rep = { list:[], off:null, filter:'new', photos:{}, msgs:{}, msgOff:{}, drafts:{} };
+const repWhen = r => (r.lastAt && r.lastAt.seconds) || (r.created && r.created.seconds) || 9e9;
+function repCount() { const t = document.querySelector('.tab[data-tab="reports"] i'), n = rep.list.filter(r => r.status === 'new').length; t.hidden = !n; t.textContent = n; }
+const repLabel = r => r.status === 'new' ? ['hi', 'Waiting for you'] : r.status === 'done' ? ['', '✓ Done'] : ['', r.userUnread ? 'Replied · not read yet' : 'Replied · read'];
 function repRender() {
-  const L = rep.list, apps = [...new Set(L.map(r => r.app))];
-  const f = rep.filter, shown = L.filter(r => f === 'all' ? true : f === 'new' ? r.status !== 'done' : f === 'done' ? r.status === 'done' : r.app === f);
-  const chip = (k, label, n) => `<button class="btn${f === k ? ' on' : ''}" data-f="${esc(k)}">${esc(label)}${n != null ? ` (${n})` : ''}</button>`;
-  $('rep-filter').innerHTML = chip('new', 'New', L.filter(r => r.status !== 'done').length) + chip('done', 'Done', L.filter(r => r.status === 'done').length) + chip('all', 'All', L.length)
-    + apps.map(id => chip(id, (L.find(r => r.app === id) || {}).appName || id, L.filter(r => r.app === id).length)).join('');
-  $('rep-list').innerHTML = shown.map(r => `<div class="app rep${r.status === 'done' ? ' done' : ' ready'}" data-id="${esc(r.id)}">
-      <div class="h"><img class="ai" src="${esc(repIcon(r.app))}" alt=""><div class="t"><b>${esc(r.appName || r.app)}${r.version ? ` <span class="tag">${esc(r.version)}</span>` : ''}</b><small>From <b style="display:inline;font:inherit;color:var(--text)">${esc(r.name)}</b> · 📱 ${esc(r.device || '')} · ${pplDay(r.created)}</small></div></div>
-      <p class="txt">${esc(r.text)}</p>
-      ${r.photos ? `<div class="thumbs" data-photos="${esc(r.id)}">${(rep.photos[r.id] || []).map((p, i) => `<img src="${p}" data-i="${i}" alt="">`).join('') || '<span class="meta2">Loading photos…</span>'}</div>` : ''}
-      <div class="acts">${r.status === 'done' ? '<button class="btn" data-do="new">Mark as new</button>' : '<button class="gold" data-do="done">Mark as done</button>'}<button class="btn" data-do="delete">Delete</button></div></div>`).join('')
-    || `<div class="empty">${f === 'new' ? 'No new messages. When someone sends one from App Vault, it shows up here.' : 'Nothing here.'}</div>`;
+  const act = document.activeElement, keep = act && act.dataset && act.dataset.reply;
+  const L = rep.list, f = rep.filter, shown = L.filter(r => f === 'all' || r.status === f || (f === 'replied' && !r.status));
+  const chip = (k, label) => `<button class="btn${f === k ? ' on' : ''}" data-f="${k}">${label} (${k === 'all' ? L.length : L.filter(r => r.status === k).length})</button>`;
+  $('rep-filter').innerHTML = chip('new', 'Waiting for you') + chip('replied', 'Replied') + chip('done', 'Done') + chip('all', 'All');
+  $('rep-list').innerHTML = shown.map(r => { const [c, t] = repLabel(r), pics = rep.photos[r.id] || [];
+    return `<div class="app rep person${r.status === 'done' ? ' done' : r.status === 'new' ? ' ready' : ''}" data-id="${esc(r.id)}">
+      <div class="h"><div class="av">${esc((r.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(r.name)}</b><small>📱 ${esc(r.device || '')} · ${pplDay(r.created)}</small></div><span class="v ${c}">${t}</span></div>
+      <div class="chat">
+        <div class="bub them"><p>${esc(r.text)}</p>${r.photos ? `<div class="thumbs" data-photos="${esc(r.id)}">${pics.map(p => `<img src="${p}" alt="">`).join('') || '<span class="meta2">Loading photos…</span>'}</div>` : ''}</div>
+        ${(rep.msgs[r.id] || []).map(m => `<div class="bub ${m.from === 'su' ? 'mine' : 'them'}"><p>${esc(m.text)}</p><small>${m.from === 'su' ? 'You · ' : ''}${pplDay(m.created)}</small></div>`).join('')}
+      </div>
+      <div class="replyrow"><textarea class="in" data-reply="${esc(r.id)}" maxlength="2000" placeholder="Write a reply to ${esc((r.name || '').split(' ')[0])}">${esc(rep.drafts[r.id] || '')}</textarea><button class="gold" data-do="reply">Send</button></div>
+      <div class="acts">${r.status === 'done' ? '<button class="btn" data-do="replied">Reopen</button>' : '<button class="btn" data-do="done">Mark as done</button>'}<button class="btn" data-do="delete">Delete</button></div></div>`; }).join('')
+    || `<div class="empty">${f === 'new' ? 'Nothing waiting for you. When someone writes from App Vault, it shows up here.' : 'Nothing here.'}</div>`;
   repCount();
-  for (const r of shown) if (r.photos && !rep.photos[r.id]) repLoadPhotos(r.id);
+  for (const r of shown) { if (r.photos && !rep.photos[r.id]) repLoadPhotos(r.id); if (!rep.msgOff[r.id]) repListenMsgs(r.id); }
+  if (keep) { const t = document.querySelector(`textarea[data-reply="${CSS.escape(keep)}"]`); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
+}
+function repListenMsgs(id) {
+  const { F, db } = ppl.fb;
+  rep.msgOff[id] = F.onSnapshot(F.collection(db, 'reports', id, 'msgs'), s => {
+    rep.msgs[id] = s.docs.map(d => d.data()).sort((a, b) => ((a.created && a.created.seconds) || 9e9) - ((b.created && b.created.seconds) || 9e9));
+    repRender();
+  }, x => console.warn('msgs', x));
 }
 async function repLoadPhotos(id) {
   rep.photos[id] = [];
@@ -1040,30 +1060,44 @@ async function repLoadPhotos(id) {
     rep.photos[id] = s.docs.sort((a, b) => +a.id - +b.id).map(d => d.data().data);
   } catch (x) { console.warn(x); }
   const box = document.querySelector(`.thumbs[data-photos="${CSS.escape(id)}"]`);
-  if (box) box.innerHTML = rep.photos[id].map((p, i) => `<img src="${p}" data-i="${i}" alt="">`).join('') || '<span class="meta2">The photos could not be loaded.</span>';
+  if (box) box.innerHTML = rep.photos[id].map(p => `<img src="${p}" alt="">`).join('') || '<span class="meta2">The photos could not be loaded.</span>';
 }
-$('t-reports').onclick = e => {
+$('t-reports').addEventListener('input', e => { const t = e.target.closest('textarea[data-reply]'); if (t) rep.drafts[t.dataset.reply] = t.value; });
+$('t-reports').onclick = async e => {
   const fb = e.target.closest('button[data-f]'); if (fb) { rep.filter = fb.dataset.f; repRender(); return; }
   const card = e.target.closest('.rep'); if (!card) return;
   const r = rep.list.find(x => x.id === card.dataset.id); if (!r) return;
   const img = e.target.closest('.thumbs img'); if (img) { modal(`<img class="bigphoto" src="${img.src}" alt=""><div class="acts"><button class="btn" id="m-no">Close</button></div>`); $('m-no').onclick = closeModal; return; }
   const b = e.target.closest('button[data-do]'); if (!b) return;
-  const { F, db } = ppl.fb, ref = F.doc(db, 'reports', r.id);
-  if (b.dataset.do === 'delete') return confirmBox('Delete this message?', `The message from ${r.name} and its photos are deleted for good.`, 'Delete', async () => {
+  const { F, db } = ppl.fb, ref = F.doc(db, 'reports', r.id), what = b.dataset.do;
+  if (what === 'delete') return confirmBox('Delete this conversation?', `The messages with ${r.name} and the photos are deleted for good.`, 'Delete', async () => {
     for (let i = 0; i < (r.photos || 0); i++) await F.deleteDoc(F.doc(db, 'reports', r.id, 'photos', String(i)));
-    await F.deleteDoc(ref); toast('Message deleted');
+    const ms = await F.getDocs(F.collection(db, 'reports', r.id, 'msgs')); for (const d of ms.docs) await F.deleteDoc(d.ref);
+    if (rep.msgOff[r.id]) { rep.msgOff[r.id](); delete rep.msgOff[r.id]; }
+    await F.deleteDoc(ref); toast('Conversation deleted');
   });
+  if (what === 'reply') {
+    const text = (rep.drafts[r.id] || '').trim(); if (!text) { toast('Write a reply first.'); return; }
+    b.disabled = true;
+    try {
+      await F.addDoc(F.collection(db, 'reports', r.id, 'msgs'), { from:'su', text, created:F.serverTimestamp() });
+      await F.updateDoc(ref, { status:'replied', lastAt:F.serverTimestamp(), userUnread:true });
+      rep.drafts[r.id] = ''; toast(`Reply sent to ${r.name}`);
+    } catch (x) { console.warn(x); b.disabled = false; toast('That did not work. Check the internet and try again.'); }
+    return;
+  }
   b.disabled = true;
-  F.updateDoc(ref, { status:b.dataset.do }).then(() => toast(b.dataset.do === 'done' ? 'Marked as done' : 'Marked as new')).catch(x => { b.disabled = false; console.warn(x); toast('That did not work. Check the internet and try again.'); });
+  F.updateDoc(ref, { status:what }).then(() => toast(what === 'done' ? 'Marked as done' : 'Reopened')).catch(x => { b.disabled = false; console.warn(x); toast('That did not work. Check the internet and try again.'); });
 };
 (async () => {
   try {
     const { A, F, auth, db } = await pplLoad();
     A.onAuthStateChanged(auth, u => {
       if (rep.off) { rep.off(); rep.off = null; }
+      for (const k in rep.msgOff) rep.msgOff[k](); rep.msgOff = {};
       if (!(u && u.email)) { rep.list = []; repCount(); $('rep-filter').innerHTML = ''; $('rep-list').innerHTML = '<div class="empty">Sign in on the People tab to see messages.</div>'; return; }
       rep.off = F.onSnapshot(F.collection(db, 'reports'), s => {
-        rep.list = s.docs.map(d => ({ id:d.id, ...d.data() })).sort((a, b) => ((b.created && b.created.seconds) || 9e9) - ((a.created && a.created.seconds) || 9e9));
+        rep.list = s.docs.map(d => ({ id:d.id, ...d.data() })).sort((a, b) => repWhen(b) - repWhen(a));
         repRender();
       }, x => { console.warn(x); $('rep-list').innerHTML = '<div class="empty">Could not load messages. If you just updated, paste the new database rules in Firebase.</div>'; });
     });
