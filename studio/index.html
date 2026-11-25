@@ -137,32 +137,45 @@
   .toast { color:var(--text); }
   [hidden] { display:none !important; }
   /* Reports (0.14.0): notes and bug reports sent from App Vault app pages */
-  .rep .h img.ai { width:44px; height:44px; border-radius:12px; background:var(--tile); padding:4px; flex:none; }
-  .rep.done { opacity:.7; } .rep .txt { margin:0; white-space:pre-wrap; line-height:1.5; }
-  .rep .meta2 { color:var(--muted); font-size:.82rem; }
-  .rep .thumbs { display:flex; gap:8px; flex-wrap:wrap; } .rep .thumbs img { width:110px; height:110px; object-fit:cover; border-radius:10px; border:1px solid var(--line); cursor:zoom-in; background:var(--surface2); }
-  .rep .h .v.hi { border-color:var(--gold); color:var(--strong); }
-  .rep .chat { display:flex; flex-direction:column; gap:8px; }
-  .rep .bub { max-width:80%; padding:10px 14px; border-radius:16px; background:var(--surface2); border:1px solid var(--line); }
-  .rep .bub.them { align-self:flex-start; border-bottom-left-radius:4px; } .rep .bub.mine { align-self:flex-end; border-color:var(--gold); border-bottom-right-radius:4px; }
-  .rep .bub p { margin:0; white-space:pre-wrap; line-height:1.45; } .rep .bub small { display:block; color:var(--muted); font-size:.75rem; margin-top:4px; }
-  .rep .bub .thumbs { margin-top:8px; }
-  .rep .replyrow { display:flex; gap:10px; align-items:flex-end; } .rep .replyrow textarea { min-height:52px; flex:1; } .rep .replyrow .gold { padding:12px 22px; }
-  .repfilter { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-  .repfilter button.on { border-color:var(--gold); color:var(--strong); }
   .bigphoto { max-width:100%; max-height:80vh; display:block; margin:0 auto; border-radius:12px; }
   /* People (0.11.0): who asked to join App Vault, with Approve / Decline / Remove access */
   .person .h .av { width:50px; height:50px; border-radius:50%; flex:none; display:grid; place-items:center; font:700 1.3rem Cinzel,Georgia,serif; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); }
   .person.old .h .av { background:var(--surface2); color:var(--muted); }
   .person .quote { margin:0; padding:10px 14px; border-left:3px solid var(--gold); background:var(--surface2); border-radius:0 12px 12px 0; font-style:italic; }
-  .pplhave { display:flex; flex-wrap:wrap; gap:8px; } .pplhave .v { display:inline-flex; align-items:center; gap:6px; color:var(--text); }
-  .pplhave .v img { width:18px; height:18px; border-radius:5px; } .pplhave .v strong { color:var(--strong); }
-  .pplhave .v.old { border-color:var(--dangerline); color:var(--dangertext); } .pplhave .v.old strong { color:var(--dangertext); }
-  .pplhave.none, .pplhave .none { color:var(--muted); font-size:.88rem; } .pplseen { color:var(--muted); font-size:.8rem; margin-top:-4px; }
-  .pplsum { padding:8px 20px; display:flex; flex-direction:column; }
-  .sumrow { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); } .sumrow:first-child { border-top:0; }
-  .sumrow img { width:30px; height:30px; border-radius:8px; } .sumrow b { flex:1; font:700 1rem Cinzel,Georgia,serif; } .sumrow span { color:var(--muted); } .sumrow em { color:var(--dangertext); font-style:normal; font-weight:700; }
   .pplhead { display:flex; align-items:center; gap:10px; margin:30px 0 14px; } .pplhead:first-child { margin-top:0; } .pplhead h3 { flex:1; margin:0; }
+  /* Studio 0.18.0: Apps header, People rows, Messages inbox (list left, chat right) */
+  .benchhead { display:flex; align-items:center; gap:16px; margin-bottom:16px; } .benchhead .hint { flex:1; margin:0; }
+  .prow .h { cursor:pointer; } .prow .icons { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:40%; }
+  .prow .icons img { width:24px; height:24px; border-radius:6px; background:var(--tile); }
+  .chatbtn { padding:8px 14px; font-size:1.1rem; } .chatbtn:disabled { opacity:.35; }
+  .pdetail { display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--line); padding-top:12px; } .pdetail small { color:var(--muted); }
+  .prow.open { border-color:var(--gold); } #ppl-no-wrap { margin-top:24px; } #ppl-no-box { margin-top:6px; }
+  .ib { display:grid; grid-template-columns:320px 1fr; gap:0; height:calc(100vh - 190px); min-height:420px; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--surface); }
+  .iblist { overflow-y:auto; border-right:1px solid var(--line); } .iblist .empty, .ibchat > .empty { padding:30px 20px; }
+  .ibrow { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .ibrow:hover { background:var(--surface2); } .ibrow.on { background:var(--surface2); box-shadow:inset 3px 0 0 var(--gold); }
+  .ibrow .av, .ibhead .av { width:42px; height:42px; border-radius:50%; flex:none; display:grid; place-items:center; font:700 1.1rem Cinzel,Georgia,serif; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); }
+  .ibrow .t, .ibhead .t { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .ibrow .t b, .ibhead .t b { font:700 1rem Cinzel,Georgia,serif; color:var(--text); }
+  .ibrow .t small { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .ibrow.new .t small { color:var(--text); font-weight:600; }
+  .ibrow .w { display:flex; flex-direction:column; align-items:flex-end; gap:6px; } .ibrow .w small { color:var(--muted); font-size:.75rem; }
+  .ibrow .dot { width:11px; height:11px; border-radius:50%; background:var(--gold); }
+  .ibchat { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  .ibhead { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); } .ibhead small { color:var(--muted); } .ibhead .back { display:none; }
+  .ibmsgs { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:10px; }
+  .m { max-width:75%; padding:10px 14px; border-radius:16px; background:var(--surface2); border:1px solid var(--line); }
+  .m.them { align-self:flex-start; border-bottom-left-radius:4px; } .m.me { align-self:flex-end; border-color:var(--gold); border-bottom-right-radius:4px; background:#232c3f; }
+  .m p { margin:0; white-space:pre-wrap; line-height:1.45; overflow-wrap:anywhere; } .m small { display:block; color:var(--muted); font-size:.75rem; margin-top:4px; }
+  .m .tick.read { color:var(--gold2); font-weight:700; }
+  .m .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; } .m .thumbs img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--line); cursor:zoom-in; background:var(--surface); }
+  .filechip { display:inline-block; margin-top:6px; padding:8px 12px; border-radius:10px; border:1px solid var(--line); color:var(--goldhi); text-decoration:none; overflow-wrap:anywhere; }
+  .ibcomp { position:relative; display:flex; gap:10px; align-items:flex-end; padding:12px 14px; border-top:1px solid var(--line); }
+  .ibcomp textarea { flex:1; min-height:48px; max-height:160px; } .ibcomp .gold { padding:12px 22px; } .ibcomp .plus { font-size:1.4rem; padding:8px 16px; }
+  .plusmenu { position:absolute; left:14px; bottom:70px; display:flex; flex-direction:column; background:var(--surface2); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow); z-index:5; }
+  .plusmenu button { all:unset; padding:12px 18px; cursor:pointer; color:var(--text); } .plusmenu button:hover { background:var(--surface); color:var(--goldhi); }
+  @media (max-width:800px) { .ib { grid-template-columns:1fr; height:calc(100vh - 170px); } .iblist { border-right:0; }
+    .ib.chatting .iblist { display:none; } .ib:not(.chatting) .ibchat { display:none; } .ibhead .back { display:inline-block; } .ibhead .t small { display:none; } .ibhead { gap:8px; padding:10px; } .ibhead .btn { padding:8px 12px; }
+    .prow .icons { display:none; } .benchhead { flex-direction:column; align-items:stretch; } }
 </style>
 </head>
 <body>
@@ -170,15 +183,14 @@
   <img src="icon.svg" alt="">
   <h1>App Vault Studio</h1>
   <div class="sp"></div>
+  <button class="ghost" id="share3" hidden title="Send App Vault to someone">↗ Share App Vault</button>
   <span class="sync" id="sync" hidden><span id="checked"></span><button class="ghost" id="reload" title="Check GitHub again">↻ Check again</button></span>
 </div>
 <nav class="tabs" id="tabs" hidden>
   <button class="tab" data-tab="bench">Apps <i id="bench-count" hidden></i></button>
   <button class="tab" data-tab="vault">App Vault <i id="vault-count" hidden></i></button>
-  <button class="tab" data-tab="public">Public</button>
   <button class="tab" data-tab="people">People <i hidden></i></button>
   <button class="tab" data-tab="reports">Messages <i hidden></i></button>
-  <button class="tab" data-tab="add">+ Add app</button>
   <button class="tab set" data-tab="settings">⚙ Settings</button>
 </nav>
 
@@ -203,23 +215,19 @@
 
 <main id="home" hidden>
   <section id="t-bench" class="tabpage">
-    <p class="hint">Your apps. A gold card has a version your friends don't have yet: install it to try, then press Publish.</p>
+    <div class="benchhead"><p class="hint" style="margin:0">Your apps. A gold card has a version your friends don't have yet: install it to try, then press Publish.</p><button class="btn" id="addbtn">+ Add app</button></div>
     <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
   </section>
   <section id="t-vault" class="tabpage" hidden>
     <p class="hint">Everything about App Vault itself: the app, its page, and sharing it. Try first, then press Publish.</p>
     <div class="apps" id="vault"><div class="empty">Loading…</div></div>
-    <div class="app" style="margin-top:14px"><div class="row2"><img src="${'{'}x{'}'}" alt="" id="share-ic"><div><b class="n">Share App Vault</b><small style="color:var(--muted);display:block">Send App Vault to friends: the real Android share menu on the tablet, a link on the desktop.</small></div>
-      <div class="acts"><button class="gold" id="share4">Share App Vault</button></div></div></div>
-  </section>
-  <section id="t-public" class="tabpage" hidden>
-    <div style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px"><p class="hint" style="margin:0">What your friends see in App Vault right now.</p><button class="gold" id="share">Share App Vault</button></div>
-    <div class="apps" id="pubapps"></div>
   </section>
   <section id="t-reports" class="tabpage" hidden>
-    <p class="hint">Messages people send from App Vault › Settings › Contact the developer. Reply right here; they see your answer in App Vault and can write back. Sign in on the People tab first.</p>
-    <div class="repfilter" id="rep-filter"></div>
-    <div class="apps" id="rep-list"><div class="empty">Loading notes…</div></div>
+    <div class="ib" id="ib">
+      <div class="iblist" id="ib-list"><div class="empty">Loading messages…</div></div>
+      <div class="ibchat" id="ib-chat"><div class="empty">Pick a person on the left to see your chat.</div></div>
+    </div>
+    <input type="file" id="pick-photo" accept="image/*" hidden><input type="file" id="take-photo" accept="image/*" capture="environment" hidden><input type="file" id="pick-file" hidden>
   </section>
   <section id="t-people" class="tabpage" hidden>
     <div id="ppl-signin" class="card signin" style="margin-top:0" hidden>
@@ -235,11 +243,12 @@
       <div class="apps" id="ppl-req"></div>
       <div class="pplhead"><h3>Approved</h3></div>
       <div class="apps" id="ppl-ok"></div>
-      <div id="ppl-no-wrap" hidden><div class="pplhead"><h3>Declined or removed</h3></div><div class="apps" id="ppl-no"></div></div>
+      <div id="ppl-no-wrap" hidden><button class="btn" id="ppl-showno" style="margin-top:22px">Show removed</button><div id="ppl-no-box" hidden><div class="pplhead"><h3>Declined or removed</h3></div><div class="apps" id="ppl-no"></div></div></div>
     </div>
     <div id="ppl-load" class="empty">Loading people…</div>
   </section>
   <section id="t-add" class="tabpage card" hidden>
+  <button class="btn" id="addback" style="margin-bottom:14px">‹ Back to Apps</button>
   <div class="top">
     <section>
       <h3>Add an app file</h3>
@@ -279,7 +288,6 @@
     <div class="line"><span>Studio app</span><span id="set-app" style="display:flex;gap:10px;align-items:center"></span></div>
     <div class="line"><span>People sign-in</span><span style="display:flex;gap:10px;align-items:center"><b id="set-ppl">…</b><button class="btn" id="ppl-out" hidden>Sign out</button></span></div>
     <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
-    <div class="line"><span>Give App Vault to someone</span><button class="btn" id="share2">Share App Vault</button></div>
     <button class="danger" id="signout">Sign out of Studio</button>
     <p class="hint" style="margin-top:10px">Only needed if you want to stop using Studio on this device. You will have to paste your GitHub key again.</p>
   </section>
@@ -291,7 +299,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.17.0';
+const VERSION = '0.18.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -358,9 +366,9 @@ $('signin-btn').onclick = async () => {
 };
 $('signout').onclick = () => confirmBox('Sign out of Studio?', 'You will need to paste your GitHub key again to use Studio on this device.', 'Sign out', () => { store.set('studioKey', null); token = null; showSignin(); });
 
-function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; }
+function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; $('share3').hidden = true; }
 async function showHome() {
-  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false;
+  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false; $('share3').hidden = false;
   showTab(store.get('studioTab') || 'bench');
   await load();
   resumeUpload();
@@ -445,14 +453,14 @@ function shareAppVault() {
   shareBox();
 }
 window.shareReady = ok => { if (!ok) { toast('Could not get App Vault ready. Sending the link instead.'); bridge.share ? bridge.share('App Vault', SHARE_TEXT + SHARE_URL) : shareBox(); } };
-$('share').onclick = shareAppVault; $('share4').onclick = shareAppVault; $('share2').onclick = shareAppVault;
+$('share3').onclick = shareAppVault;
 
 
 // Tabs
 function showTab(t) {
   if (!$('t-' + t)) t = 'bench';
   document.querySelectorAll('.tabpage').forEach(p => p.hidden = p.id !== 't-' + t);
-  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === (t === 'add' ? 'bench' : t)));
   store.set('studioTab', t);
 }
 $('tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) showTab(b.dataset.tab); };
@@ -492,7 +500,6 @@ function render() {
   $('bench-count').hidden = !waiting; $('bench-count').textContent = `${waiting} to publish`;
   waiting = 0;
   $('vault').innerHTML = list.filter(a => a.id === 'hub').map(card).join('');
-  $('share-ic').src = iconSrc(studio.apps.find(x => x.id === 'hub') || {});
   if (page) {
     const need = page.next !== page.live || page.getNew; if (need) waiting++;
     const card = `<div class="app${need ? ' ready' : ''}" data-id="hubpage"><div class="row2"><img src="${esc(iconSrc(studio.apps.find(x => x.id === 'hub') || {}))}" alt=""><div><b class="n">App Vault page</b>
@@ -503,12 +510,6 @@ function render() {
   }
   renderSelf();
   $('vault-count').hidden = !waiting; $('vault-count').textContent = `${waiting} to publish`;
-  $('pubapps').innerHTML = catalog.apps.map(p => {
-    const a = studio.apps.find(x => x.id === p.id), st = a ? stateOf(a, p) : 'live';
-    const line = st === 'newer' ? `<div class="st">Studio has ${esc(a.version)} · not published yet</div>` : st === 'details' ? `<div class="st">New details in Studio · not published yet</div>` : `<div class="st ok">✓ Up to date</div>`;
-    return `<div class="app${needsPublish(st) ? ' ready' : ''}" data-id="${esc(p.id)}"><div class="row2"><img src="${esc(iconSrc(p))}" alt=""><div><b class="n">${esc(p.name)}</b>${pills(a, p)}${line}</div>
-      <div class="acts">${needsPublish(st) ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${p.id !== 'hub' ? `<button class="btn" data-act="hide">Take off</button>` : ''}</div></div></div>`;
-  }).join('') || '<div class="empty">Nothing published yet. Press Publish on an app in the Apps tab.</div>';
 }
 
 // Studio's own app: version and update, shown only in Settings.
@@ -550,12 +551,6 @@ $('apps').onclick = $('vault').onclick = e => {
   else if (act === 'cancel') { bridge.cancel(a.id); setTimeout(render, 500); }
   else if (act === 'publish') publish(a);
   else if (act === 'menu') menu(a);
-};
-$('pubapps').onclick = e => {
-  const b = e.target.closest('button[data-act]'); if (!b) return;
-  const id = b.closest('.app').dataset.id;
-  if (b.dataset.act === 'publish') publish(studio.apps.find(x => x.id === id));
-  else hide(catalog.apps.find(x => x.id === id));
 };
 function menu(a) {
   const st = stateOf(a, catalog.apps.find(x => x.id === a.id));
@@ -787,6 +782,7 @@ $('pick').onchange = () => $('pick').files[0] && takeFile($('pick').files[0]);
 ['dragleave','drop'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
 addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && !$('home').hidden && $('upload').hidden) { openAdd(); takeFile(f); } });
 function openAdd() { showTab('add'); }
+$('addbtn').onclick = openAdd; $('addback').onclick = () => showTab('bench');
 
 // Tablet: an APK opened with Studio from Files / Downloads, or shared to it. The Studio app hands it over here.
 window.onIncoming = async () => {
@@ -910,7 +906,7 @@ addEventListener('visibilitychange', () => { if (!document.hidden && studio && b
 const FB_CONFIG = { apiKey:'AIzaSyC9HRHjPw7WebTY-6OaRipAcC5rtNMH8dA', authDomain:'app-vault-962b9.firebaseapp.com', projectId:'app-vault-962b9',
   storageBucket:'app-vault-962b9.firebasestorage.app', messagingSenderId:'1065278960988', appId:'1:1065278960988:web:33674911afac30fec23d99' };
 const FB_SDK = 'https://www.gstatic.com/firebasejs/10.14.1/';
-const ppl = { fb:null, list:[], off:null };
+const ppl = { fb:null, list:[], off:null, open:null };
 async function pplLoad() {
   if (ppl.fb) return ppl.fb;
   const [app, auth, fs] = await Promise.all(['app', 'auth', 'firestore'].map(n => import(FB_SDK + `firebase-${n}.js`)));
@@ -921,46 +917,38 @@ function pplView(v) { $('ppl-signin').hidden = v !== 'signin'; $('ppl').hidden =
 function pplCount(n) { const t = document.querySelector('.tab[data-tab="people"] i'); t.hidden = !n; t.textContent = n; }
 const pplDay = ts => { const d = ts && ts.toDate ? ts.toDate() : null; return d ? d.toLocaleDateString([], { day:'numeric', month:'short', year:'numeric' }) + ', ' + d.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'just now'; };
 function pplCard(p) {
+  if (p.status === 'approved') {   // Short row: name, small app icons, chat button; tap the row for details (Studio 0.18.0)
+    const icons = pplAppList().filter(a => p.apps && p.apps[a.id]).map(a => `<img src="${esc(iconSrc(a))}" alt="" title="${esc(a.name)}">`).join('');
+    const has = typeof rep !== 'undefined' && rep.list.some(r => r.uid === p.uid), open = ppl.open === p.uid;
+    return `<div class="app person prow${open ? ' open' : ''}" data-uid="${esc(p.uid)}"><div class="h" data-do="toggle">
+      <div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(p.name)}</b><small>Opened App Vault ${p.seen ? pplDay(p.seen) : 'not yet'}</small></div>
+      <div class="icons">${icons}</div><button class="btn chatbtn" data-do="chat" ${has ? '' : 'disabled title="No messages yet"'}>💬</button></div>
+      ${open ? `<div class="pdetail"><small>📱 ${esc(p.device || 'Unknown device')} · Approved ${pplDay(p.decided)}</small>${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}
+        <div class="acts"><button class="btn" data-do="removed">Remove access</button></div></div>` : ''}</div>`;
+  }
   const acts = p.status === 'pending' ? `<button class="gold" data-do="approved">Approve</button><button class="btn" data-do="declined">Decline</button>`
-    : p.status === 'approved' ? `<button class="btn" data-do="removed">Remove access</button>`
     : `<button class="btn" data-do="approved">Approve</button><button class="btn" data-do="delete" title="They can ask again">Delete</button>`;
-  const when = p.status === 'pending' ? 'Asked ' + pplDay(p.created) : p.status === 'approved' ? 'Approved ' + pplDay(p.decided) : (p.status === 'removed' ? 'Removed ' : 'Declined ') + pplDay(p.decided);
-  return `<div class="app person${p.status === 'pending' ? ' ready' : ''}${p.status === 'declined' || p.status === 'removed' ? ' old' : ''}" data-uid="${esc(p.uid)}">
+  const when = p.status === 'pending' ? 'Asked ' + pplDay(p.created) : (p.status === 'removed' ? 'Removed ' : 'Declined ') + pplDay(p.decided);
+  return `<div class="app person${p.status === 'pending' ? ' ready' : ' old'}" data-uid="${esc(p.uid)}">
     <div class="h"><div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(p.name)}</b><small>📱 ${esc(p.device || 'Unknown device')} · ${when}</small></div></div>
-    ${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}${p.status === 'approved' ? pplApps(p) : ''}<div class="acts">${acts}</div></div>`;
+    ${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}<div class="acts">${acts}</div></div>`;
 }
 // Who has what (0.13.0): App Vault 0.25.0+ reports each approved person's apps and versions (members/{uid}.apps, seen).
-// A version matching the public App Vault is plain; an older one is marked "behind".
 function pplAppList() { return ((studio && studio.apps) || []).filter(a => !a.private); }
-const pubVer = id => { const c = catalog && catalog.apps.find(x => x.id === id); return c ? c.version : null; };
-const verOlder = (x, y) => { const p = v => String(v || 0).split('.').map(Number), a = p(x), b = p(y); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
-function pplApps(p) {
-  if (!p.apps) return `<div class="pplhave none">No app info yet. It shows up the next time ${esc((p.name || '').split(' ')[0])} opens the new App Vault.</div>`;
-  const chips = pplAppList().filter(a => p.apps[a.id]).map(a => {
-    const v = p.apps[a.id], pv = pubVer(a.id), old = pv && verOlder(v, pv);
-    return `<span class="v${old ? ' old' : ''}" title="${old ? 'Public is ' + esc(pv) : 'Up to date'}"><img src="${esc(iconSrc(a))}" alt="">${esc(a.name)} <strong>${esc(v)}</strong>${old ? ' · behind' : ''}</span>`;
-  }).join('');
-  return `<div class="pplhave">${chips || '<span class="none">No apps installed yet' + (/Windows|Mac|Linux|iPhone|iPad|Chromebook/.test(p.device || '') ? ' (uses App Vault in a browser)' : '') + '</span>'}</div>
-    <small class="pplseen">Last opened App Vault ${pplDay(p.seen)}${p.page ? ' · page ' + esc(p.page) : ''}</small>`;
-}
-// Summary above the approved list: how many people have each app, and how many are behind.
-function pplSummary(ok) {
-  const rows = pplAppList().map(a => {
-    const have = ok.filter(p => p.apps && p.apps[a.id]), pv = pubVer(a.id), behind = have.filter(p => pv && verOlder(p.apps[a.id], pv)).length;
-    return `<div class="sumrow"><img src="${esc(iconSrc(a))}" alt=""><b>${esc(a.name)}</b><span>${have.length} ${have.length === 1 ? 'person' : 'people'}${behind ? ` · <em>${behind} behind</em>` : ''}</span></div>`;
-  }).join('');
-  return ok.length ? `<div class="card pplsum">${rows}</div>` : '';
-}
+function showPerson(uid) { ppl.open = uid; showTab('people'); pplRender(); const el = document.querySelector(`.person[data-uid="${CSS.escape(uid)}"]`); if (el) el.scrollIntoView({ block:'center' }); }
 function pplRender() {
   const L = ppl.list, req = L.filter(p => p.status === 'pending'), ok = L.filter(p => p.status === 'approved'), no = L.filter(p => p.status === 'declined' || p.status === 'removed');
   $('ppl-req').innerHTML = req.map(pplCard).join('') || '<div class="empty" style="padding:24px">No new requests. When someone asks to join App Vault, they show up here.</div>';
-  $('ppl-ok').innerHTML = pplSummary(ok) + ok.map(pplCard).join('') || '<div class="empty" style="padding:24px">Nobody approved yet.</div>';
+  $('ppl-ok').innerHTML = ok.map(pplCard).join('') || '<div class="empty" style="padding:24px">Nobody approved yet.</div>';
   $('ppl-no').innerHTML = no.map(pplCard).join(''); $('ppl-no-wrap').hidden = !no.length;
   pplCount(req.length);
 }
 $('t-people').onclick = e => {
-  const b = e.target.closest('button[data-do]'); if (!b) return;
+  if (e.target.closest('#ppl-showno')) { const box = $('ppl-no-box'); box.hidden = !box.hidden; $('ppl-showno').textContent = box.hidden ? 'Show removed' : 'Hide removed'; return; }
+  const b = e.target.closest('[data-do]'); if (!b) return;
   const p = ppl.list.find(x => x.uid === b.closest('.person').dataset.uid); if (!p) return;
+  if (b.dataset.do === 'chat') { e.stopPropagation(); return openChat(p.uid); }
+  if (b.dataset.do === 'toggle') { ppl.open = ppl.open === p.uid ? null : p.uid; return pplRender(); }
   const { F, db } = ppl.fb, ref = F.doc(db, 'members', p.uid), to = b.dataset.do;
   const set = () => to === 'delete' ? F.deleteDoc(ref) : F.updateDoc(ref, { status:to, decided:F.serverTimestamp() });
   const msg = { approved:`${p.name} is approved`, declined:`${p.name} was declined`, removed:`${p.name} can no longer use App Vault`, delete:`${p.name} was deleted` }[to];
@@ -974,7 +962,7 @@ function pplListen() {
   if (ppl.off) ppl.off();
   ppl.off = F.onSnapshot(F.collection(db, 'members'), s => {
     ppl.list = s.docs.map(d => ({ uid:d.id, ...d.data() })).sort((a, b) => ((b.created && b.created.seconds) || 9e9) - ((a.created && a.created.seconds) || 9e9));
-    pplRender(); pplView('list');
+    pplRender(); pplView('list'); if (typeof repRender === 'function') repRender();
   }, x => {
     console.warn(x); pplView('error');
     $('ppl-load').textContent = x.code === 'permission-denied' ? 'This account is not allowed to see people. Sign out in Settings and sign in with the right email.' : 'Could not reach the people list. Check the internet.';
@@ -1002,74 +990,159 @@ $('ppl-out').onclick = () => confirmBox('Sign out of People?', 'You will need yo
 })();
 </script>
 <script>
-// ---------- Messages (Studio 0.16.0: a chat per message) ----------
+// ---------- Messages (Studio 0.18.0: one chat per person, like texting) ----------
 // reports/{id} = { uid, name, device, text, photos, status 'new'|'replied'|'done', created, lastAt, userUnread } + photos/{n} = { data } + msgs/{m} = { from:'su'|'user', text, created }.
-// 'new' = the person wrote last and waits for you. Your reply sets 'replied' and userUnread (App Vault shows "New reply").
-const rep = { list:[], off:null, filter:'new', photos:{}, msgs:{}, msgOff:{}, drafts:{} };
-const repWhen = r => (r.lastAt && r.lastAt.seconds) || (r.created && r.created.seconds) || 9e9;
-function repCount() { const t = document.querySelector('.tab[data-tab="reports"] i'), n = rep.list.filter(r => r.status === 'new').length; t.hidden = !n; t.textContent = n; }
-const repLabel = r => r.status === 'new' ? ['hi', 'Waiting for you'] : r.status === 'done' ? ['', '✓ Done'] : ['', r.userUnread ? 'Replied · not read yet' : 'Replied · read'];
+// All of a person's reports are shown as ONE chat. 'new' = they wrote last and wait for you (gold dot).
+// Your messages go into their latest report: { from:'su', text, created } plus photo (data URL) or file {name,type,data}. Ticks: ✓ sent, ✓✓ read (userUnread false).
+const rep = { list:[], off:null, sel:null, photos:{}, msgs:{}, msgOff:{}, draft:{} };
+const tsec = t => (t && t.seconds) || 9e9;   // a time still on its way to the server counts as "now"
+const repWhen = r => Math.max(r.lastAt ? tsec(r.lastAt) : 0, tsec(r.created));
+const first = n => esc((n || '').trim().split(' ')[0]);
+function repConvs() {
+  const by = {};
+  for (const r of rep.list) { const k = r.uid || r.id; (by[k] = by[k] || { uid:k, name:r.name, device:r.device, reps:[] }).reps.push(r); }
+  return Object.values(by).map(c => {
+    c.reps.sort((a, b) => tsec(a.created) - tsec(b.created)); c.last = c.reps[c.reps.length - 1];
+    c.when = Math.max(...c.reps.map(repWhen)); c.waiting = c.reps.some(r => r.status === 'new');
+    const m = ppl.list.find(p => p.uid === c.uid); if (m) { c.name = m.name || c.name; c.device = m.device || c.device; }
+    const items = repItems(c), l = items[items.length - 1]; c.preview = l ? (l.me ? 'You: ' : '') + (l.text || '') : '';
+    return c;
+  }).sort((a, b) => b.when - a.when);
+}
+function repItems(c) {   // every message of every report, oldest first
+  const out = [];
+  for (const r of c.reps) {
+    out.push({ me:false, text:r.text, t:r.created, pics:r.photos ? (rep.photos[r.id] || null) : undefined, rid:r.id });
+    for (const m of rep.msgs[r.id] || []) out.push({ me:m.from === 'su', text:m.text, t:m.created, photo:m.photo, file:m.file, read:!r.userUnread, rid:r.id });
+  }
+  return out.sort((a, b) => tsec(a.t) - tsec(b.t));
+}
+const shortDay = ts => { const d = ts && ts.toDate ? ts.toDate() : null; if (!d) return 'now'; const now = new Date();
+  return d.toDateString() === now.toDateString() ? d.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : d.toLocaleDateString([], { day:'numeric', month:'short' }); };
+function repCount(cs) { const t = document.querySelector('.tab[data-tab="reports"] i'), n = cs.filter(c => c.waiting).length; t.hidden = !n; t.textContent = n; }
 function repRender() {
-  const act = document.activeElement, keep = act && act.dataset && act.dataset.reply;
-  const L = rep.list, f = rep.filter, shown = L.filter(r => f === 'all' || r.status === f || (f === 'replied' && !r.status));
-  const chip = (k, label) => `<button class="btn${f === k ? ' on' : ''}" data-f="${k}">${label} (${k === 'all' ? L.length : L.filter(r => r.status === k).length})</button>`;
-  $('rep-filter').innerHTML = chip('new', 'Waiting for you') + chip('replied', 'Replied') + chip('done', 'Done') + chip('all', 'All');
-  $('rep-list').innerHTML = shown.map(r => { const [c, t] = repLabel(r), pics = rep.photos[r.id] || [];
-    return `<div class="app rep person${r.status === 'done' ? ' done' : r.status === 'new' ? ' ready' : ''}" data-id="${esc(r.id)}">
-      <div class="h"><div class="av">${esc((r.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(r.name)}</b><small>📱 ${esc(r.device || '')} · ${pplDay(r.created)}</small></div><span class="v ${c}">${t}</span></div>
-      <div class="chat">
-        <div class="bub them"><p>${esc(r.text)}</p>${r.photos ? `<div class="thumbs" data-photos="${esc(r.id)}">${pics.map(p => `<img src="${p}" alt="">`).join('') || '<span class="meta2">Loading photos…</span>'}</div>` : ''}</div>
-        ${(rep.msgs[r.id] || []).map(m => `<div class="bub ${m.from === 'su' ? 'mine' : 'them'}"><p>${esc(m.text)}</p><small>${m.from === 'su' ? 'You · ' : ''}${pplDay(m.created)}</small></div>`).join('')}
-      </div>
-      <div class="replyrow"><textarea class="in" data-reply="${esc(r.id)}" maxlength="2000" placeholder="Write a reply to ${esc((r.name || '').split(' ')[0])}">${esc(rep.drafts[r.id] || '')}</textarea><button class="gold" data-do="reply">Send</button></div>
-      <div class="acts">${r.status === 'done' ? '<button class="btn" data-do="replied">Reopen</button>' : '<button class="btn" data-do="done">Mark as done</button>'}<button class="btn" data-do="delete">Delete</button></div></div>`; }).join('')
-    || `<div class="empty">${f === 'new' ? 'Nothing waiting for you. When someone writes from App Vault, it shows up here.' : 'Nothing here.'}</div>`;
-  repCount();
-  for (const r of shown) { if (r.photos && !rep.photos[r.id]) repLoadPhotos(r.id); if (!rep.msgOff[r.id]) repListenMsgs(r.id); }
-  if (keep) { const t = document.querySelector(`textarea[data-reply="${CSS.escape(keep)}"]`); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
+  const cs = repConvs(); repCount(cs);
+  $('ib-list').innerHTML = cs.map(c => `<button class="ibrow${c.uid === rep.sel ? ' on' : ''}${c.waiting ? ' new' : ''}" data-uid="${esc(c.uid)}">
+      <div class="av">${esc((c.name || '?').trim().charAt(0).toUpperCase())}</div>
+      <div class="t"><b>${esc(c.name)}</b><small>${esc(c.preview)}</small></div>
+      <div class="w"><small>${shortDay(c.last.lastAt || c.last.created)}</small>${c.waiting ? '<i class="dot" title="Waiting for your reply"></i>' : ''}</div></button>`).join('')
+    || '<div class="empty">No messages yet. When someone writes from App Vault, they show up here.</div>';
+  if (typeof pplRender === 'function' && ppl.list.length) pplRender();
+  for (const r of rep.list) if (!rep.msgOff[r.id]) repListenMsgs(r.id);
+  const c = cs.find(x => x.uid === rep.sel);
+  if (rep.sel && !c) { rep.sel = null; chatEmpty(); } else if (c) chatMsgs(c);
+}
+function chatEmpty() { $('ib').classList.remove('chatting'); $('ib-chat').innerHTML = '<div class="empty">Pick a person on the left to see your chat.</div>'; }
+function openChat(uid) {
+  showTab('reports'); rep.sel = uid; $('ib').classList.add('chatting');
+  const c = repConvs().find(x => x.uid === uid); if (!c) return chatEmpty();
+  $('ib-chat').innerHTML = `<div class="ibhead"><button class="btn back" data-do="back" title="Back to the list">‹</button>
+      <div class="av">${esc((c.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(c.name)}</b><small>📱 ${esc(c.device || 'Unknown device')}</small></div>
+      <button class="btn" data-do="info">Person info</button><button class="btn" data-do="more" title="More">⋯</button></div>
+    <div class="ibmsgs" id="ib-msgs"></div>
+    <div class="ibcomp"><div class="plusmenu" id="plusmenu" hidden><button data-do="photo">🖼️ Add photo</button><button data-do="camera">📷 Take photo</button><button data-do="file">📎 Add file</button></div>
+      <button class="btn plus" data-do="plus" title="Add a photo or file">+</button>
+      <textarea class="in" id="ib-text" maxlength="2000" placeholder="Write to ${first(c.name)}"></textarea><button class="gold" data-do="send">Send</button></div>`;
+  $('ib-text').value = rep.draft[uid] || '';
+  $('ib-text').oninput = e => { rep.draft[uid] = e.target.value; };
+  $('ib-text').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && matchMedia('(pointer:fine)').matches) { e.preventDefault(); repSend(); } };
+  for (const r of c.reps) if (r.photos && !rep.photos[r.id]) repLoadPhotos(r.id);
+  repRender(); chatMsgs(c, true);
+}
+function chatMsgs(c, toEnd) {
+  const box = $('ib-msgs'); if (!box) return;
+  const end = toEnd || box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  const thumbs = list => `<div class="thumbs">${list.map(p => `<img src="${p}" alt="">`).join('')}</div>`;
+  box.innerHTML = repItems(c).map(m => `<div class="m ${m.me ? 'me' : 'them'}">
+      ${m.text && !(m.photo && /^📷/.test(m.text)) && !(m.file && /^📎/.test(m.text)) ? `<p>${esc(m.text)}</p>` : ''}
+      ${m.pics === null ? '<small>Loading photos…</small>' : m.pics ? thumbs(m.pics) : ''}${m.photo ? thumbs([m.photo]) : ''}
+      ${m.file ? `<a class="filechip" download="${esc(m.file.name)}" href="${esc(m.file.data)}">📎 ${esc(m.file.name)}</a>` : ''}
+      <small>${pplDay(m.t)}${m.me ? (m.read ? ' · <span class="tick read">✓✓ Read</span>' : ' · <span class="tick">✓ Sent</span>') : ''}</small></div>`).join('');
+  if (end) box.scrollTop = box.scrollHeight;
 }
 function repListenMsgs(id) {
   const { F, db } = ppl.fb;
   rep.msgOff[id] = F.onSnapshot(F.collection(db, 'reports', id, 'msgs'), s => {
-    rep.msgs[id] = s.docs.map(d => d.data()).sort((a, b) => ((a.created && a.created.seconds) || 9e9) - ((b.created && b.created.seconds) || 9e9));
+    rep.msgs[id] = s.docs.map(d => d.data()).sort((a, b) => tsec(a.created) - tsec(b.created));
     repRender();
   }, x => console.warn('msgs', x));
 }
 async function repLoadPhotos(id) {
   rep.photos[id] = [];
-  try {
-    const { F, db } = ppl.fb, s = await F.getDocs(F.collection(db, 'reports', id, 'photos'));
-    rep.photos[id] = s.docs.sort((a, b) => +a.id - +b.id).map(d => d.data().data);
-  } catch (x) { console.warn(x); }
-  const box = document.querySelector(`.thumbs[data-photos="${CSS.escape(id)}"]`);
-  if (box) box.innerHTML = rep.photos[id].map(p => `<img src="${p}" alt="">`).join('') || '<span class="meta2">The photos could not be loaded.</span>';
+  try { const { F, db } = ppl.fb, s = await F.getDocs(F.collection(db, 'reports', id, 'photos')); rep.photos[id] = s.docs.sort((a, b) => +a.id - +b.id).map(d => d.data().data); }
+  catch (x) { console.warn(x); }
+  repRender();
 }
-$('t-reports').addEventListener('input', e => { const t = e.target.closest('textarea[data-reply]'); if (t) rep.drafts[t.dataset.reply] = t.value; });
-$('t-reports').onclick = async e => {
-  const fb = e.target.closest('button[data-f]'); if (fb) { rep.filter = fb.dataset.f; repRender(); return; }
-  const card = e.target.closest('.rep'); if (!card) return;
-  const r = rep.list.find(x => x.id === card.dataset.id); if (!r) return;
+async function repPost(extra) {   // add one message from you to the person's latest report
+  const c = repConvs().find(x => x.uid === rep.sel); if (!c) return false;
+  const { F, db } = ppl.fb, r = c.last;
+  try {
+    await F.addDoc(F.collection(db, 'reports', r.id, 'msgs'), { from:'su', created:F.serverTimestamp(), ...extra });
+    for (const x of c.reps) if (x.status === 'new' && x.id !== r.id) F.updateDoc(F.doc(db, 'reports', x.id), { status:'replied' }).catch(console.warn);
+    await F.updateDoc(F.doc(db, 'reports', r.id), { status:'replied', lastAt:F.serverTimestamp(), userUnread:true });
+    return true;
+  } catch (x) { console.warn(x); toast('That did not work. Check the internet and try again.'); return false; }
+}
+async function repSend() {
+  const t = $('ib-text'), text = t.value.trim(); if (!text) { toast('Write a message first.'); return; }
+  const uid = rep.sel; t.disabled = true;
+  if (await repPost({ text })) { rep.draft[uid] = ''; if (rep.sel === uid) t.value = ''; }
+  t.disabled = false; t.focus();
+}
+// Photos are made smaller (about 1280 px, JPEG) so each message stays well under the 1 MB database limit.
+function shrinkPhoto(file) {
+  return new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => { URL.revokeObjectURL(u); let side = 1280, q = .82, out;
+      do { const k = Math.min(1, side / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        out = cv.toDataURL('image/jpeg', q); side *= .8; q = Math.max(.6, q - .07); } while (out.length > 850000 && side > 300);
+      ok(out); };
+    img.onerror = () => { URL.revokeObjectURL(u); no(new Error('not an image')); }; img.src = u; });
+}
+async function repAttach(file, kind) {
+  if (!file) return;
+  try {
+    if (kind === 'photo') { toast('Sending photo…'); if (await repPost({ text:'📷 Photo', photo:await shrinkPhoto(file) })) toast('Photo sent'); return; }
+    if (file.size > 700000) { toast('That file is too big. Files up to 700 KB can be sent.'); return; }
+    const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(file); });
+    toast('Sending file…'); if (await repPost({ text:'📎 ' + file.name, file:{ name:file.name, type:file.type || '', data } })) toast('File sent');
+  } catch (x) { console.warn(x); toast('That could not be sent. Try another photo or file.'); }
+}
+$('pick-photo').onchange = e => { repAttach(e.target.files[0], 'photo'); e.target.value = ''; };
+$('take-photo').onchange = e => { repAttach(e.target.files[0], 'photo'); e.target.value = ''; };
+$('pick-file').onchange = e => { const f = e.target.files[0]; repAttach(f, f && /^image\//.test(f.type) ? 'photo' : 'file'); e.target.value = ''; };
+$('t-reports').onclick = e => {
+  const row = e.target.closest('.ibrow'); if (row) return openChat(row.dataset.uid);
   const img = e.target.closest('.thumbs img'); if (img) { modal(`<img class="bigphoto" src="${img.src}" alt=""><div class="acts"><button class="btn" id="m-no">Close</button></div>`); $('m-no').onclick = closeModal; return; }
-  const b = e.target.closest('button[data-do]'); if (!b) return;
-  const { F, db } = ppl.fb, ref = F.doc(db, 'reports', r.id), what = b.dataset.do;
-  if (what === 'delete') return confirmBox('Delete this conversation?', `The messages with ${r.name} and the photos are deleted for good.`, 'Delete', async () => {
-    for (let i = 0; i < (r.photos || 0); i++) await F.deleteDoc(F.doc(db, 'reports', r.id, 'photos', String(i)));
-    const ms = await F.getDocs(F.collection(db, 'reports', r.id, 'msgs')); for (const d of ms.docs) await F.deleteDoc(d.ref);
-    if (rep.msgOff[r.id]) { rep.msgOff[r.id](); delete rep.msgOff[r.id]; }
-    await F.deleteDoc(ref); toast('Conversation deleted');
-  });
-  if (what === 'reply') {
-    const text = (rep.drafts[r.id] || '').trim(); if (!text) { toast('Write a reply first.'); return; }
-    b.disabled = true;
-    try {
-      await F.addDoc(F.collection(db, 'reports', r.id, 'msgs'), { from:'su', text, created:F.serverTimestamp() });
-      await F.updateDoc(ref, { status:'replied', lastAt:F.serverTimestamp(), userUnread:true });
-      rep.drafts[r.id] = ''; toast(`Reply sent to ${r.name}`);
-    } catch (x) { console.warn(x); b.disabled = false; toast('That did not work. Check the internet and try again.'); }
-    return;
+  const b = e.target.closest('button[data-do]'), menu = $('plusmenu');
+  if (menu && !(b && b.dataset.do === 'plus')) menu.hidden = true;
+  if (!b) return;
+  const c = repConvs().find(x => x.uid === rep.sel), what = b.dataset.do;
+  if (what === 'back') { rep.sel = null; chatEmpty(); return repRender(); }
+  if (what === 'plus') { menu.hidden = !menu.hidden; return; }
+  if (what === 'photo') return $('pick-photo').click();
+  if (what === 'camera') return $('take-photo').click();
+  if (what === 'file') return $('pick-file').click();
+  if (what === 'send') return repSend();
+  if (!c) return;
+  if (what === 'info') { if (ppl.list.some(p => p.uid === c.uid)) showPerson(c.uid); else toast(`${c.name} is not in your People list any more.`); return; }
+  if (what === 'more') {
+    modal(`<h3>${esc(c.name)}</h3><div class="acts" style="flex-direction:column;align-items:stretch">
+      ${c.waiting ? '<button class="btn" id="m-done">Mark as answered (no reply needed)</button>' : ''}
+      <button class="btn danger" id="m-del">Delete the whole chat</button><button class="btn" id="m-no">Cancel</button></div>`);
+    $('m-no').onclick = closeModal;
+    const { F, db } = ppl.fb;
+    if ($('m-done')) $('m-done').onclick = async () => { closeModal(); for (const r of c.reps) if (r.status === 'new') await F.updateDoc(F.doc(db, 'reports', r.id), { status:'done' }).catch(console.warn); toast('Marked as answered'); };
+    $('m-del').onclick = () => confirmBox(`Delete the chat with ${c.name}?`, 'All messages and photos in this chat are deleted for good.', 'Delete', async () => {
+      for (const r of c.reps) {
+        for (let i = 0; i < (r.photos || 0); i++) await F.deleteDoc(F.doc(db, 'reports', r.id, 'photos', String(i)));
+        const ms = await F.getDocs(F.collection(db, 'reports', r.id, 'msgs')); for (const d of ms.docs) await F.deleteDoc(d.ref);
+        if (rep.msgOff[r.id]) { rep.msgOff[r.id](); delete rep.msgOff[r.id]; }
+        await F.deleteDoc(F.doc(db, 'reports', r.id));
+      }
+      rep.sel = null; chatEmpty(); toast('Chat deleted');
+    });
   }
-  b.disabled = true;
-  F.updateDoc(ref, { status:what }).then(() => toast(what === 'done' ? 'Marked as done' : 'Reopened')).catch(x => { b.disabled = false; console.warn(x); toast('That did not work. Check the internet and try again.'); });
 };
 (async () => {
   try {
@@ -1077,11 +1150,9 @@ $('t-reports').onclick = async e => {
     A.onAuthStateChanged(auth, u => {
       if (rep.off) { rep.off(); rep.off = null; }
       for (const k in rep.msgOff) rep.msgOff[k](); rep.msgOff = {};
-      if (!(u && u.email)) { rep.list = []; repCount(); $('rep-filter').innerHTML = ''; $('rep-list').innerHTML = '<div class="empty">Sign in on the People tab to see messages.</div>'; return; }
-      rep.off = F.onSnapshot(F.collection(db, 'reports'), s => {
-        rep.list = s.docs.map(d => ({ id:d.id, ...d.data() })).sort((a, b) => repWhen(b) - repWhen(a));
-        repRender();
-      }, x => { console.warn(x); $('rep-list').innerHTML = '<div class="empty">Could not load messages. If you just updated, paste the new database rules in Firebase.</div>'; });
+      if (!(u && u.email)) { rep.list = []; rep.sel = null; repCount([]); chatEmpty(); $('ib-list').innerHTML = '<div class="empty">Sign in on the People tab to see messages.</div>'; return; }
+      rep.off = F.onSnapshot(F.collection(db, 'reports'), s => { rep.list = s.docs.map(d => ({ id:d.id, ...d.data() })); repRender(); },
+        x => { console.warn(x); $('ib-list').innerHTML = '<div class="empty">Could not load messages. If you just updated, paste the new database rules in Firebase.</div>'; });
     });
   } catch (x) { console.warn(x); }
 })();
