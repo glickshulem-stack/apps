@@ -25,14 +25,10 @@
   .iconbtn:active { transform:scale(.94); }
   .iconbtn svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   main { max-width:1180px; margin:0 auto; padding:22px 24px 40px; }
-  /* greeting + summary chips */
+  /* greeting */
   .welcome { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:4px 4px 18px; }
   .welcome .d { color:var(--muted); font-size:.85rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600; }
   .welcome h2 { margin:4px 0 0; font:700 2rem/1.15 Cinzel,Georgia,serif; }
-  .chips { display:flex; gap:10px; flex-wrap:wrap; }
-  .chip { display:flex; align-items:center; gap:8px; padding:9px 14px; border-radius:999px; background:var(--surface); border:1px solid var(--line); font-size:.88rem; font-weight:600; box-shadow:var(--shadow); }
-  .chip b { color:var(--gold2); }
-  .chip i { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,var(--goldhi),var(--gold)); box-shadow:0 0 8px var(--gold); }
   /* section titles with a gold rule */
   h3 { display:flex; align-items:center; gap:14px; margin:30px 4px 14px; font:700 1.15rem Cinzel,Georgia,serif; letter-spacing:.05em; }
   h3::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--gold),transparent); opacity:.6; }
@@ -176,7 +172,7 @@
   <button class="iconbtn" id="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
 </header>
 <main>
-  <section class="welcome"><div><div class="d" id="w-date"></div><h2 id="w-hi">Welcome</h2></div><div class="chips" id="chips"></div></section>
+  <section class="welcome"><div><div class="d" id="w-date"></div><h2 id="w-hi">Welcome</h2></div></section>
   <div id="removed"></div>
   <h3>Your apps</h3>
   <div class="grid" id="list"><div class="msg">Loading apps…</div></div>
@@ -219,7 +215,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.19.0';
+const PAGE_VER = '0.20.0';
 // Play Hub 0.5.0+ keeps downloads and reports progress. Older Play Hub only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -289,14 +285,11 @@ function button(a, have) {
 }
 function barHtml(st) { return st && st.pct != null ? `<div class="bar${st.pct < 0 ? ' wait' : ''}"><i style="${st.pct >= 0 ? `width:${st.pct}%` : ''}"></i></div>` : ''; }
 
-// Greeting, date and the little summary chips at the top
-function renderTop(apps, inst, ups) {
+// Greeting and date at the top (the summary pills were removed in 0.20.0, Su's wish)
+function renderTop() {
   const now = new Date(), h = now.getHours();
   $('w-date').textContent = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
   $('w-hi').textContent = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-  const chip = (txt) => `<span class="chip"><i></i>${txt}</span>`;
-  $('chips').innerHTML = chip(`<b>${apps.length}</b> app${apps.length === 1 ? "" : "s"}`) + (hasHub ? chip(`<b>${inst}</b> installed`) : '') +
-    chip(ups ? `<b>${ups}</b> update${ups > 1 ? 's' : ''} ready` : 'All up to date');
 }
 // "What's new": the latest notes from catalog.json (field "news": [{ id, version, date, text }])
 function renderNews() {
@@ -359,7 +352,7 @@ function render() {
   // while something is downloading, refresh the progress twice a second
   if (busy && !ticker) ticker = setInterval(render, 500);
   if (!busy && ticker) { clearInterval(ticker); ticker = null; }
-  renderTop(apps, inst, ups + (hubUpd ? 1 : 0)); renderNews(); renderRemoved(); updateDetail();
+  renderTop(); renderNews(); renderRemoved(); updateDetail();
   $('settings').classList.toggle('dot', !!hubUpd);
   $('s-last').textContent = lastCheck ? 'Last checked ' + lastCheck.toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'}) : 'Not checked yet';
 }

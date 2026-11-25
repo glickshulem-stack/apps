@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (Play Hub page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html` (Su's rule, 2026-11-25: every change goes to Studio first). Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- Play Hub page: 0.19.0 public (`PAGE_VER` in `hub/index.html`); test copy `hub-next/index.html`
+- Play Hub page: 0.19.0 public (`PAGE_VER` in `hub/index.html`); test copy `hub-next/index.html` 0.20.0 (no summary pills) waiting for Su's Publish
 - Play Hub app (APK): 0.8.0 (`android/hub/app/build.gradle`); in Studio, waiting for Su to publish
 
 ## Su's decisions
@@ -20,6 +20,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - Public Play Hub shows only the apps Su published from Studio. If Su takes an app off, Play Hub offers to uninstall it.
 - The friends page (`get/`) never mentions Play Hub Studio.
 - Tapping an app card opens its own app page like a real store: icon, name, button, version facts, swipeable screenshots, About this app (`description`), What's new (catalog `news` for that app). Screenshots = optional catalog field `screenshots` (repo image paths, 16:10, kept in `shots/<id>/`, not inside `apps/` so they don't go into APKs). Since 0.17.0.
+- No summary pills ("2 apps / installed / update ready") under the greeting (Su, 0.20.0).
 - No "About" box in Settings (removed in 0.18.0, Su's wish).
 
 ## Known bugs
