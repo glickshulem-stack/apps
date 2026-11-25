@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (App Vault page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html`. Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.21.0); test copy `hub-next/index.html` 0.24.1 (Tile vault icon + sign-in and approval + no See what's new, join screen says "Note (optional)") waiting for Su's Publish
+- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.24.1, sign-in + approval live); test copy `hub-next/index.html` 0.25.0 (reports which apps are installed) waiting for Su's Publish
 - App Vault app (APK): 0.9.0 public; 0.10.0 (new home-screen icon) goes to Studio for Su to publish (`android/hub/app/build.gradle`)
 
 ## Su's decisions
@@ -26,7 +26,8 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - No summary pills under the greeting (0.20.0) and no "About" box in Settings (0.18.0).
 
 - **Sign-in + approval (page 0.23.0, Su 2026-11-25):** everyone types a name (+ optional note) once; the device model is read from the browser. They see "Waiting for approval" until Su approves them in Studio › People. Declined / removed people see a short message. Approved people open App Vault right away, even offline (status saved as `vaultMember`). Backend: Firebase project `app-vault-962b9` (Su's Google account): anonymous sign-in per device + Firestore `members/{uid}` = {name, note, device, status pending|approved|declined|removed, created, decided}. Security rules (pasted by Su in the Firebase console, admin = Su's email + password sign-in) let people write only their own pending request. The web config in the page is public on purpose. Note: approval only hides the Vault; app files are still on public GitHub.
-- Next steps Su asked for (one at a time): who has which apps (Studio), bug reports with photos, chat, publish to chosen people.
+- **Who has what (page 0.25.0):** approved people's App Vault writes `apps` {id: installed version} (catalog apps + App Vault itself, Android only), `page` and `seen` to their member doc when App Vault opens or comes back, after a check and after an install; only when changed or once a day (`vaultReported`). Rules let a person change only those 3 fields.
+- Next steps Su asked for (one at a time): bug reports with photos (Su noticed there are no notes yet), chat, publish to chosen people.
 
 ## Known bugs
 - None known.

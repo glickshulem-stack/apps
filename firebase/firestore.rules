@@ -20,7 +20,15 @@ service cloud.firestore {
         && request.resource.data.device is string
         && request.resource.data.device.size() <= 80
         && request.resource.data.keys().hasOnly(['name', 'note', 'device', 'status', 'created']);
-      allow update, delete: if isSu();
+      // An approved person may only report which apps they have (App Vault 0.25.0+)
+      allow update: if isSu() || (request.auth != null && request.auth.uid == uid
+        && resource.data.status == 'approved'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['apps', 'page', 'seen'])
+        && request.resource.data.apps is map
+        && request.resource.data.apps.size() <= 50
+        && request.resource.data.page is string
+        && request.resource.data.page.size() <= 20);
+      allow delete: if isSu();
     }
   }
 }
