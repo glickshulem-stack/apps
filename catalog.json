@@ -5,7 +5,7 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "iconUrl": "vault-icon.svg",
       "tagline": "Your personal app store",
       "live": "0.33.0"
@@ -46,6 +46,12 @@
     }
   ],
   "news": [
+    {
+      "id": "hub",
+      "version": "0.13.0",
+      "date": "2026-11-25",
+      "text": "Save photos and files from the developer"
+    },
     {
       "id": "chess",
       "version": "0.31.0",
