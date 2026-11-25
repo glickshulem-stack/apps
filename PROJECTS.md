@@ -6,7 +6,7 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 | App | Folder | Current version | Status | Next to-do |
 |---|---|---|---|---|
 | App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.10.0, app 0.4.0 | testing | Su updates Studio app to 0.4.0, checks the App Vault rename (Try page, Install app 0.9.0), then Publishes |
-| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.20.0 public (0.21.0 App Vault rename in Studio), app 0.9.0 in Studio | testing | Su tries the renamed page + app from Studio, then Publishes |
+| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.21.0 public (0.22.0 new icon in Studio), app 0.9.0 public (0.10.0 new icon in Studio) | testing | Su tries the new Tile vault icon from Studio, then Publishes |
 | Gambit (chess) | `apps/chess/` + `android/chess/` | 0.27.0 (in Studio and public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
 | App Vault for Windows | `hub/` installed from Edge/Chrome | (uses the App Vault page) | in progress | PR #26 waits for Su's go |
