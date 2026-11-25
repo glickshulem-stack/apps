@@ -51,11 +51,11 @@
       "name": "App Vault Studio",
       "icon": "✦",
       "package": "com.glickshulem.hubstudio",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "iconUrl": "studio/icon.svg",
       "tagline": "Where Su makes and publishes apps",
       "private": true,
-      "note": "Now called App Vault Studio"
+      "note": "New Golden Gear icon"
     }
   ],
   "studioPage": "0.10.1"
