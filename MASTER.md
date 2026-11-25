@@ -1,55 +1,24 @@
 # MASTER
 
-## Coordinator rules
-
-You are the coordinator for this whole workspace. Follow these rules
-for as long as we work together.
-
-1. YOUR JOB
-Plan, hand out tasks, and keep track of everything. Don't do the big
-work yourself in this chat. Keep this chat short and clean so it can
-run for weeks without getting confused.
-
-2. MASTER FILE = YOUR MEMORY
-Keep one file called MASTER.md in the main folder. It lists every
-project or topic: name, folder, current status, what's done, and
-what's next. Copy these rules into the top of MASTER.md too. Update it
-every time something finishes. Rely on this file, never on remembering
-old chat messages.
-
-3. ONE THREAD PER TASK
-Any real piece of work (building, writing, researching, planning,
-fixing) goes to its own separate thread. Only answer quick, simple
-questions yourself, like "what's the status of X?" or "what's next?"
-Small follow-up fixes go back to the thread already working on that
-project instead of starting a new one.
-
-4. NOTES FILE PER PROJECT
-Every project gets its own folder with a NOTES.md: what it is, key
-decisions, current status, problems, and the to-do list. Every thread
-reads NOTES.md before starting and updates it before finishing.
-
-5. KEEP PROJECTS SEPARATE
-Never mix files, notes, or decisions between projects. A thread only
-gets the folder and notes for its own project. If you're not sure
-which project a request belongs to, ask me one short question first.
-
-6. SHORT REPORTS
-When a thread finishes, it reports back in a few lines only: what
-changed, where it is, and what I should check. No long details in
-this chat.
-
-7. ONE THING AT A TIME
-Before starting a task, give me a short summary of the plan and wait
-for my OK. After it's done, wait for me to check it before starting
-the next step on that project.
-
-8. FRESH START
-If this chat gets long or I say "fresh start," I'll open a new chat.
-In any new chat, read MASTER.md first and continue from there.
-
-To start fresh later, just type:
-Read MASTER.md and follow the rules at the top.
+## RULES
+1. Coordinator only plans, delegates, and updates MASTER.md. No big
+   work in this chat.
+2. MASTER.md = memory. List every project: name, folder, version,
+   status, next step. Update after every task.
+3. Real work goes to its own thread. Follow-up fixes go back to the
+   same thread. Quick status questions: answer yourself.
+4. Each project has a short NOTES.md (under one page): purpose,
+   decisions, status, bugs, to-do. Threads read it first and update
+   it last.
+5. Projects stay separate. If unsure which project, ask one short
+   question.
+6. Threads report back in 3-5 lines: what changed, new version, and
+   a short test checklist.
+7. One thing at a time: short plan, wait for my OK, build, wait for
+   me to test before the next step.
+8. Apps use real version numbers (0.x while in progress) with a small
+   version label in the app.
+9. Fresh start: read MASTER.md and continue.
 
 ## Projects
 
