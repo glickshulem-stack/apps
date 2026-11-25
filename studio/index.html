@@ -152,7 +152,6 @@
   <img src="icon.svg" alt="">
   <h1>Play Hub Studio</h1>
   <div class="sp"></div>
-  <button class="gold" id="share3" hidden style="padding:9px 16px;font-size:.88rem">Share Play Hub</button>
   <span class="sync" id="sync" hidden><span id="checked"></span><button class="ghost" id="reload" title="Check GitHub again">↻ Check again</button></span>
 </div>
 <nav class="tabs" id="tabs" hidden>
@@ -242,7 +241,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.9.0';
+const VERSION = '0.9.1';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -308,9 +307,9 @@ $('signin-btn').onclick = async () => {
 };
 $('signout').onclick = () => confirmBox('Sign out of Studio?', 'You will need to paste your GitHub key again to use Studio on this device.', 'Sign out', () => { store.set('studioKey', null); token = null; showSignin(); });
 
-function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; $('share3').hidden = true; }
+function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; }
 async function showHome() {
-  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false; $('share3').hidden = false;
+  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false;
   showTab(store.get('studioTab') || 'bench');
   await load();
   resumeUpload();
@@ -387,7 +386,7 @@ function sharePlayHub() {
   shareBox();
 }
 window.shareReady = ok => { if (!ok) { toast('Could not get Play Hub ready. Sending the link instead.'); bridge.share ? bridge.share('Play Hub', SHARE_TEXT + SHARE_URL) : shareBox(); } };
-$('share').onclick = sharePlayHub; $('share2').onclick = sharePlayHub; $('share3').onclick = sharePlayHub;
+$('share').onclick = sharePlayHub; $('share2').onclick = sharePlayHub;
 
 // Look: Ember Sunset (default) or Amethyst Dusk, remembered on this device.
 function setLook(l) {
