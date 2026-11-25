@@ -241,7 +241,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.9.1';
+const VERSION = '0.9.2';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -254,7 +254,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 let token = store.get('studioKey');
 let studio = null, catalog = null, me = null;
-let page = null;   // Play Hub page: { next, live, nextSha, liveSha } read from hub-next/index.html and hub/index.html
+let page = null, stale = false;   // page: Play Hub page versions in hub-next/ and hub/. stale: a newer Studio page exists but has not reached this device yet
+const notStale = () => { if (stale) toast('Studio is updating. Wait a minute, then press Check again.'); return !stale; };
 
 
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('show'), 3200); }
@@ -330,7 +331,13 @@ async function load(quiet) {
     // An older copy of this page (an open tab, or a cached one) must not change Play Hub: load the newest Studio first.
     // Claude raises studio.json "studioPage" whenever this page changes.
     const want = studio.studioPage, older = (x, y) => { const p = v => String(v).split('.').map(Number); const [a, b] = [p(x), p(y)]; for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
-    if (want && older(VERSION, want)) { location.replace(location.pathname + '?v=' + encodeURIComponent(want)); return; }
+    // Reload at most once per version, with a fresh address so no cached copy can bring the old page back (that looped in 0.9.1).
+    stale = !!(want && older(VERSION, want));
+    if (stale) {
+      let tried = null; try { tried = sessionStorage.getItem('studioReload'); } catch {}
+      if (tried !== want) { try { sessionStorage.setItem('studioReload', want); } catch {} location.replace(location.pathname + '?v=' + encodeURIComponent(want) + '-' + Date.now()); return; }
+      toast(`Studio ${want} is still on its way. Wait a minute, then press Check again.`);
+    }
     $('set-who').textContent = me.name || me.login; checkedAt = Date.now(); showChecked();
     render();
     if (!quiet) return true;
@@ -509,6 +516,7 @@ function menu(a) {
 }
 
 function publishPage() {
+  if (!notStale()) return;
   confirmBox(`Publish Play Hub page ${page.next}?`, `Everyone's Play Hub switches to page ${page.next} the next time it opens (it is ${page.live} now).`, 'Publish', async () => {
     const [n, l] = await Promise.all([readPage('hub-next'), readPage('hub')]);
     if (!n || !l) throw new Error('could not read the Play Hub page');
@@ -520,6 +528,7 @@ function publishPage() {
   });
 }
 function publish(a) {
+  if (!notStale()) return;
   const p = catalog.apps.find(x => x.id === a.id);
   const what = !p ? `${a.name} will appear in Play Hub for everyone.` : p.version !== a.version ? `Everyone's Play Hub will offer ${a.name} ${a.version} as an update.` : `Everyone's Play Hub will show the new details for ${a.name}.`;
   confirmBox(`Publish ${a.name}?`, what, 'Publish', async () => {
@@ -538,6 +547,7 @@ function publish(a) {
   });
 }
 function hide(a) {
+  if (!notStale()) return;
   confirmBox(`Take ${a.name} off Play Hub?`, `It disappears from Play Hub for everyone. Play Hub tells people who have it installed and offers to uninstall it. It stays in your Studio test bench, so you can drop it onto Play Hub again any time.`, 'Take off', async () => {
     await changeFile('catalog.json', c => {
       c.apps = c.apps.filter(x => x.id !== a.id);
