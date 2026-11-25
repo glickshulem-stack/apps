@@ -163,6 +163,28 @@
   .sdots i.on { width:24px; background:linear-gradient(90deg,var(--goldhi),var(--gold)); }
   .d-about { padding:16px 20px; line-height:1.6; font-size:1rem; }
   @media (max-width:640px) { .d-top { flex-direction:column; text-align:center; } #d-act { justify-content:center; } .d-wrap { padding:18px 16px 40px; } .d-t h2 { font-size:1.8rem; } }
+  /* Sign in + approval (0.23.0): a full screen that covers App Vault until Su approves this person in Studio */
+  .gate { position:fixed; inset:0; z-index:30; overflow-y:auto; display:flex; align-items:center; justify-content:center; padding:24px 16px;
+    background:radial-gradient(900px 500px at 80% -10%, var(--glow), transparent 60%), radial-gradient(800px 500px at -10% 110%, var(--glow), transparent 60%), linear-gradient(180deg,var(--bg),var(--bg2)); }
+  .gate[hidden] { display:none; }
+  .gate-in { width:min(460px,100%); text-align:center; }
+  .gate-in > img { width:86px; height:86px; border-radius:22px; box-shadow:0 0 0 1px var(--gold), 0 10px 30px var(--glow); }
+  .gate-in h2 { margin:18px 0 6px; font:700 1.9rem/1.15 Cinzel,Georgia,serif; letter-spacing:.04em; }
+  .gate-in > p { margin:0 auto 22px; color:var(--muted); line-height:1.5; max-width:380px; }
+  .gate-card { text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:22px; padding:20px; box-shadow:var(--shadow); }
+  .gate-card label { display:block; font-weight:700; font-size:.88rem; color:var(--gold2); margin:0 0 6px; }
+  .gate-card label small { color:var(--muted); font-weight:500; }
+  .gate-card input, .gate-card textarea { width:100%; border:1px solid var(--line); border-radius:14px; background:var(--surface2); color:var(--text); padding:13px 14px; font:500 1rem Inter,sans-serif; outline:none; margin-bottom:16px; user-select:text; }
+  .gate-card textarea { min-height:78px; resize:vertical; }
+  .gate-card input:focus, .gate-card textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px var(--glow); }
+  .gate-dev { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.88rem; margin:0 0 18px; padding:10px 12px; border-radius:12px; background:var(--surface2); }
+  .gate-dev b { color:var(--text); font-weight:600; }
+  .gate-err { color:#e08a5a; font-size:.9rem; min-height:1.2em; margin-top:10px; text-align:center; }
+  .gate-wait { display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; }
+  .gate-wait .ring { width:54px; height:54px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--gold); animation:spin 1.4s linear infinite; }
+  .gate-wait b { font:700 1.15rem Cinzel,Georgia,serif; }
+  .gate-wait span { color:var(--muted); font-size:.92rem; line-height:1.5; }
+  .gate-link { margin-top:14px; border:0; background:none; color:var(--gold2); font:600 .9rem Inter,sans-serif; cursor:pointer; text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -186,6 +208,7 @@
   <div class="box" id="s-upd-box" style="display:none;margin-top:12px"><div class="row click" id="s-upd"><span>Update App Vault</span><span id="s-updv"></span></div><div id="s-upd-x"></div></div>
   <h5>Look</h5>
   <div class="seg" id="s-theme"><button data-t="noir"><i style="background:linear-gradient(135deg,#120f0b,#3a2a1a);"></i>Noir · dark</button><button data-t="ivory"><i style="background:linear-gradient(135deg,#fffcf6,#efe4cf);"></i>Ivory · light</button></div>
+  <div id="s-me"></div>
   <h5>Versions</h5>
   <div class="box">
     <div class="row"><span>App Vault app<small>The app installed on this tablet</small></span><span class="vv" id="s-ver"></span></div>
@@ -197,6 +220,7 @@
   <div class="sheet-head"><button class="backbtn" id="news-back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><h4 class="goldtext" style="text-align:right">What's new</h4></div>
   <div id="news-list"></div>
 </div></div>
+<div class="gate" id="gate"><div class="gate-in" id="gate-in"></div></div>
 <div class="ptr" id="ptr"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
 <div class="toast" id="toast"><span class="ti" id="toast-i">✓</span><div id="toast-t"></div></div>
 <script>
@@ -215,7 +239,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.22.0';
+const PAGE_VER = '0.23.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -535,6 +559,111 @@ document.querySelectorAll('#s-theme button').forEach(b => b.onclick = () => setT
 markTheme();
 window.refresh = refresh; window.hubEvent = hubEvent; window.onHubResume = onHubResume;
 refresh();
+</script>
+<script>
+// Sign in + approval (page 0.23.0). Each device gets a quiet Firebase ID. A new person types a name (and an optional note),
+// App Vault adds the device by itself, and they wait until Su approves them in App Vault Studio (People tab).
+// The web config below is meant to be public; the database rules make sure only Su can approve or see other people.
+const FB_CONFIG = { apiKey:'AIzaSyC9HRHjPw7WebTY-6OaRipAcC5rtNMH8dA', authDomain:'app-vault-962b9.firebaseapp.com', projectId:'app-vault-962b9',
+  storageBucket:'app-vault-962b9.firebasestorage.app', messagingSenderId:'1065278960988', appId:'1:1065278960988:web:33674911afac30fec23d99' };
+const FB_SDK = 'https://www.gstatic.com/firebasejs/10.14.1/';
+const gate = { fb:null, uid:null, me:null, off:null };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+function memberSaved() { try { return JSON.parse(localStorage.getItem('vaultMember') || 'null'); } catch { return null; } }
+function memberSave(m) { try { m ? localStorage.setItem('vaultMember', JSON.stringify(m)) : localStorage.removeItem('vaultMember'); } catch {} }
+// "Samsung SM-X710 · Android 14", "Windows PC", … read from the browser, nothing to type.
+function deviceName() {
+  const ua = navigator.userAgent, m = ua.match(/Android\s([\d.]+);\s*([^;)]+?)(?:\sBuild\/|\)|;)/);
+  if (m) {
+    let model = m[2].trim(); if (!model || model === 'K') model = 'Android device';
+    const brand = /^(SM-|GT-)/.test(model) ? 'Samsung ' : /^Pixel/.test(model) ? 'Google ' : '';
+    return `${brand}${model} · Android ${m[1].split('.')[0]}`.slice(0, 80);
+  }
+  if (/iPad/.test(ua)) return 'iPad'; if (/iPhone/.test(ua)) return 'iPhone';
+  if (/Windows/.test(ua)) return 'Windows PC'; if (/CrOS/.test(ua)) return 'Chromebook'; if (/Mac OS X/.test(ua)) return 'Mac'; if (/Linux/.test(ua)) return 'Linux PC';
+  return 'Unknown device';
+}
+async function fbLoad() {
+  if (gate.fb) return gate.fb;
+  const [app, auth, fs] = await Promise.all(['app', 'auth', 'firestore'].map(n => import(FB_SDK + `firebase-${n}.js`)));
+  const a = app.initializeApp(FB_CONFIG);
+  return gate.fb = { A:auth, F:fs, auth:auth.getAuth(a), db:fs.getFirestore(a) };
+}
+function gateShow(html) { $('gate-in').innerHTML = `<img src="../vault-icon.svg" alt="">${html}`; $('gate').hidden = false; }
+function gateHide() { $('gate').hidden = true; }
+const gateWait = (t, s) => `<div class="gate-card gate-wait"><div class="ring"></div><b>${t}</b><span>${s}</span></div>`;
+
+function gateForm(err) {
+  gateShow(`<h2 class="goldtext">Welcome to App Vault</h2><p>Tell us who you are. Once you're approved, you'll see all the apps here.</p>
+    <form class="gate-card" id="g-form" autocomplete="off">
+      <label for="g-name">Your name</label><input id="g-name" maxlength="40" placeholder="First and last name" required>
+      <label for="g-note">A short note <small>(optional)</small></label><textarea id="g-note" maxlength="200" placeholder="Hi, it's Dan from work"></textarea>
+      <div class="gate-dev">📱 <span>Device: <b>${esc(deviceName())}</b></span></div>
+      <button class="bigbtn" id="g-send" type="submit">Ask to join</button>
+      <div class="gate-err" id="g-err">${err || ''}</div>
+    </form>`);
+  $('g-form').onsubmit = async e => {
+    e.preventDefault();
+    const name = $('g-name').value.trim().replace(/\s+/g, ' '), note = $('g-note').value.trim();
+    if (!name) { $('g-err').textContent = 'Please type your name.'; return; }
+    $('g-send').disabled = true; $('g-send').textContent = 'Sending…'; $('g-err').textContent = '';
+    try {
+      const { F, db } = gate.fb;
+      await F.setDoc(F.doc(db, 'members', gate.uid), { name, note, device:deviceName(), status:'pending', created:F.serverTimestamp() });
+    } catch (x) {
+      console.warn(x); $('g-send').disabled = false; $('g-send').textContent = 'Ask to join';
+      $('g-err').textContent = navigator.onLine ? 'That didn\'t go through. Please try again.' : 'No internet. Connect and try again.';
+    }
+  };
+  setTimeout(() => $('g-name') && $('g-name').focus(), 300);
+}
+function gateOffline() {
+  gateShow(`<h2 class="goldtext">App Vault</h2><p>Connect to the internet to sign in.</p><button class="bigbtn" id="g-retry">Try again</button>`);
+  $('g-retry').onclick = () => location.reload();
+}
+// What to show for this person's status: no request yet, waiting, approved, declined or removed.
+function gateApply(d) {
+  gate.me = d;
+  memberSave(d ? { status:d.status, name:d.name } : null);
+  renderMe();
+  if (!d) return gateForm();
+  if (d.status === 'approved') { const was = !$('gate').hidden; gateHide(); if (was && d.name) toast('✓', `Welcome, ${esc(d.name.split(' ')[0])}!`, 'You\'re approved. Enjoy the apps.'); return; }
+  if (d.status === 'pending') return gateShow(`<h2 class="goldtext">Request sent</h2><p>Thanks, ${esc(d.name)}.</p>${gateWait('Waiting for approval', 'You can close App Vault. When you\'re approved, this screen opens by itself.')}`);
+  const removed = d.status === 'removed';
+  gateShow(`<h2 class="goldtext">${removed ? 'Access removed' : 'Not approved'}</h2><p>${removed ? 'Your access to App Vault was removed.' : 'Your request to join App Vault wasn\'t approved.'} If you think this is a mistake, contact the person who shared App Vault with you.</p>`);
+}
+async function gateStart() {
+  const saved = memberSaved();
+  // Approved before: open right away (also offline), and double-check quietly in the background.
+  if (saved && saved.status === 'approved') gateHide();
+  else if (saved && saved.status === 'pending') gateShow(`<h2 class="goldtext">Request sent</h2><p>Thanks, ${esc(saved.name)}.</p>${gateWait('Waiting for approval', 'Checking…')}`);
+  else gateShow(gateWait('Opening App Vault…', ''));
+  // No answer after 15 seconds: say so (people approved before just keep using App Vault).
+  let answered = false;
+  const stuck = () => { if (!answered && !(saved && saved.status === 'approved')) gateOffline(); };
+  let slow = setTimeout(stuck, 15000);
+  try {
+    const { A, F, auth, db } = await fbLoad();
+    let u = await new Promise(r => { const off = A.onAuthStateChanged(auth, x => { off(); r(x); }); });
+    if (!u) u = (await A.signInAnonymously(auth)).user;
+    gate.uid = u.uid;
+    clearTimeout(slow);
+    // Offline, Firestore may answer "no request" from its empty memory: wait for the real answer instead.
+    gate.off = F.onSnapshot(F.doc(db, 'members', u.uid), { includeMetadataChanges:true }, s => { if (s.metadata.fromCache && !s.exists()) return; answered = true; clearTimeout(slow); gateApply(s.exists() ? s.data() : null); },
+      x => { console.warn(x); if (!(saved && saved.status === 'approved')) gateOffline(); });
+    slow = setTimeout(stuck, 15000);
+  } catch (x) {
+    console.warn(x); clearTimeout(slow);
+    if (!(saved && saved.status === 'approved')) gateOffline();
+  }
+}
+// Settings shows who is signed in on this device.
+function renderMe() {
+  const m = gate.me || memberSaved(), box = $('s-me'); if (!box) return;
+  box.innerHTML = m && m.status === 'approved' ? `<h5>You</h5><div class="box"><div class="row"><span>Signed in as<small>${esc(gate.me && gate.me.device || deviceName())}</small></span><span class="vv">${esc(m.name)}</span></div></div>` : '';
+}
+renderMe();
+gateStart();
 </script>
 <script>
 // Studio preview: this same file lives in hub-next/ (Claude's test copy, opened from App Vault Studio) until Su presses Publish,

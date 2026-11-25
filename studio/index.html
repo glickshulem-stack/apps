@@ -145,6 +145,11 @@
   .looks button.on { border-color:var(--gold); box-shadow:0 0 14px rgba(226,176,79,.45); }
   .toast { color:var(--text); }
   [hidden] { display:none !important; }
+  /* People (0.11.0): who asked to join App Vault, with Approve / Decline / Remove access */
+  .person .h .av { width:50px; height:50px; border-radius:50%; flex:none; display:grid; place-items:center; font:700 1.3rem Cinzel,Georgia,serif; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); }
+  .person.old .h .av { background:var(--surface2); color:var(--muted); }
+  .person .quote { margin:0; padding:10px 14px; border-left:3px solid var(--gold); background:var(--surface2); border-radius:0 12px 12px 0; font-style:italic; }
+  .pplhead { display:flex; align-items:center; gap:10px; margin:30px 0 14px; } .pplhead:first-child { margin-top:0; } .pplhead h3 { flex:1; margin:0; }
 </style>
 </head>
 <body>
@@ -157,6 +162,7 @@
 <nav class="tabs" id="tabs" hidden>
   <button class="tab" data-tab="bench">Test bench <i id="bench-count" hidden></i></button>
   <button class="tab" data-tab="public">Public</button>
+  <button class="tab" data-tab="people">People <i hidden></i></button>
   <button class="tab" data-tab="add">+ Add app</button>
   <button class="tab set" data-tab="settings">⚙ Settings</button>
 </nav>
@@ -188,6 +194,24 @@
   <section id="t-public" class="tabpage" hidden>
     <div style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px"><p class="hint" style="margin:0">What your friends see in App Vault right now.</p><button class="gold" id="share">Share App Vault</button></div>
     <div class="apps" id="pubapps"></div>
+  </section>
+  <section id="t-people" class="tabpage" hidden>
+    <div id="ppl-signin" class="card signin" style="margin-top:0" hidden>
+      <h3>Sign in to People</h3>
+      <p>Here you approve who can use App Vault. Sign in with the email and password you made in Firebase. You only do this once on each device.</p>
+      <label class="l" for="ppl-email">Email</label><input class="in" id="ppl-email" type="email" autocomplete="username" style="margin:6px 0 14px">
+      <label class="l" for="ppl-pass">Password</label><input class="in" id="ppl-pass" type="password" autocomplete="current-password" style="margin-top:6px">
+      <button class="gold wide" id="ppl-go" style="margin-top:14px">Sign in</button>
+      <div class="err" id="ppl-err"></div>
+    </div>
+    <div id="ppl" hidden>
+      <div class="pplhead"><h3>Requests</h3></div>
+      <div class="apps" id="ppl-req"></div>
+      <div class="pplhead"><h3>Approved</h3></div>
+      <div class="apps" id="ppl-ok"></div>
+      <div id="ppl-no-wrap" hidden><div class="pplhead"><h3>Declined or removed</h3></div><div class="apps" id="ppl-no"></div></div>
+    </div>
+    <div id="ppl-load" class="empty">Loading people…</div>
   </section>
   <section id="t-add" class="tabpage card" hidden>
   <div class="top">
@@ -227,6 +251,7 @@
     <div class="line"><span>Signed in as</span><b id="set-who"></b></div>
     <div class="line"><span>Studio page</span><b id="set-page"></b></div>
     <div class="line"><span>Studio app</span><span id="set-app" style="display:flex;gap:10px;align-items:center"></span></div>
+    <div class="line"><span>People sign-in</span><span style="display:flex;gap:10px;align-items:center"><b id="set-ppl">…</b><button class="btn" id="ppl-out" hidden>Sign out</button></span></div>
     <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
     <div class="line"><span>Look</span><div class="looks" id="looks"><button data-look="ember" style="background:linear-gradient(135deg,#5c1a1f,#8a3a1a)">Ember Sunset</button><button data-look="amethyst" style="background:linear-gradient(135deg,#3a1f5c,#8a3a4e)">Amethyst Dusk</button></div></div>
     <div class="line"><span>Give App Vault to someone</span><button class="btn" id="share2">Share App Vault</button></div>
@@ -241,7 +266,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.10.1';
+const VERSION = '0.11.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -853,6 +878,82 @@ function resumeUpload() {
   showHome();
 })();
 addEventListener('visibilitychange', () => { if (!document.hidden && studio && bridge) render(); });
+</script>
+<script>
+// ---------- People (Studio 0.11.0) ----------
+// New App Vault users ask to join (name, note, device). Su signs in here with the Firebase email + password once per device,
+// then approves, declines or removes people. The web config is meant to be public; the Firestore rules let only Su's account see or change people.
+const FB_CONFIG = { apiKey:'AIzaSyC9HRHjPw7WebTY-6OaRipAcC5rtNMH8dA', authDomain:'app-vault-962b9.firebaseapp.com', projectId:'app-vault-962b9',
+  storageBucket:'app-vault-962b9.firebasestorage.app', messagingSenderId:'1065278960988', appId:'1:1065278960988:web:33674911afac30fec23d99' };
+const FB_SDK = 'https://www.gstatic.com/firebasejs/10.14.1/';
+const ppl = { fb:null, list:[], off:null };
+async function pplLoad() {
+  if (ppl.fb) return ppl.fb;
+  const [app, auth, fs] = await Promise.all(['app', 'auth', 'firestore'].map(n => import(FB_SDK + `firebase-${n}.js`)));
+  const a = app.initializeApp(FB_CONFIG);
+  return ppl.fb = { A:auth, F:fs, auth:auth.getAuth(a), db:fs.getFirestore(a) };
+}
+function pplView(v) { $('ppl-signin').hidden = v !== 'signin'; $('ppl').hidden = v !== 'list'; $('ppl-load').hidden = v !== 'load' && v !== 'error'; }
+function pplCount(n) { const t = document.querySelector('.tab[data-tab="people"] i'); t.hidden = !n; t.textContent = n; }
+const pplDay = ts => { const d = ts && ts.toDate ? ts.toDate() : null; return d ? d.toLocaleDateString([], { day:'numeric', month:'short', year:'numeric' }) + ', ' + d.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'just now'; };
+function pplCard(p) {
+  const acts = p.status === 'pending' ? `<button class="gold" data-do="approved">Approve</button><button class="btn" data-do="declined">Decline</button>`
+    : p.status === 'approved' ? `<button class="btn" data-do="removed">Remove access</button>`
+    : `<button class="btn" data-do="approved">Approve</button><button class="btn" data-do="delete" title="They can ask again">Delete</button>`;
+  const when = p.status === 'pending' ? 'Asked ' + pplDay(p.created) : p.status === 'approved' ? 'Approved ' + pplDay(p.decided) : (p.status === 'removed' ? 'Removed ' : 'Declined ') + pplDay(p.decided);
+  return `<div class="app person${p.status === 'pending' ? ' ready' : ''}${p.status === 'declined' || p.status === 'removed' ? ' old' : ''}" data-uid="${esc(p.uid)}">
+    <div class="h"><div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(p.name)}</b><small>📱 ${esc(p.device || 'Unknown device')} · ${when}</small></div></div>
+    ${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}<div class="acts">${acts}</div></div>`;
+}
+function pplRender() {
+  const L = ppl.list, req = L.filter(p => p.status === 'pending'), ok = L.filter(p => p.status === 'approved'), no = L.filter(p => p.status === 'declined' || p.status === 'removed');
+  $('ppl-req').innerHTML = req.map(pplCard).join('') || '<div class="empty" style="padding:24px">No new requests. When someone asks to join App Vault, they show up here.</div>';
+  $('ppl-ok').innerHTML = ok.map(pplCard).join('') || '<div class="empty" style="padding:24px">Nobody approved yet.</div>';
+  $('ppl-no').innerHTML = no.map(pplCard).join(''); $('ppl-no-wrap').hidden = !no.length;
+  pplCount(req.length);
+}
+$('t-people').onclick = e => {
+  const b = e.target.closest('button[data-do]'); if (!b) return;
+  const p = ppl.list.find(x => x.uid === b.closest('.person').dataset.uid); if (!p) return;
+  const { F, db } = ppl.fb, ref = F.doc(db, 'members', p.uid), to = b.dataset.do;
+  const set = () => to === 'delete' ? F.deleteDoc(ref) : F.updateDoc(ref, { status:to, decided:F.serverTimestamp() });
+  const msg = { approved:`${p.name} is approved`, declined:`${p.name} was declined`, removed:`${p.name} can no longer use App Vault`, delete:`${p.name} was deleted` }[to];
+  const run = async () => { await set(); toast(msg); };
+  if (to === 'removed') confirmBox(`Remove ${p.name}?`, `${p.name} will no longer be able to use App Vault. You can approve them again later.`, 'Remove access', run);
+  else if (to === 'delete') confirmBox(`Delete ${p.name}?`, `This clears their request. If they open App Vault again, they can ask to join again.`, 'Delete', run);
+  else { b.disabled = true; run().catch(x => { b.disabled = false; toast('That did not work. Check the internet and try again.'); console.warn(x); }); }
+};
+function pplListen() {
+  const { F, db } = ppl.fb;
+  if (ppl.off) ppl.off();
+  ppl.off = F.onSnapshot(F.collection(db, 'members'), s => {
+    ppl.list = s.docs.map(d => ({ uid:d.id, ...d.data() })).sort((a, b) => ((b.created && b.created.seconds) || 9e9) - ((a.created && a.created.seconds) || 9e9));
+    pplRender(); pplView('list');
+  }, x => {
+    console.warn(x); pplView('error');
+    $('ppl-load').textContent = x.code === 'permission-denied' ? 'This account is not allowed to see people. Sign out in Settings and sign in with the right email.' : 'Could not reach the people list. Check the internet.';
+  });
+}
+$('ppl-go').onclick = async () => {
+  const email = $('ppl-email').value.trim(), pass = $('ppl-pass').value;
+  if (!email || !pass) { $('ppl-err').textContent = 'Type your email and password.'; return; }
+  $('ppl-go').disabled = true; $('ppl-err').textContent = '';
+  try { const { A, auth } = await pplLoad(); await A.signInWithEmailAndPassword(auth, email, pass); $('ppl-pass').value = ''; }
+  catch (x) { console.warn(x); $('ppl-err').textContent = /invalid|wrong|not-found|credential/.test(x.code || '') ? 'That email or password is not right. Try again.' : 'Could not sign in. Check the internet and try again.'; }
+  $('ppl-go').disabled = false;
+};
+$('ppl-pass').onkeydown = e => { if (e.key === 'Enter') $('ppl-go').onclick(); };
+$('ppl-out').onclick = () => confirmBox('Sign out of People?', 'You will need your Firebase email and password to see requests on this device again.', 'Sign out', async () => { const { A, auth } = await pplLoad(); await A.signOut(auth); });
+(async () => {
+  try {
+    const { A, auth } = await pplLoad();
+    A.onAuthStateChanged(auth, u => {
+      $('set-ppl').textContent = u && u.email ? u.email : 'Not signed in'; $('ppl-out').hidden = !(u && u.email);
+      if (u && u.email) { pplView('load'); pplListen(); }
+      else { if (ppl.off) { ppl.off(); ppl.off = null; } ppl.list = []; pplCount(0); pplView('signin'); }
+    });
+  } catch (x) { console.warn(x); pplView('error'); $('ppl-load').textContent = 'Could not load People. Check the internet and reopen Studio.'; }
+})();
 </script>
 </body>
 </html>
