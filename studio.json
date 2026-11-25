@@ -8,7 +8,7 @@
       "version": "0.8.0",
       "iconUrl": "icon.svg",
       "tagline": "Your personal app store",
-      "live": "0.12.0",
+      "live": "0.20.0",
       "note": "Tells you when an app was removed and offers to uninstall it"
     },
     {
@@ -22,7 +22,11 @@
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
       "category": "Board games",
       "webPath": "apps/chess/",
-      "screenshots": ["shots/chess/1.jpg", "shots/chess/2.jpg", "shots/chess/3.jpg"]
+      "screenshots": [
+        "shots/chess/1.jpg",
+        "shots/chess/2.jpg",
+        "shots/chess/3.jpg"
+      ]
     },
     {
       "id": "quillsong",
@@ -35,7 +39,11 @@
       "category": "Books",
       "description": "A book reader with lifelike page turns and two pages side by side on the tablet. Opens PDF, EPUB, Word and text files, and reads them aloud in a natural voice that works offline, even with the screen off, highlighting each word as it goes.",
       "hero": "linear-gradient(120deg,#1e150d 0%,#3a2716 50%,#6a4a25 100%)",
-      "screenshots": ["shots/quillsong/1.jpg", "shots/quillsong/2.jpg", "shots/quillsong/3.jpg"]
+      "screenshots": [
+        "shots/quillsong/1.jpg",
+        "shots/quillsong/2.jpg",
+        "shots/quillsong/3.jpg"
+      ]
     },
     {
       "id": "hubstudio",
