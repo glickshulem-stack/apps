@@ -32,7 +32,12 @@
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
       "category": "Board games",
-      "webPath": "apps/chess/"
+      "webPath": "apps/chess/",
+      "screenshots": [
+        "shots/chess/1.jpg",
+        "shots/chess/2.jpg",
+        "shots/chess/3.jpg"
+      ]
     }
   ],
   "news": [
