@@ -5,11 +5,11 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "iconUrl": "vault-icon.svg",
       "tagline": "Your personal app store",
       "live": "0.28.0",
-      "note": "New gold vault icon"
+      "note": "Add photos to notes and bug reports"
     },
     {
       "id": "chess",
@@ -58,5 +58,5 @@
       "note": "New Golden Gear icon"
     }
   ],
-  "studioPage": "0.13.0"
+  "studioPage": "0.14.0"
 }
