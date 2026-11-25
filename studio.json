@@ -16,7 +16,7 @@
       "name": "Gambit",
       "icon": "♞",
       "package": "com.glickshulem.chess",
-      "version": "0.28.1",
+      "version": "0.29.0",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
@@ -27,7 +27,7 @@
         "shots/chess/2.jpg",
         "shots/chess/3.jpg"
       ],
-      "note": "Smoother pieces: no jump when you touch one, and a gentle glide to the new square"
+      "note": "The computer thinks like a person: quick on obvious moves, longer on hard choices and checkmates"
     },
     {
       "id": "quillsong",
