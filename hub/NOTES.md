@@ -3,11 +3,11 @@
 ## What it does
 Su's personal app store. It lists Su's apps from `catalog.json`, installs them and updates them, like the Play Store. Friends can get it from one link: https://glickshulem-stack.github.io/apps/get/
 
-- The page is `hub/index.html` (on GitHub Pages). The Android app in `android/hub/` is a shell that shows this page.
-- Changes to the page go live as soon as they are merged. Changes to the Android app need a new APK, which waits for Su to publish it from Studio.
+- The page everyone sees is `hub/index.html` (on GitHub Pages). The Android app in `android/hub/` is a shell that shows this page.
+- **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (Play Hub page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html` (Su's rule, 2026-11-25: every change goes to Studio first). Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- Play Hub page: 0.19.0 (`PAGE_VER` in `hub/index.html`)
+- Play Hub page: 0.19.0 public (`PAGE_VER` in `hub/index.html`); test copy `hub-next/index.html`
 - Play Hub app (APK): 0.8.0 (`android/hub/app/build.gradle`); in Studio, waiting for Su to publish
 
 ## Su's decisions
@@ -27,4 +27,4 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 
 ## To-do
 - Su publishes app 0.8.0 from Studio and tests the "app was removed" card.
-- Su presses Publish in Studio so the Gambit and Quillsong screenshots (in studio.json) reach Play Hub. Studio should get screenshot + description editing (Studio thread).
+- Su presses Publish in Studio so the Gambit and Quillsong screenshots (in studio.json) reach Play Hub. Su can also edit them in Studio › ⋯ › Edit details (Studio 0.8.0).
