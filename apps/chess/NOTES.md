@@ -7,7 +7,7 @@ Chess for the tablet, played in landscape. Two players on one device, or against
 - Version lives in `const VERSION` in `apps/chess/chess.js`.
 
 ## Current version
-0.28.1 in Studio (0.27.0 public)
+0.29.0 in Studio (0.27.0 public)
 
 ## Su's decisions
 - Name Gambit, gold knight in a shield logo. Cinzel font. Saddle tan leather background.
@@ -21,7 +21,7 @@ Chess for the tablet, played in landscape. Two players on one device, or against
 - Pieces glide when moving, stepping through moves and on Undo: a gentle glide of about 0.4-0.65 s (longer moves a bit longer). A finger tap never lifts the piece (drag starts only after ~14 px); a dropped piece settles softly into its square; an illegal drop floats back (0.28.1, Su said the movement was jumpy). Captured pieces fly off. Win celebration with gold confetti.
 - Clocks are picked in New game; they start after White's first move and pause when the app is hidden.
 - Computer levels: Beginner and Easy use a simple built-in player; Medium and up use Stockfish. Each level must be a clear step up (Su). Measured 0.28.0 (winning chances lost per middlegame move): Beginner ~28%, Easy ~14%, Medium ~4%, Hard ~2%, Expert ~1%, Master ~0.6%. Medium never gives pieces away mid-game (Su hated that).
-- Computer think time grows with level (0.28.0): about 1-2 s on Beginner up to 3.5-6 s on Master; the first couple of moves are quicker.
+- Computer think time is smart (0.29.0, Su): Medium's normal pace = 3-5 s (Su picked the old Expert pace); levels go Beginner 1.8-3 s up to Master 5-8 s. Obvious moves (only move, taking back, a clearly winning move like a free queen or fork) come fast (about half the level's minimum); several equal choices or being in check take longer; playing out a checkmate takes the longest. First moves of the game are quick. Code: thinkTime() in chess.js.
 - Draw on the board: a pen that opens a Drawing card with 4 colors, Undo and Clear. The card is dark brown like the other cards; gold only on the pen icon, the title and a thin border (Su said the yellow header didn't belong, 0.27.1).
 
 ## Known bugs
