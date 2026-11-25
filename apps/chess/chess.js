@@ -1,4 +1,4 @@
-const VERSION = '0.27.1';
+const VERSION = '0.27.2';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -183,27 +183,33 @@ function save() { if (ex) return; try { localStorage.setItem('chess-game', JSON.
 function load() { try { const d = JSON.parse(localStorage.getItem('chess-game')); if (d && d.S) { S = d.S; history = d.history; flipped = d.flipped; if (d.undos) undos = d.undos; clock = d.clock || null; mode = d.mode || { cpu:false }; return true; } } catch {} return false; }
 
 function render() {
-  boardEl.innerHTML = '';
   const D = viewIdx == null ? S : [...history, S][viewIdx + 1];
   if (marks.pos !== D) { marks.arrows = []; marks.boxes = {}; marks.past = []; marks.pos = D; }   // drawings belong to the position shown
   const over = result(S), dover = result(D), chk = !dover && inCheck(D, D.turn) ? kingPos(D.board, D.turn) : (dover?.startsWith('Checkmate') ? kingPos(D.board, D.turn) : null);
+  // The 64 squares are made once and then only changed where something changed.
+  // (Rebuilding every piece on each tap made the whole board blink on the tablet.)
+  if (boardEl.children.length !== 64) { boardEl.innerHTML = ''; for (let k = 0; k < 64; k++) boardEl.appendChild(document.createElement('div')); }
   for (let i=0;i<8;i++) for (let j=0;j<8;j++) {
-    const r = flipped ? 7-i : i, c = flipped ? 7-j : j;
-    const d = document.createElement('div');
-    d.className = 'sq ' + ((r+c)%2 ? 'dark' : 'light'); d.style.backgroundPosition = `${(c*37+r*11)%100}% ${(r*53+c*7)%100}%`;
-    if (D.last && ((D.last.fr===r && D.last.fc===c) || (D.last.tr===r && D.last.tc===c))) d.classList.add('last');   // where the last move went
-    if (selected && selected[0]===r && selected[1]===c) d.classList.add('sel');
-    if (chk && chk[0]===r && chk[1]===c) d.classList.add('check');
+    const r = flipped ? 7-i : i, c = flipped ? 7-j : j, d = boardEl.children[i*8 + j];
+    let cls = 'sq ' + ((r+c)%2 ? 'dark' : 'light');
+    if (D.last && ((D.last.fr===r && D.last.fc===c) || (D.last.tr===r && D.last.tc===c))) cls += ' last';   // where the last move went
+    if (selected && selected[0]===r && selected[1]===c) cls += ' sel';
+    if (chk && chk[0]===r && chk[1]===c) cls += ' check';
     const mv = legalForSel.find(m => m.tr===r && m.tc===c);
-    if (mv) d.classList.add(D.board[r][c] ? 'capture' : 'move');
+    if (mv) cls += D.board[r][c] ? ' capture' : ' move';
     // en passant: also ring the pawn that gets taken (beside the moving pawn)
-    else if (legalForSel.some(m => m.enpassant && m.fr===r && m.tc===c)) d.classList.add('capture');
+    else if (legalForSel.some(m => m.enpassant && m.fr===r && m.tc===c)) cls += ' capture';
     const p = D.board[r][c], box = marks.boxes[r + ',' + c];
-    if (box) d.insertAdjacentHTML('beforeend', `<i class="mk" style="--ink:${INKS[box]}"></i>`);
-    if (p) d.insertAdjacentHTML('beforeend', piece(p.c, p.t));
-    if (i===7) d.insertAdjacentHTML('beforeend', `<span class="coord f">${'abcdefgh'[c]}</span>`);
-    if (j===0) d.insertAdjacentHTML('beforeend', `<span class="coord r">${8-r}</span>`);
-    boardEl.appendChild(d);
+    let html = box ? `<i class="mk" style="--ink:${INKS[box]}"></i>` : '';
+    if (p) html += piece(p.c, p.t);
+    if (i===7) html += `<span class="coord f">${'abcdefgh'[c]}</span>`;
+    if (j===0) html += `<span class="coord r">${8-r}</span>`;
+    if (d.className !== cls) d.className = cls;
+    const bg = `${(c*37+r*11)%100}% ${(r*53+c*7)%100}%`;
+    if (d._bg !== bg) { d.style.backgroundPosition = bg; d._bg = bg; }
+    if (d._html !== html) { d.innerHTML = html; d._html = html; }
+    else { const pc = d.querySelector('svg.pc'); if (pc?._topple && pc._topple !== D) { pc.getAnimations().forEach(x => x.cancel()); pc._topple = null; }   // stand the beaten king up again
+      if (pc && pc.style.transform) { pc.style.transform = ''; pc.style.zIndex = ''; pc.style.transition = ''; } }   // put back a piece that was dragged and let go
   }
   const mat = col => S.captured[col].reduce((a,t)=>a+VALUE[t],0);
   document.getElementById('turn-dot').className = 'turn-dot ' + S.turn;
@@ -275,6 +281,7 @@ function celebrate() {
   const winner = opp(S.turn), loser = S.turn, kp = kingPos(S.board, loser);
   // the beaten king topples over
   const ksq = kp && sqEl(kp[0], kp[1]), kpc = ksq && ksq.querySelector('svg.pc');
+  if (kpc) kpc._topple = S;
   if (kpc) kpc.animate([{ transform:'rotate(0)' }, { transform:'rotate(-14deg)', offset:.3 }, { transform:'rotate(90deg) translate(18%, 10%)' }],
     { duration:900, easing:'cubic-bezier(.5,0,.75,0)', fill:'forwards' });
   setTimeout(() => {
