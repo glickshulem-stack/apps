@@ -124,7 +124,7 @@
 <body>
 <div class="bar">
   <img src="icon.svg" alt="">
-  <h1>Play Hub Studio</h1><span class="badge">DEVELOPER</span>
+  <h1>Play Hub Studio</h1>
   <div class="sp"></div>
   <span class="sync" id="sync" hidden><span id="checked"></span><button class="ghost" id="reload" title="Check GitHub again">↻ Check again</button></span>
 </div>
@@ -160,7 +160,7 @@
     <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
   </section>
   <section id="t-public" class="tabpage" hidden>
-    <p class="hint">What your friends see in Play Hub right now.</p>
+    <div style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px"><p class="hint" style="margin:0">What your friends see in Play Hub right now.</p><button class="gold" id="share">Share Play Hub</button></div>
     <div class="apps" id="pubapps"></div>
   </section>
   <section id="t-add" class="tabpage card" hidden>
@@ -202,6 +202,7 @@
     <div class="line"><span>Studio page</span><b id="set-page"></b></div>
     <div class="line"><span>Studio app</span><span id="set-app" style="display:flex;gap:10px;align-items:center"></span></div>
     <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
+    <div class="line"><span>Give Play Hub to someone</span><button class="btn" id="share2">Share Play Hub</button></div>
     <button class="danger" id="signout">Sign out of Studio</button>
     <p class="hint" style="margin-top:10px">Only needed if you want to stop using Studio on this device. You will have to paste your GitHub key again.</p>
   </section>
@@ -212,7 +213,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.4.1';
+const VERSION = '0.5.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -314,6 +315,30 @@ function showChecked() {
 setInterval(showChecked, 30000);
 $('set-page').textContent = VERSION;
 
+
+// Share Play Hub: one link that starts the Play Hub download on Android (get/?auto).
+const SHARE_URL = SITE + 'get/?auto';
+const SHARE_TEXT = 'Get Play Hub, my little app store for Android: ';
+function shareBox() {
+  const msg = encodeURIComponent(SHARE_TEXT + SHARE_URL);
+  modal(`<h4>Share Play Hub</h4><p>Send this link to anyone you like. When they tap it on an Android phone or tablet, Play Hub starts downloading right away, with simple steps to install it.</p>
+    <input class="in" id="sh-link" readonly value="${esc(SHARE_URL)}">
+    <div class="menu">
+      ${navigator.share ? '<button class="gold" id="sh-native">Share…</button>' : ''}
+      <button class="btn" id="sh-copy">Copy the link</button>
+      <a class="btn" style="display:block;text-decoration:none;margin-top:10px;text-align:center" href="https://wa.me/?text=${msg}" target="_blank" rel="noopener">Send on WhatsApp</a>
+      <a class="btn" style="display:block;text-decoration:none;margin-top:10px;text-align:center" href="sms:?body=${msg}">Send as a text message</a>
+      <a class="btn" style="display:block;text-decoration:none;margin-top:10px;text-align:center" href="mailto:?subject=${encodeURIComponent('Play Hub')}&body=${msg}">Send by email</a>
+      <button class="btn" id="sh-no">Close</button></div>`);
+  if ($('sh-native')) $('sh-native').onclick = () => navigator.share({ title:'Play Hub', text:SHARE_TEXT, url:SHARE_URL }).catch(() => {});
+  $('sh-copy').onclick = async () => {
+    try { await navigator.clipboard.writeText(SHARE_URL); }
+    catch { const i = $('sh-link'); i.select(); try { document.execCommand('copy'); } catch {} }
+    toast('Link copied. Paste it in a message.');
+  };
+  $('sh-no').onclick = closeModal;
+}
+$('share').onclick = shareBox; $('share2').onclick = shareBox;
 
 // Tabs
 function showTab(t) {
