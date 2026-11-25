@@ -290,6 +290,7 @@
     <div class="line"><span>Signed in as</span><b id="set-who"></b></div>
     <div class="line"><span>Studio page</span><b id="set-page"></b></div>
     <div class="line"><span>Studio app</span><span id="set-app" style="display:flex;gap:10px;align-items:center"></span></div>
+    <div class="line"><span>Notifications</span><span id="set-notify" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end"></span></div>
     <div class="line"><span>People sign-in</span><span style="display:flex;gap:10px;align-items:center"><b id="set-ppl">…</b><button class="btn" id="ppl-out" hidden>Sign out</button></span></div>
     <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
     <button class="danger" id="signout">Sign out of Studio</button>
@@ -303,7 +304,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.19.1';
+const VERSION = '0.20.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -1047,7 +1048,7 @@ function pplListen() {
   const { F, db } = ppl.fb;
   if (ppl.off) ppl.off();
   ppl.off = F.onSnapshot(F.collection(db, 'members'), s => {
-    ppl.list = s.docs.map(d => ({ uid:d.id, ...d.data() })).sort((a, b) => ((b.created && b.created.seconds) || 9e9) - ((a.created && a.created.seconds) || 9e9));
+    ppl.loaded = true; ppl.list = s.docs.map(d => ({ uid:d.id, ...d.data() })).sort((a, b) => ((b.created && b.created.seconds) || 9e9) - ((a.created && a.created.seconds) || 9e9));
     pplRender(); pplView('list'); if (typeof repRender === 'function') repRender(); try { if (studio && catalog) render(); } catch {}
   }, x => {
     console.warn(x); pplView('error');
@@ -1273,8 +1274,75 @@ $('t-reports').onclick = e => {
       if (rep.off) { rep.off(); rep.off = null; }
       for (const k in rep.msgOff) rep.msgOff[k](); rep.msgOff = {};
       if (!(u && u.email)) { rep.list = []; rep.sel = null; repCount([]); chatEmpty(); $('ib-list').innerHTML = '<div class="empty">Sign in on the People tab to see messages.</div>'; return; }
-      rep.off = F.onSnapshot(F.collection(db, 'reports'), s => { rep.list = s.docs.map(d => ({ id:d.id, ...d.data() })); repRender(); },
+      rep.off = F.onSnapshot(F.collection(db, 'reports'), s => { rep.list = s.docs.map(d => ({ id:d.id, ...d.data() })); rep.loaded = true; repRender(); },
         x => { console.warn(x); $('ib-list').innerHTML = '<div class="empty">Could not load messages. If you just updated, paste the new database rules in Firebase.</div>'; });
+    });
+  } catch (x) { console.warn(x); }
+})();
+</script>
+<script>
+// ---------- Notifications (Studio 0.20.0, Su 2026-11-25: free, a few minutes' delay is fine) ----------
+// Tablet (Studio app 0.7.0+, bridge 5): the app checks the database about every 5 minutes, even when Studio is closed,
+// and shows "name: start of the message" for new messages, join requests and Beta requests. Tapping opens the chat / People.
+// Desktop browser: a notification while Studio is open in a background tab. When Studio is on screen: a short toast.
+const NB = !!(bridge && bridge.bridge && bridge.bridge() >= 5);
+const nt = { seen:null, pending:'' };
+function notifyRender() {
+  const box = $('set-notify'); if (!box) return;
+  const muted = t => `<span style="color:var(--muted)">${t}</span>`;
+  if (NB) box.innerHTML = bridge.notifyAllowed() ? `<b>On</b>${muted('checks about every 5 minutes')}` : `<b>Off</b><button class="btn" id="nt-on">Turn on</button>`;
+  else if (bridge) box.innerHTML = muted('Update the Studio app above to get notifications');
+  else if (!('Notification' in window)) box.innerHTML = muted('This browser cannot show notifications');
+  else box.innerHTML = Notification.permission === 'granted' ? `<b>On in this browser</b>${muted('while Studio is open in a tab')}`
+    : Notification.permission === 'denied' ? muted('Blocked in this browser. Allow them in the browser\'s site settings.') : `<button class="btn" id="nt-on">Turn on in this browser</button>`;
+  if ($('nt-on')) $('nt-on').onclick = () => { if (NB) bridge.askNotify(); else Notification.requestPermission().then(notifyRender); };
+}
+addEventListener('visibilitychange', () => { if (!document.hidden) notifyRender(); });
+// Opening from a tapped notification: "chat:<uid>" or "people".
+function noticeGo(o) {
+  if (!o) return;
+  if (o === 'people') { showTab('people'); return; }
+  if (o.startsWith('chat:')) { const uid = o.slice(5); if (rep.list.some(r => r.uid === uid)) openChat(uid); else nt.pending = o; }
+}
+window.onNotice = () => { if (NB) noticeGo(bridge.takeOpen()); };
+// What is waiting right now, for toasts and browser notifications.
+function noticeItems() {
+  const out = [];
+  for (const c of repConvs()) if (c.unseen) { const items = repItems(c), l = items[items.length - 1]; out.push({ key:'r:' + c.uid + ':' + c.when, title:c.name, text:(l && !l.me ? l.text : c.last.text) || '', go:'chat:' + c.uid }); }
+  for (const p of ppl.list) {
+    if (p.status === 'pending') out.push({ key:'j:' + p.uid, title:'Wants to join App Vault', text:p.name + (p.note ? ': ' + p.note : ''), go:'people' });
+    if (p.status === 'approved' && p.beta === 'asked') out.push({ key:'b:' + p.uid, title:'Wants to join Beta', text:p.name, go:'people' });
+  }
+  return out;
+}
+function noticeCheck() {
+  if (!rep.loaded || !ppl.loaded) return;
+  const items = noticeItems();
+  if (nt.seen === null) { nt.seen = new Set(items.map(i => i.key)); return; }   // what was there when Studio opened is not "new"
+  for (const it of items) {
+    if (nt.seen.has(it.key)) continue;
+    nt.seen.add(it.key);
+    if (it.go === 'chat:' + rep.sel && !document.hidden && !$('t-reports').hidden) continue;   // already looking at that chat
+    const text = it.text.length > 120 ? it.text.slice(0, 120) + '…' : it.text;
+    if (document.hidden && !NB && 'Notification' in window && Notification.permission === 'granted') {
+      try { const n = new Notification(it.title, { body:text, icon:'icon.svg', tag:it.key }); n.onclick = () => { window.focus(); noticeGo(it.go); n.close(); }; } catch (x) { console.warn(x); }
+    } else if (!document.hidden) toast(`${it.title}: ${text}`);
+  }
+}
+{ const rr = repRender; repRender = function () { rr(); if (nt.pending && rep.list.length) { const o = nt.pending; nt.pending = ''; noticeGo(o); } noticeCheck(); }; }
+{ const pr = pplRender; pplRender = function () { pr(); noticeCheck(); }; }
+(async () => {
+  notifyRender();
+  try {
+    const { A, auth } = await pplLoad();
+    A.onAuthStateChanged(auth, u => {
+      if (!NB) return;
+      if (u && u.email) {
+        bridge.notifySetup(FB_CONFIG.apiKey, u.refreshToken, u.uid, 'su');
+        if (!bridge.notifyAllowed() && !store.get('askedNotify')) { store.set('askedNotify', '1'); bridge.askNotify(); }
+        setTimeout(window.onNotice, 1500);
+      } else bridge.notifyStop();
+      notifyRender();
     });
   } catch (x) { console.warn(x); }
 })();
