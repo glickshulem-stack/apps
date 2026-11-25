@@ -68,6 +68,15 @@
   textarea.in { min-height:70px; resize:vertical; }
   .pill { display:inline-block; background:rgba(212,166,74,.15); color:var(--gold2); border-radius:99px; padding:2px 10px; font-size:.78rem; font-weight:700; }
   .icons { display:flex; gap:8px; flex-wrap:wrap; }
+  .shotsed { display:flex; gap:10px; overflow-x:auto; padding:2px 2px 8px; }
+  .shotsed .s { position:relative; flex:0 0 auto; width:150px; aspect-ratio:16/10; border-radius:10px; overflow:hidden; border:1px solid var(--line); background:var(--surface2); }
+  .shotsed .s img { width:100%; height:100%; object-fit:cover; display:block; }
+  .shotsed .s .new { position:absolute; left:6px; top:6px; background:var(--gold); color:#1a1208; border-radius:99px; padding:0 8px; font-size:.7rem; font-weight:800; }
+  .shotsed .s .b { position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; background:linear-gradient(transparent,rgba(0,0,0,.7)); padding:14px 4px 4px; }
+  .shotsed .s button { width:30px; height:30px; border-radius:8px; border:0; background:rgba(0,0,0,.55); color:#fff; font-size:1rem; cursor:pointer; }
+  .shotsed .s button:disabled { opacity:.3; }
+  .shotsed .add { flex:0 0 auto; width:150px; aspect-ratio:16/10; border-radius:10px; border:2px dashed var(--gold); background:transparent; color:var(--gold2); font-weight:700; cursor:pointer; }
+  .row > * { min-width:0; } .row.top { align-items:start; } .hint { color:var(--muted); font-size:.78rem; margin-top:2px; }
   .icons button { width:44px; height:44px; border-radius:12px; background:var(--surface2); border:1px solid var(--line); display:grid; place-items:center; font-size:21px; padding:0; overflow:hidden; }
   .icons button img { width:100%; height:100%; object-fit:cover; }
   .icons button.on { border:2px solid var(--gold); box-shadow:0 0 16px rgba(212,166,74,.35); }
@@ -97,7 +106,7 @@
   .err { color:var(--red); font-size:.88rem; min-height:1.3em; margin-top:8px; }
   .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:16px; z-index:20; }
   .modal-bg.show { display:flex; }
-  .modal { width:min(560px,100%); max-height:92vh; overflow:auto; }
+  .modal { width:min(640px,100%); max-height:92vh; overflow:auto; }
   .modal h4 { margin:0 0 6px; font:700 1.3rem Cinzel,Georgia,serif; }
   .modal p { color:var(--muted); margin:6px 0 16px; }
   .modal .acts { justify-content:flex-end; margin-top:14px; }
@@ -230,9 +239,10 @@
 <div class="modal-bg" id="modal"><div class="card modal" id="modal-box"></div></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+<input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.7.0';
+const VERSION = '0.8.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -412,7 +422,7 @@ function render() {
     if (need) waiting++;
     const line = st === 'newer' ? `<div class="st">Newer in Studio · your friends still have ${esc(p.version)}</div>`
       : st === 'none' ? `<div class="st">Only in Studio · nobody else can see it</div>`
-      : st === 'details' ? `<div class="st">Name, icon or text changed · not published yet</div>`
+      : st === 'details' ? `<div class="st">Details or pictures changed · not published yet</div>`
       : st === 'live' ? `<div class="st ok">✓ Same as public</div>` : `<div class="st ok">Studio itself · only for you</div>`;
     return `<div class="app${need ? ' ready' : ''}" data-id="${esc(a.id)}"><div class="row2">
       <img src="${esc(iconSrc(a))}" alt=""><div><b class="n">${esc(a.name)}</b>${pills(a, p)}${line}${a.note && need ? `<small style="color:var(--muted)">What's new: ${esc(a.note)}</small>` : ''}</div>
@@ -476,7 +486,7 @@ $('pubapps').onclick = e => {
 };
 function menu(a) {
   const st = stateOf(a, catalog.apps.find(x => x.id === a.id));
-  modal(`<h4>${esc(a.name)} ${esc(a.version)}</h4><p>Change the name, icon, text or What's new line.</p><div class="menu">
+  modal(`<h4>${esc(a.name)} ${esc(a.version)}</h4><p>Change the name, icon, screenshots, text or What's new line.</p><div class="menu">
     <button class="btn" id="mm-edit">Edit details</button>${st === 'live' && a.id !== 'hub' ? '<button class="btn" id="mm-off">Take off Play Hub</button>' : ''}<button class="btn" id="mm-no">Cancel</button></div>`);
   $('mm-edit').onclick = () => edit(a);
   if ($('mm-off')) $('mm-off').onclick = () => hide(catalog.apps.find(x => x.id === a.id));
@@ -557,26 +567,66 @@ async function saveIcon(id, chosen) {
   await putBinary(path, chosen.dataUrl.split(',')[1], `Studio: icon for ${id}`); return path;
 }
 
+// Screenshots: a row of pictures you can add, move and remove. New ones are shrunk to at most 1600 px wide JPEGs
+// and saved in shots/<id>/ when you press Save. The app's "screenshots" list holds their paths in the repo.
+function shotEditor(box, paths) {
+  let items = paths.map(p => ({ path:p, src: /^https?:/.test(p) ? p : `https://raw.githubusercontent.com/${REPO}/main/${p}` }));
+  const draw = () => {
+    box.innerHTML = items.map((it, i) => `<div class="s"><img src="${esc(it.src)}" alt="">${it.blob ? '<span class="new">New</span>' : ''}<div class="b">
+      <button data-mv="${i}" data-d="-1" ${i ? '' : 'disabled'} title="Move left">‹</button><button data-rm="${i}" title="Remove">✕</button><button data-mv="${i}" data-d="1" ${i < items.length - 1 ? '' : 'disabled'} title="Move right">›</button></div></div>`).join('')
+      + (items.length < 8 ? `<button class="add" data-add="1">+ Add pictures</button>` : '');
+  };
+  box.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.rm) items.splice(+b.dataset.rm, 1);
+    else if (b.dataset.mv) { const i = +b.dataset.mv, j = i + +b.dataset.d; [items[i], items[j]] = [items[j], items[i]]; }
+    else if (b.dataset.add) { const p = $('pick-shots'); p.value = ''; p.onchange = async () => {
+      for (const f of [...p.files].slice(0, 8 - items.length)) { try { const blob = await shrink(f); items.push({ blob, src: URL.createObjectURL(blob) }); } catch { toast(`Could not read ${f.name}`); } }
+      draw(); }; p.click(); return; }
+    draw();
+  };
+  draw();
+  return { async save(id, progress) {
+    const t = Date.now().toString(36), out = []; let n = 0;
+    for (const it of items) {
+      if (!it.blob) { out.push(it.path); continue; }
+      progress(++n); const path = `shots/${id}/${t}-${n}.jpg`;
+      await putBinary(path, await blobToB64(it.blob), `Studio: screenshot for ${id}`); out.push(path);
+    }
+    return out;
+  } };
+}
+async function shrink(file) {
+  const img = await createImageBitmap(file), k = Math.min(1, 1600 / img.width);
+  const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('no image')), 'image/jpeg', .86));
+}
+const blobToB64 = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result.split(',')[1]); r.readAsDataURL(b); });
+
 function edit(a) {
   modal(`<h4>Edit ${esc(a.name)}</h4><p>Changes are kept in Studio first. Press Publish afterwards to show them in Play Hub.</p>
     <div class="row"><label class="l">Name</label><input class="in" id="e-name" maxlength="40" value="${esc(a.name)}"></div>
     <div class="row"><label class="l">Icon</label><div class="icons" id="e-icons"></div></div>
     <div class="row"><label class="l">Short line</label><input class="in" id="e-tag" maxlength="70" value="${esc(a.tagline)}"></div>
-    <div class="row"><label class="l">About</label><textarea class="in" id="e-desc" maxlength="400">${esc(a.description)}</textarea></div>
+    <div class="row top"><label class="l">Screenshots</label><div><div class="shotsed" id="e-shots"></div><div class="hint">Wide pictures of the app look best (like a tablet held sideways). Use the arrows to change the order.</div></div></div>
+    <div class="row top"><label class="l">About this app</label><textarea class="in" id="e-desc" maxlength="1200" style="min-height:120px" placeholder="What the app is and what you can do with it">${esc(a.description)}</textarea></div>
     <div class="row"><label class="l">What's new</label><input class="in" id="e-note" maxlength="90" value="${esc(a.note)}" placeholder="What changed in this version"></div>
     <div class="row"><label class="l">Category</label><input class="in" id="e-cat" maxlength="30" list="cats" value="${esc(a.category)}"></div>
     <div class="err" id="m-err"></div>
     <div class="acts"><button class="btn" id="m-no">Cancel</button><button class="gold" id="m-ok">Save in Studio</button></div>`);
   let icon; iconPicker($('e-icons'), { keep: iconSrc(a) }, c => icon = c);
+  const shots = shotEditor($('e-shots'), a.screenshots || []);
   $('m-no').onclick = closeModal;
   $('m-ok').onclick = async () => {
     const name = $('e-name').value.trim(); if (!name) { $('m-err').textContent = 'The app needs a name.'; return; }
     $('m-ok').disabled = true; $('m-ok').textContent = 'Saving…';
     try {
       const iconUrl = await saveIcon(a.id, icon);
-      const fields = { name, tagline:$('e-tag').value.trim(), description:$('e-desc').value.trim(), note:$('e-note').value.trim(), category:$('e-cat').value.trim() };
+      const screenshots = await shots.save(a.id, n => $('m-ok').textContent = `Saving picture ${n}…`);
+      const fields = { name, tagline:$('e-tag').value.trim(), description:$('e-desc').value.trim(), note:$('e-note').value.trim(), category:$('e-cat').value.trim(), screenshots };
       if (iconUrl) { fields.iconUrl = iconUrl; if (icon.emoji) fields.icon = icon.emoji; }
-      await changeFile('studio.json', s => { const x = s.apps.find(y => y.id === a.id); for (const [k, v] of Object.entries(fields)) { if (v) x[k] = v; else delete x[k]; } }, `Studio: edit ${name}`);
+      await changeFile('studio.json', s => { const x = s.apps.find(y => y.id === a.id); for (const [k, v] of Object.entries(fields)) { if (v && v.length !== 0) x[k] = v; else delete x[k]; } }, `Studio: edit ${name}`);
       closeModal(); await load(); toast('Saved in Studio. Press Publish to show it in Play Hub.');
     } catch (e) { $('m-err').textContent = 'Could not save: ' + (e.detail || e.message); $('m-ok').disabled = false; $('m-ok').textContent = 'Save in Studio'; }
   };

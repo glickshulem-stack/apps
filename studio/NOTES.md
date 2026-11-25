@@ -7,7 +7,7 @@ Su's private developer edition of Play Hub, on the tablet and on the desktop. Ev
 - Studio reads `studio.json`. Publishing changes `catalog.json`.
 
 ## Current version
-- Studio page: 0.7.0 (`VERSION` in `studio/index.html`, and `"studioPage"` in `studio.json` must match)
+- Studio page: 0.8.0 (`VERSION` in `studio/index.html`, and `"studioPage"` in `studio.json` must match)
 - Studio app (APK): 0.3.0 (`android/hubstudio/app/build.gradle`)
 
 ## Su's decisions
@@ -17,9 +17,11 @@ Su's private developer edition of Play Hub, on the tablet and on the desktop. Ev
 - Studio itself does not appear in the app lists; its version and update live in Settings.
 - Dark looks only (never light, never blue): Ember Sunset (default) and Amethyst Dusk.
 - Share Play Hub button in the top bar opens the real Android share sheet with the Play Hub APK.
+- Each app's Play Hub page shows screenshots and "About this app" (Su, 2026-11-25). Su edits both in Studio › ⋯ › Edit details: add pictures (shrunk to ≤1600 px JPEG, saved as `shots/<id>/<time>-<n>.jpg` on Save), reorder with ‹ ›, remove with ✕, up to 8. They are the `screenshots` list and `description` in studio.json, and go public on Publish.
 
 ## Known bugs
 - None known.
 
 ## To-do
+- Su tries screenshots + About in Edit, then Publish.
 - Su tests the dark looks and the Share button on the tablet.
