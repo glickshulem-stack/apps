@@ -16,7 +16,7 @@
       "name": "Gambit",
       "icon": "♞",
       "package": "com.glickshulem.chess",
-      "version": "0.27.1",
+      "version": "0.27.2",
       "iconUrl": "apps/chess/logo.svg",
       "tagline": "Classic chess, beautifully made",
       "description": "Chess with tournament boards, matching backgrounds, chess clocks and a computer opponent with six levels.",
@@ -27,7 +27,7 @@
         "shots/chess/2.jpg",
         "shots/chess/3.jpg"
       ],
-      "note": "The Drawing card is now dark brown like the other cards, with gold touches"
+      "note": "Fixed: the board no longer blinks when you touch a piece"
     },
     {
       "id": "quillsong",
