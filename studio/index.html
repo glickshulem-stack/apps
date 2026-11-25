@@ -97,6 +97,27 @@
   .modal .acts { justify-content:flex-end; margin-top:14px; }
   .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(30px); opacity:0; background:#2b2218; border:1px solid var(--gold); border-radius:14px; padding:12px 20px; transition:.25s; z-index:30; max-width:90vw; text-align:center; }
   .toast.show { opacity:1; transform:translateX(-50%); }
+  .sync { color:var(--muted); font-size:.85rem; display:flex; align-items:center; gap:8px; }
+  .tabs { display:flex; gap:6px; padding:14px clamp(16px,4vw,44px) 0; border-bottom:1px solid var(--line); overflow-x:auto; }
+  .tab { border:1px solid transparent; border-bottom:0; background:none; padding:12px 20px; border-radius:14px 14px 0 0; color:var(--muted); font-weight:700; display:flex; gap:8px; align-items:center; white-space:nowrap; }
+  .tab:hover { color:var(--gold2); }
+  .tab.on { color:var(--goldhi); background:var(--surface); border-color:var(--line); margin-bottom:-1px; padding-bottom:13px; }
+  .tab i { font-style:normal; background:var(--gold); color:#1a1208; border-radius:99px; font-size:.74rem; padding:0 8px; }
+  .tab.set { margin-left:auto; }
+  .hint { color:var(--muted); margin:0 0 18px; }
+  .row2 { display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; }
+  .row2 img { width:52px; height:52px; border-radius:12px; background:#2b2218; padding:5px; }
+  .row2 b.n { font:700 1.1rem Cinzel,Georgia,serif; }
+  .vers { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+  .v { border-radius:10px; padding:3px 11px; font-size:.83rem; border:1px solid var(--line); background:var(--surface2); color:var(--muted); white-space:nowrap; }
+  .v strong { color:var(--text); }
+  .v.hi { border-color:var(--gold); color:var(--gold2); } .v.hi strong { color:var(--goldhi); }
+  .st { margin-top:6px; font-size:.88rem; color:var(--gold2); font-weight:600; } .st.ok { color:var(--muted); font-weight:500; }
+  .settings { max-width:640px; }
+  .settings .line { display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .settings .line span { color:var(--muted); }
+  .danger { margin-top:26px; border:1px solid #5a3a2c; color:#f0b8a4; background:none; border-radius:12px; padding:10px 18px; font-weight:700; }
+  @media (max-width:640px) { .row2 { grid-template-columns:auto 1fr; } .row2 .acts { grid-column:1/-1; } }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -105,12 +126,14 @@
   <img src="icon.svg" alt="">
   <h1>Play Hub Studio</h1><span class="badge">DEVELOPER</span>
   <div class="sp"></div>
-  <button class="addbtn" id="addbtn" hidden>+ Add an app file</button>
-  <span class="who" id="who" hidden></span>
-  <button class="ghost" id="reload" hidden title="Check GitHub again">↻ Refresh</button>
-  <button class="ghost" id="signout" hidden>Sign out</button>
-  <span class="ver" id="ver"></span>
+  <span class="sync" id="sync" hidden><span id="checked"></span><button class="ghost" id="reload" title="Check GitHub again">↻ Check again</button></span>
 </div>
+<nav class="tabs" id="tabs" hidden>
+  <button class="tab" data-tab="bench">Test bench <i id="bench-count" hidden></i></button>
+  <button class="tab" data-tab="public">Public</button>
+  <button class="tab" data-tab="add">+ Add app</button>
+  <button class="tab set" data-tab="settings">⚙ Settings</button>
+</nav>
 
 <!-- One-time sign in: the GitHub key stays only on this device -->
 <main id="signin" hidden>
@@ -132,8 +155,15 @@
 </main>
 
 <main id="home" hidden>
-  <section class="card addpanel" id="addpanel" hidden>
-    <button class="ghost x" id="add-close">✕ Close</button>
+  <section id="t-bench" class="tabpage">
+    <p class="hint">All your apps. A gold card has a version your friends don't have yet: install it to try, then press Publish.</p>
+    <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
+  </section>
+  <section id="t-public" class="tabpage" hidden>
+    <p class="hint">What your friends see in Play Hub right now.</p>
+    <div class="apps" id="pubapps"></div>
+  </section>
+  <section id="t-add" class="tabpage card" hidden>
   <div class="top">
     <section>
       <h3>Add an app file</h3>
@@ -153,7 +183,7 @@
         <div class="row"><label class="l">Category</label><input class="in" id="f-cat" maxlength="30" list="cats" placeholder="Games, Books, Music…"></div>
         <datalist id="cats"><option>Board games</option><option>Games</option><option>Books</option><option>Music</option><option>Video</option><option>Tools</option><option>Learning</option></datalist>
         <button class="gold wide" id="send">Send to Studio</button>
-        <div class="note">It shows up in your test bench in about 3 minutes. Nobody else sees it until you drop it onto Play Hub.</div>
+        <div class="note">It shows up in your test bench in about 3 minutes. Nobody else sees it until you press Publish.</div>
       </div>
       <div id="upload" hidden>
         <div><b id="up-title"></b></div>
@@ -166,19 +196,15 @@
   </div>
 
   </section>
-  <div class="cols">
-    <section>
-      <h3>Studio · your test bench</h3>
-      <p class="sub">Only you see these. Install any of them to try it. When one is ready for everyone, drag it by ⋮⋮ onto Play Hub.</p>
-      <div class="apps" id="apps"><div class="empty">Loading your apps…</div></div>
-    </section>
-    <section class="pub" id="pub">
-      <h3>Play Hub · for everyone</h3>
-      <p class="sub">What your friends see. Only the apps you drop here.</p>
-      <div class="zone" id="zone"><b>Drop an app here to publish</b><span>Or press ⋯ on an app and choose Publish</span></div>
-      <div class="apps" id="pubapps"></div>
-    </section>
-  </div>
+  <section id="t-settings" class="tabpage card settings" hidden>
+    <h3>Settings</h3>
+    <div class="line"><span>Signed in as</span><b id="set-who"></b></div>
+    <div class="line"><span>Studio page</span><b id="set-page"></b></div>
+    <div class="line" id="set-app-line" hidden><span>Studio app on this tablet</span><b id="set-app"></b></div>
+    <div class="line"><span>Last checked GitHub</span><b id="set-checked"></b></div>
+    <button class="danger" id="signout">Sign out of Studio</button>
+    <p class="hint" style="margin-top:10px">Only needed if you want to stop using Studio on this device. You will have to paste your GitHub key again.</p>
+  </section>
 </main>
 
 <div class="modal-bg" id="modal"><div class="card modal" id="modal-box"></div></div>
@@ -186,7 +212,7 @@
 <input type="file" id="pick-icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
 
 <script>
-const VERSION = '0.3.1';
+const VERSION = '0.4.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -200,7 +226,6 @@ const store = { get(k) { try { return localStorage.getItem(k); } catch { return 
 let token = store.get('studioKey');
 let studio = null, catalog = null, me = null;
 
-$('ver').textContent = `Studio ${VERSION}` + (bridge && bridge.hubVersion ? ` · app ${bridge.hubVersion()}` : '');
 
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('show'), 3200); }
 
@@ -246,10 +271,10 @@ $('signin-btn').onclick = async () => {
 };
 $('signout').onclick = () => confirmBox('Sign out of Studio?', 'You will need to paste your GitHub key again to use Studio on this device.', 'Sign out', () => { store.set('studioKey', null); token = null; showSignin(); });
 
-function showSignin() { $('signin').hidden = false; $('home').hidden = true; ['who','reload','signout','addbtn'].forEach(i => $(i).hidden = true); }
+function showSignin() { $('signin').hidden = false; $('home').hidden = true; $('tabs').hidden = true; $('sync').hidden = true; }
 async function showHome() {
-  $('signin').hidden = true; $('home').hidden = false; ['who','reload','signout','addbtn'].forEach(i => $(i).hidden = false);
-  if (me) $('who').innerHTML = `Signed in as <b>${esc(me.name || me.login)}</b>`;
+  $('signin').hidden = true; $('home').hidden = false; $('tabs').hidden = false; $('sync').hidden = false;
+  showTab(store.get('studioTab') || 'bench');
   await load();
   resumeUpload();
   window.onIncoming();
@@ -270,7 +295,7 @@ async function load(quiet) {
     // Claude raises studio.json "studioPage" whenever this page changes.
     const want = studio.studioPage, older = (x, y) => { const p = v => String(v).split('.').map(Number); const [a, b] = [p(x), p(y)]; for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
     if (want && older(VERSION, want)) { location.replace(location.pathname + '?v=' + encodeURIComponent(want)); return; }
-    $('who').innerHTML = `Signed in as <b>${esc(me.name || me.login)}</b>`;
+    $('set-who').textContent = me.name || me.login; checkedAt = Date.now(); showChecked();
     render();
     if (!quiet) return true;
   } catch (e) {
@@ -279,31 +304,62 @@ async function load(quiet) {
   }
 }
 $('reload').onclick = async () => { $('reload').disabled = true; await load(); $('reload').disabled = false; toast('Up to date with GitHub'); };
+let checkedAt = 0;
+function showChecked() {
+  if (!checkedAt) return;
+  const m = Math.floor((Date.now() - checkedAt) / 60000);
+  const t = m < 1 ? 'just now' : m === 1 ? '1 min ago' : m < 60 ? m + ' min ago' : 'over an hour ago';
+  $('checked').textContent = 'Checked ' + t; $('set-checked').textContent = t;
+}
+setInterval(showChecked, 30000);
+$('set-page').textContent = VERSION;
+if (bridge && bridge.hubVersion) { $('set-app-line').hidden = false; $('set-app').textContent = bridge.hubVersion(); }
 
-const TAG = { private:'Only for you', none:'Not published', newer:'Newer than Play Hub', details:'New details', live:'Published' };
+// Tabs
+function showTab(t) {
+  if (!$('t-' + t)) t = 'bench';
+  document.querySelectorAll('.tabpage').forEach(p => p.hidden = p.id !== 't-' + t);
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  store.set('studioTab', t);
+}
+$('tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) showTab(b.dataset.tab); };
+
 function stateOf(a, p) {
   if (a.private) return 'private';
   if (!p) return 'none';
   if (p.version !== a.version) return 'newer';
   return sameEntry(a, p) ? 'live' : 'details';
 }
+const needsPublish = st => st === 'none' || st === 'newer' || st === 'details';
+function pills(a, p) {
+  const sv = a ? `<span class="v${a && (!p || p.version !== a.version) ? ' hi' : ''}">In Studio <strong>${esc(a.version)}</strong></span>` : '';
+  const pv = `<span class="v">Public <strong>${p ? esc(p.version) : 'not published'}</strong></span>`;
+  return `<div class="vers">${sv}${a && a.private ? '' : pv}</div>`;
+}
 function render() {
   const pub = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
-  const list = studio.apps.slice().sort((a, b) => (a.private ? 1 : 0) - (b.private ? 1 : 0));
+  const rank = a => { const st = stateOf(a, pub[a.id]); return needsPublish(st) ? 0 : st === 'live' ? 1 : 2; };
+  const list = studio.apps.slice().sort((a, b) => rank(a) - rank(b));
+  let waiting = 0;
   $('apps').innerHTML = list.map(a => {
-    const p = pub[a.id], st = stateOf(a, p);
-    const line = st === 'newer' ? `Play Hub has ${esc(p.version)}` : st === 'details' ? 'Name, icon or text changed since you published' : st === 'none' ? 'Try it, then drag it onto Play Hub' : st === 'live' ? 'Same as in Play Hub' : 'Studio itself';
-    return `<div class="app${st === 'newer' || st === 'details' ? ' ready' : ''}" data-id="${esc(a.id)}">
-      <div class="h">${a.private ? '<span class="grip" style="visibility:hidden">⋮⋮</span>' : '<span class="grip" title="Drag onto Play Hub to publish">⋮⋮</span>'}<img src="${esc(iconSrc(a))}" alt=""><div class="t"><b>${esc(a.name)}<span class="tag">${TAG[st]}</span></b><small>Version ${esc(a.version)}${a.category ? ' · ' + esc(a.category) : ''} · ${line}</small>${a.note ? `<small style="display:block">What's new: ${esc(a.note)}</small>` : ''}</div>
-      <div class="acts">${tryButton(a)}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div></div>
-    </div>`;
-  }).join('') || '<div class="empty">No apps yet. Press + Add an app file.</div>';
-  const pubList = catalog.apps;
-  $('pubapps').innerHTML = pubList.map(p => {
+    const p = pub[a.id], st = stateOf(a, p), need = needsPublish(st);
+    if (need) waiting++;
+    const line = st === 'newer' ? `<div class="st">Newer in Studio · your friends still have ${esc(p.version)}</div>`
+      : st === 'none' ? `<div class="st">Only in Studio · nobody else can see it</div>`
+      : st === 'details' ? `<div class="st">Name, icon or text changed · not published yet</div>`
+      : st === 'live' ? `<div class="st ok">✓ Same as public</div>` : `<div class="st ok">Studio itself · only for you</div>`;
+    return `<div class="app${need ? ' ready' : ''}" data-id="${esc(a.id)}"><div class="row2">
+      <img src="${esc(iconSrc(a))}" alt=""><div><b class="n">${esc(a.name)}</b>${pills(a, p)}${line}${a.note && need ? `<small style="color:var(--muted)">What's new: ${esc(a.note)}</small>` : ''}</div>
+      <div class="acts">${tryButton(a)}${need ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${a.private ? '' : `<button class="btn" data-act="menu" title="More">⋯</button>`}</div>
+    </div></div>`;
+  }).join('') || '<div class="empty">No apps yet. Open + Add app.</div>';
+  $('bench-count').hidden = !waiting; $('bench-count').textContent = `${waiting} to publish`;
+  $('pubapps').innerHTML = catalog.apps.map(p => {
     const a = studio.apps.find(x => x.id === p.id), st = a ? stateOf(a, p) : 'live';
-    return `<div class="app" data-id="${esc(p.id)}"><div class="h"><img src="${esc(iconSrc(p))}" alt=""><div class="t"><b>${esc(p.name)}</b><small>Version ${esc(p.version)} for everyone${st === 'newer' ? ` · Studio has ${esc(a.version)}, drop it again to update` : st === 'details' ? ' · drop it again to show the new details' : ''}</small></div>
-      ${p.id !== 'hub' ? `<div class="acts"><button class="btn" data-act="hide">Take off</button></div>` : ''}</div></div>`;
-  }).join('') || '<div class="empty">Nothing published yet.<br>Play Hub is empty until you drop an app here.</div>';
+    const line = st === 'newer' ? `<div class="st">Studio has ${esc(a.version)} · not published yet</div>` : st === 'details' ? `<div class="st">New details in Studio · not published yet</div>` : `<div class="st ok">✓ Up to date</div>`;
+    return `<div class="app${needsPublish(st) ? ' ready' : ''}" data-id="${esc(p.id)}"><div class="row2"><img src="${esc(iconSrc(p))}" alt=""><div><b class="n">${esc(p.name)}</b>${pills(a, p)}${line}</div>
+      <div class="acts">${needsPublish(st) ? `<button class="gold" data-act="publish">Publish${st === 'newer' ? ' ' + esc(a.version) : ''}</button>` : ''}${p.id !== 'hub' ? `<button class="btn" data-act="hide">Take off</button>` : ''}</div></div></div>`;
+  }).join('') || '<div class="empty">Nothing published yet. Press Publish on an app in the Test bench.</div>';
 }
 
 // Try on the tablet: Studio app downloads and installs the test version, like Play Hub does.
@@ -313,7 +369,7 @@ function tryButton(a) {
   let job = null; try { job = JSON.parse(bridge.job(a.id) || 'null'); } catch {}
   if (job && job.state === 'downloading') return `<button class="btn" data-act="cancel">Downloading ${job.total ? Math.round(job.done * 100 / job.total) + '%' : '…'}</button>`;
   if (have === a.version) return a.id === 'hubstudio' ? '' : `<button class="btn" data-act="open">Open</button>`;
-  return `<button class="gold" data-act="try">${a.id === 'hubstudio' ? 'Update Studio' : have ? 'Install ' + esc(a.version) : 'Install'}</button>`;
+  return `<button class="btn" data-act="try">${a.id === 'hubstudio' ? 'Update Studio' : have ? 'Install ' + esc(a.version) : 'Install'}</button>`;
 }
 window.hubEvent = (id, what) => {
   const msg = { installing:'Installing…', installed:'Installed', failed:'The install did not work', back:'Install cancelled', missing:'Download it again', permission:'Allow Studio to install apps, then come back' }[what];
@@ -321,7 +377,7 @@ window.hubEvent = (id, what) => {
   if (studio) render();
 };
 window.refresh = () => { if (studio) render(); };
-setInterval(() => { if (bridge && studio && !drag && document.querySelector('[data-act="cancel"]')) render(); }, 1000);
+setInterval(() => { if (bridge && studio && document.querySelector('[data-act="cancel"]')) render(); }, 1000);
 
 const appOf = el => { const c = el.closest('.app'); return c && studio.apps.find(x => x.id === c.dataset.id); };
 $('apps').onclick = e => {
@@ -330,65 +386,23 @@ $('apps').onclick = e => {
   if (act === 'try') { bridge.download(a.id, apkUrl(a), a.version); toast('Downloading ' + a.name); setTimeout(render, 300); }
   else if (act === 'open') bridge.open(a.package);
   else if (act === 'cancel') { bridge.cancel(a.id); setTimeout(render, 500); }
+  else if (act === 'publish') publish(a);
   else if (act === 'menu') menu(a);
 };
 $('pubapps').onclick = e => {
-  const b = e.target.closest('button[data-act="hide"]'); if (!b) return;
+  const b = e.target.closest('button[data-act]'); if (!b) return;
   const id = b.closest('.app').dataset.id;
-  hide(catalog.apps.find(x => x.id === id));
+  if (b.dataset.act === 'publish') publish(studio.apps.find(x => x.id === id));
+  else hide(catalog.apps.find(x => x.id === id));
 };
 function menu(a) {
   const st = stateOf(a, catalog.apps.find(x => x.id === a.id));
-  modal(`<h4>${esc(a.name)} ${esc(a.version)}</h4><p>${esc(TAG[st])}</p><div class="menu">
-    ${st !== 'live' ? '<button class="gold" id="mm-pub">Publish to Play Hub</button>' : ''}
-    <button class="btn" id="mm-edit">Edit details</button><button class="btn" id="mm-no">Cancel</button></div>`);
-  if ($('mm-pub')) $('mm-pub').onclick = () => publish(a);
+  modal(`<h4>${esc(a.name)} ${esc(a.version)}</h4><p>Change the name, icon, text or What's new line.</p><div class="menu">
+    <button class="btn" id="mm-edit">Edit details</button>${st === 'live' && a.id !== 'hub' ? '<button class="btn" id="mm-off">Take off Play Hub</button>' : ''}<button class="btn" id="mm-no">Cancel</button></div>`);
   $('mm-edit').onclick = () => edit(a);
+  if ($('mm-off')) $('mm-off').onclick = () => hide(catalog.apps.find(x => x.id === a.id));
   $('mm-no').onclick = closeModal;
 }
-
-// Drag an app by its ⋮⋮ handle onto Play Hub to publish it. Works with a mouse and with a finger.
-// Holding an app (without moving) opens its menu, for the tablet.
-let drag = null, hold = null;
-const overZone = (x, y) => { const r = $('pub').getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
-$('apps').addEventListener('pointerdown', e => {
-  const card = e.target.closest('.app'); if (!card || e.target.closest('button')) return;
-  const a = studio.apps.find(x => x.id === card.dataset.id); if (!a) return;
-  if (!e.target.closest('.grip')) {   // hold anywhere else on the card = menu
-    if (a.private) return;
-    const x0 = e.clientX, y0 = e.clientY;
-    hold = { t: setTimeout(() => { hold = null; menu(a); }, 550), x0, y0 };
-    return;
-  }
-  e.preventDefault();
-  const r = card.getBoundingClientRect();
-  drag = { a, card, dx: e.clientX - r.left, dy: e.clientY - r.top, x0: e.clientX, y0: e.clientY, moved: false, ghost: null, w: r.width, id: e.pointerId };
-  try { e.target.setPointerCapture(e.pointerId); } catch {}
-});
-addEventListener('pointermove', e => {
-  if (hold && Math.hypot(e.clientX - hold.x0, e.clientY - hold.y0) > 8) { clearTimeout(hold.t); hold = null; }
-  if (!drag || e.pointerId !== drag.id) return;
-  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
-  if (!drag.moved) {
-    drag.moved = true;
-    drag.ghost = drag.card.cloneNode(true); drag.ghost.classList.add('floating'); drag.ghost.style.width = drag.w + 'px';
-    document.body.appendChild(drag.ghost); drag.card.classList.add('dragging');
-  }
-  drag.ghost.style.left = (e.clientX - drag.dx) + 'px'; drag.ghost.style.top = (e.clientY - drag.dy) + 'px';
-  $('zone').classList.toggle('hot', overZone(e.clientX, e.clientY));
-});
-function endDrag(e, cancel) {
-  if (hold) { clearTimeout(hold.t); hold = null; }
-  if (!drag || (e && e.pointerId !== drag.id)) return;
-  const d = drag; drag = null;
-  $('zone').classList.remove('hot'); d.card.classList.remove('dragging'); if (d.ghost) d.ghost.remove();
-  if (!cancel && d.moved && overZone(e.clientX, e.clientY)) {
-    if (stateOf(d.a, catalog.apps.find(x => x.id === d.a.id)) === 'live') toast(`${d.a.name} is already in Play Hub, nothing new to publish`);
-    else publish(d.a);
-  } else if (!d.moved) toast('Drag it by ⋮⋮ onto Play Hub to publish');
-}
-addEventListener('pointerup', e => endDrag(e));
-addEventListener('pointercancel', e => endDrag(e, true));
 
 function publish(a) {
   const p = catalog.apps.find(x => x.id === a.id);
@@ -555,9 +569,7 @@ $('pick').onchange = () => $('pick').files[0] && takeFile($('pick').files[0]);
 ['dragenter','dragover'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (!$('home').hidden) drop.classList.add('over'); }));
 ['dragleave','drop'].forEach(t => addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
 addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f && !$('home').hidden && $('upload').hidden) { openAdd(); takeFile(f); } });
-function openAdd() { $('addpanel').hidden = false; $('addpanel').scrollIntoView({ behavior:'smooth', block:'start' }); }
-$('addbtn').onclick = openAdd;
-$('add-close').onclick = () => { if (!$('upload').hidden && $('up-done').hidden) { toast('Still sending. You can close it when it is done.'); return; } $('addpanel').hidden = true; $('up-done').onclick(); };
+function openAdd() { showTab('add'); }
 
 // Tablet: an APK opened with Studio from Files / Downloads, or shared to it. The Studio app hands it over here.
 window.onIncoming = async () => {
