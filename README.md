@@ -11,7 +11,7 @@ New versions go to **Studio only**. Su tries them in Studio on the tablet and pr
 3. Once that release exists, set the app's `version` in **`studio.json`** (and its `"note"`: one line of what's new, shown in Play Hub's What's new when Su publishes).
 4. Do **not** edit `catalog.json` by hand. This includes Play Hub itself (`hub`): its APK updates also wait for Su to publish them. The **Play Hub page** too: edit only `hub-next/index.html` (the test copy, with a "Studio preview" ribbon) and raise its `PAGE_VER`. Never edit `hub/index.html`: Studio's Play Hub page card shows In Studio vs Public, and Su's Publish copies `hub-next/index.html` over `hub/index.html` and sets `live` on the `hub` entry.
 
-When you change the Studio page (`studio/index.html`), raise its `VERSION` and set `"studioPage"` in `studio.json` to match, so open or cached copies of Studio reload themselves before they can change Play Hub.
+When you change the Studio page (`studio/index.html`), raise its `VERSION` and merge. Wait until the *pages build and deployment* run for that commit has finished, then set `"studioPage"` in `studio.json` to match in a second PR, so open or cached copies of Studio reload themselves into the new page before they can change Play Hub. (Raising it before Pages serves the new page made cached copies reload over and over.)
 
 Ready-made APKs (like Quillsong) are dropped into Studio, which uploads them to an `upload/...` branch; the *Publish uploaded APK* workflow makes the release and adds the version to `studio.json`.
 
