@@ -7,7 +7,7 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - Studio reads `studio.json`. Publishing changes `catalog.json`.
 
 ## Current version
-- Studio page: 0.19.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
+- Studio page: 0.19.1 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
 - Studio app (APK): 0.6.0, camera for Take photo in Messages (bridge 4) (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
 
 ## Su's decisions
@@ -29,6 +29,8 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 
 - **Beta (0.19.0, Su 2026-11-25):** each app card shows In Studio · BETA · Public. Buttons: **Publish Beta** (catalog `apps[i].beta`, or `betaApps` for an app not public yet) + **Publish to everyone**; when the Studio version is the Beta: **Make public** (one tap, same version to everyone, clears the Beta). ⋯ menu: Send <ver> to one person… (writes `members/{uid}.early.<id>` = the public entry; needs People sign-in), Take back early versions, Stop the Beta. Card shows "Sent early to …". People: Beta requests (beta 'asked') at the top with Approve Beta / Decline; approved rows show a BETA tag; row details have Add to Beta / Take out of Beta. See `hub/NOTES.md` for the App Vault side.
 - **Messages fixes (0.19.0):** the gold dot clears when Su opens that person's chat (stamps `suSeenAt` on their reports; dot = status 'new' and not seen since the last message). Picked photos/files show a preview with Send / Cancel first. Take photo opens the camera in Studio app 0.6.0+ (older app: toast to update).
+
+- **Big files (0.19.1):** files up to 10 MB both ways. Over 900k characters the data URL is split into `reports/{rid}/parts/{key}-{i}` = `{from:'su', data}` and the msg carries `file {name,type,size,key,parts}` without data (same format as App Vault page 0.36.0). Studio shows "tap to save" and joins the parts. Delete chat also deletes parts.
 
 ## Known bugs
 - Fixed in 0.9.2: a cached old Studio page could reload itself forever ("Loading apps" blinking). It now reloads once per version with a fresh address, then shows the apps with publishing paused until the new page arrives.

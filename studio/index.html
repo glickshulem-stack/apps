@@ -171,6 +171,7 @@
   .m .tick.read { color:var(--gold2); font-weight:700; }
   .m .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; } .m .thumbs img { width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--line); cursor:zoom-in; background:var(--surface); }
   .filechip.big { display:block; font-size:1.05rem; padding:16px; margin:6px 0 4px; } .filechip.big small { color:var(--muted); margin-left:6px; }
+  button.filechip { background:none; font:inherit; cursor:pointer; text-align:left; }
   .filechip { display:inline-block; margin-top:6px; padding:8px 12px; border-radius:10px; border:1px solid var(--line); color:var(--goldhi); text-decoration:none; overflow-wrap:anywhere; }
   .ibcomp { position:relative; display:flex; gap:10px; align-items:flex-end; padding:12px 14px; border-top:1px solid var(--line); }
   .ibcomp textarea { flex:1; min-height:48px; max-height:160px; } .ibcomp .gold { padding:12px 22px; } .ibcomp .plus { font-size:1.4rem; padding:8px 16px; }
@@ -302,7 +303,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.19.0';
+const VERSION = '0.19.1';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -1150,7 +1151,8 @@ function chatMsgs(c, toEnd) {
   box.innerHTML = repItems(c).map(m => `<div class="m ${m.me ? 'me' : 'them'}">
       ${m.text && !(m.photo && /^📷/.test(m.text)) && !(m.file && /^📎/.test(m.text)) ? `<p>${esc(m.text)}</p>` : ''}
       ${m.pics === null ? '<small>Loading photos…</small>' : m.pics ? thumbs(m.pics) : ''}${m.photo ? thumbs([m.photo]) : ''}
-      ${m.file ? `<a class="filechip" download="${esc(m.file.name)}" href="${esc(m.file.data)}">📎 ${esc(m.file.name)}</a>` : ''}
+      ${m.file && m.file.data ? `<a class="filechip" download="${esc(m.file.name)}" href="${esc(m.file.data)}">📎 ${esc(m.file.name)}</a>`
+        : m.file && m.file.parts ? `<button class="filechip" data-big="${esc(m.rid)}" data-key="${esc(m.file.key)}" data-parts="${+m.file.parts}" data-name="${esc(m.file.name)}" data-type="${esc(m.file.type || '')}">📎 ${esc(m.file.name)}${m.file.size ? ` · ${(m.file.size / 1048576).toFixed(1)} MB` : ''} · tap to save</button>` : ''}
       <small>${pplDay(m.t)}${m.me ? (m.read ? ' · <span class="tick read">✓✓ Read</span>' : ' · <span class="tick">✓ Sent</span>') : ''}</small></div>`).join('');
   if (end) box.scrollTop = box.scrollHeight;
 }
@@ -1171,6 +1173,12 @@ async function repPost(extra) {   // add one message from you to the person's la
   const c = repConvs().find(x => x.uid === rep.sel); if (!c) return false;
   const { F, db } = ppl.fb, r = c.last;
   try {
+    if (extra.file && extra.file.data && extra.file.data.length > 900000) {   // big file: save its pieces first, then a message that names them
+      const f = extra.file, key = Date.now().toString(36), n = Math.ceil(f.data.length / 900000);
+      if (n > 16) { toast('That file is too big. Files up to 10 MB can be sent.'); return false; }
+      for (let i = 0; i < n; i++) await F.setDoc(F.doc(db, 'reports', r.id, 'parts', key + '-' + i), { from:'su', data:f.data.slice(i * 900000, (i + 1) * 900000) });
+      extra = { ...extra, file:{ name:f.name, type:f.type, size:Math.round(f.data.length * .75), key, parts:n } };
+    }
     await F.addDoc(F.collection(db, 'reports', r.id, 'msgs'), { from:'su', created:F.serverTimestamp(), ...extra });
     for (const x of c.reps) if (x.status === 'new' && x.id !== r.id) F.updateDoc(F.doc(db, 'reports', x.id), { status:'replied' }).catch(console.warn);
     await F.updateDoc(F.doc(db, 'reports', r.id), { status:'replied', lastAt:F.serverTimestamp(), userUnread:true });
@@ -1201,7 +1209,7 @@ async function repAttach(file, kind) {
     let msg, view;
     if (kind === 'photo') { const photo = await shrinkPhoto(file); msg = { text:'📷 Photo', photo }; view = `<img class="bigphoto" src="${photo}" alt="">`; }
     else {
-      if (file.size > 700000) { toast('That file is too big. Files up to 700 KB can be sent.'); return; }
+      if (file.size > 10 * 1048576) { toast('That file is too big. Files up to 10 MB can be sent.'); return; }
       const data = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(file); });
       msg = { text:'📎 ' + file.name, file:{ name:file.name, type:file.type || '', data } };
       view = `<div class="filechip big">📎 ${esc(file.name)} <small>${Math.max(1, Math.round(file.size / 1024))} KB</small></div>`;
@@ -1214,8 +1222,18 @@ async function repAttach(file, kind) {
 $('pick-photo').onchange = e => { repAttach(e.target.files[0], 'photo'); e.target.value = ''; };
 $('take-photo').onchange = e => { repAttach(e.target.files[0], 'photo'); e.target.value = ''; };
 $('pick-file').onchange = e => { const f = e.target.files[0]; repAttach(f, f && /^image\//.test(f.type) ? 'photo' : 'file'); e.target.value = ''; };
+// Big files (App Vault page 0.36.0+, up to 10 MB) are kept in pieces: reports/{rid}/parts/{key}-{i} = { data }. Join them to save.
+async function repSaveBig(b) {
+  const { F, db } = ppl.fb, d = b.dataset; b.disabled = true; toast('Getting the file…');
+  try {
+    const parts = await Promise.all([...Array(+d.parts).keys()].map(i => F.getDoc(F.doc(db, 'reports', d.big, 'parts', d.key + '-' + i)).then(x => x.data().data)));
+    const a = document.createElement('a'); a.href = parts.join(''); a.download = d.name || 'file'; document.body.appendChild(a); a.click(); a.remove();
+  } catch (x) { console.warn(x); toast('That file could not be opened. Check the internet and try again.'); }
+  b.disabled = false;
+}
 $('t-reports').onclick = e => {
   const row = e.target.closest('.ibrow'); if (row) return openChat(row.dataset.uid);
+  const big = e.target.closest('[data-big]'); if (big) return repSaveBig(big);
   const img = e.target.closest('.thumbs img'); if (img) { modal(`<img class="bigphoto" src="${img.src}" alt=""><div class="acts"><button class="btn" id="m-no">Close</button></div>`); $('m-no').onclick = closeModal; return; }
   const b = e.target.closest('button[data-do]'), menu = $('plusmenu');
   if (menu && !(b && b.dataset.do === 'plus')) menu.hidden = true;
@@ -1240,6 +1258,7 @@ $('t-reports').onclick = e => {
       for (const r of c.reps) {
         for (let i = 0; i < (r.photos || 0); i++) await F.deleteDoc(F.doc(db, 'reports', r.id, 'photos', String(i)));
         const ms = await F.getDocs(F.collection(db, 'reports', r.id, 'msgs')); for (const d of ms.docs) await F.deleteDoc(d.ref);
+        const ps = await F.getDocs(F.collection(db, 'reports', r.id, 'parts')); for (const d of ps.docs) await F.deleteDoc(d.ref);
         if (rep.msgOff[r.id]) { rep.msgOff[r.id](); delete rep.msgOff[r.id]; }
         await F.deleteDoc(F.doc(db, 'reports', r.id));
       }
