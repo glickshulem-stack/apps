@@ -27,7 +27,7 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 
 | App | Folder | Current version | Status | Next to-do |
 |---|---|---|---|---|
-| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.16.0 (People with who has which apps + Messages with replies), app 0.5.0 | testing | Su pastes the new database rules (steps 2+3), tests People and Messages |
+| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.17.0 (Navy & Gold; People with who has which apps + Messages with replies), app 0.5.0 | testing | Su pastes the new database rules (steps 2+3), tests People and Messages |
 | App Vault | `hub/` (page) + `android/hub/` (app) | page 0.30.0 public, 0.31.0 in Studio (chat with the developer in Settings); app 0.11.0 public (photo picker) | testing | Su pastes the new rules, tries page 0.31.0 (send a message, Su replies in Studio › Messages, answer back), then Publishes. Next: publish to chosen people |
 | Gambit (chess) | `apps/chess/` + `android/chess/` | 0.31.0 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
