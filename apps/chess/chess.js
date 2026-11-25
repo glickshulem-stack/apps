@@ -1,4 +1,4 @@
-const VERSION = '0.28.0';
+const VERSION = '0.28.1';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -327,17 +327,19 @@ function ghost(c, t, rect) {
   g.innerHTML = piece(c, t, '');
   document.body.appendChild(g); return g;
 }
-function glide(c, t, fromRect, tr, tc) {
+function glide(c, t, fromRect, tr, tc, ms) {
   const sq = sqEl(tr, tc), real = sq.querySelector('svg.pc'), to = sq.getBoundingClientRect();
   if (!real || !fromRect) return;
   real.style.visibility = 'hidden';
   const g = ghost(c, t, fromRect);
-  const dx = to.left - fromRect.left, dy = to.top - fromRect.top, lift = Math.min(40, Math.hypot(dx, dy) * .12);
+  const dx = to.left - fromRect.left, dy = to.top - fromRect.top, dist = Math.hypot(dx, dy), sq1 = to.width || 60;
+  // a gentle glide you can follow: longer moves take a little longer (about 0.4 s to 0.65 s), with a soft lift
+  const dur = ms ?? Math.round(Math.min(650, 360 + dist / sq1 * 45)), lift = ms ? 0 : Math.min(22, dist * .06);
   const anim = g.animate([
     { transform: 'translate(0,0) scale(1)', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.25))' },
-    { transform: `translate(${dx*.5}px, ${dy*.5 - lift}px) scale(1.12)`, filter: 'drop-shadow(0 12px 10px rgba(0,0,0,.35))', offset: .5 },
+    { transform: `translate(${dx*.5}px, ${dy*.5 - lift}px) scale(${ms ? 1 : 1.06})`, filter: 'drop-shadow(0 8px 8px rgba(0,0,0,.3))', offset: .5 },
     { transform: `translate(${dx}px, ${dy}px) scale(1)`, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.25))' }
-  ], { duration: 340, easing: 'cubic-bezier(.4,0,.2,1)' });
+  ], { duration: dur, easing: 'cubic-bezier(.45,.05,.25,1)' });
   anim.onfinish = () => { g.remove(); real.style.visibility = ''; };
 }
 // Slide pieces between squares after the board has been redrawn (stepping through moves, undo).
@@ -392,9 +394,10 @@ boardEl.addEventListener('pointermove', e => {
   if (pdraw) return penMove(e);
   if (!drag) return;
   const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
-  if (!drag.moved && Math.hypot(dx, dy) < 6) return;
-  drag.moved = true;
-  drag.pc.style.transition = 'none'; drag.pc.style.zIndex = 10; drag.pc.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`;
+  // a finger wobbles a little on a tap, so only count it as a drag once it really moves
+  if (!drag.moved && Math.hypot(dx, dy) < (e.pointerType === 'mouse' ? 6 : 14)) return;
+  if (!drag.moved) { drag.moved = true; drag.pc.style.zIndex = 10; drag.pc.style.transition = 'transform .12s ease-out'; setTimeout(() => { if (drag?.pc) drag.pc.style.transition = 'none'; }, 120); }
+  drag.pc.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
 });
 boardEl.addEventListener('pointerup', e => {
   if (pdraw) return penUp(e);
@@ -403,8 +406,16 @@ boardEl.addEventListener('pointerup', e => {
   const sq = squareAt(e.clientX, e.clientY);
   if (d.moved) {
     const mv = sq ? movesTo(sq[0], sq[1]) : [];
-    if (mv.length > 1) { render(); return askPromo(mv); }
-    if (mv.length) return doMove(mv[0], false);
+    if (mv.length > 1) { d.pc.style.transform = ''; render(); return askPromo(mv); }
+    if (mv.length) {
+      // let go on a square: the piece settles softly into the middle of it
+      const from = d.pc.getBoundingClientRect(), p = S.board[d.r][d.c], m = mv[0];
+      d.pc.style.transform = ''; d.pc.style.zIndex = '';
+      doMove(m, false); glide(p.c, m.promo || p.t, from, m.tr, m.tc, 160); return;
+    }
+    // not a legal square: the piece floats back home instead of snapping
+    d.pc.style.transition = 'transform .25s cubic-bezier(.3,.7,.3,1)'; d.pc.style.transform = '';
+    setTimeout(() => { d.pc.style.transition = ''; d.pc.style.zIndex = ''; }, 260);
     render();
   } else if (d.wasSelected) { selected = null; legalForSel = []; render(); }
 });
