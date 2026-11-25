@@ -246,6 +246,17 @@
   .rp-tray .acts { display:flex; justify-content:space-between; align-items:center; margin-top:10px; color:var(--muted); font-size:.9rem; }
   .rp-tray .cancel { background:none; border:1px solid var(--line); color:var(--text); border-radius:99px; padding:8px 16px; font-weight:600; cursor:pointer; }
   .rp-err { color:#e08a5a; font-size:.9rem; min-height:1.2em; margin-top:8px; text-align:center; }
+  .bt { display:inline-block; font:800 .62rem/1 Inter,sans-serif; font-style:normal; letter-spacing:.08em; padding:3px 6px; border-radius:5px; color:#2a1d10; background:linear-gradient(180deg,#f6dc9c,#c9993f); vertical-align:middle; }
+  .btn .bt { background:#2a1d10; color:#f3d58f; margin-left:4px; }
+  .betaline { color:var(--gold2); font-size:.8rem; margin-top:6px; font-weight:600; }
+  .betabox { display:flex; align-items:center; gap:14px; margin-top:16px; padding:14px 16px; border:1px solid rgba(212,166,74,.55); }
+  .betabox > div { flex:1; display:flex; flex-direction:column; gap:4px; } .betabox span { color:var(--muted); font-size:.9rem; } .betabox small { color:var(--gold2); }
+  .ask-bg { position:fixed; inset:0; z-index:300; background:rgba(5,8,15,.72); display:grid; place-items:center; padding:16px; }
+  .ask-bg[hidden] { display:none; }
+  .ask { width:min(440px,100%); background:#172136; border:1px solid #2a3753; border-radius:20px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .ask h4 { margin:0 0 10px; font-size:1.2rem; } .ask p { color:#c9d0de; line-height:1.5; margin:0 0 10px; } .ask p b { color:#f1f3f8; }
+  .ask-acts { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+  .ask-no { border:1px solid #2a3753; background:#1f2b43; color:#f1f3f8; border-radius:999px; padding:10px 20px; font:600 .92rem Inter,sans-serif; cursor:pointer; } .ask-no.small { padding:7px 14px; }
 </style>
 </head>
 <body>
@@ -265,6 +276,7 @@
 <div class="sheet-bg" id="sheet"><div class="sheet" id="panel">
   <div class="sheet-head"><h4 class="goldtext">Settings</h4><button class="iconbtn" id="s-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="s-me"></div>
+  <div id="s-beta"></div>
   <h5>Updates</h5>
   <button class="bigbtn" id="refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Check for updates</button>
   <div class="last" id="s-last"></div>
@@ -292,7 +304,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.34.0';
+const PAGE_VER = '0.35.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -302,7 +314,7 @@ function onStatus(id, text) { status[id] = text; render(); }          // old App
 function hubEvent(id, what) {
   if (flow[id]) flow[id].phase = what; else flow[id] = { phase: what };
   render();
-  const app = catalog && catalog.apps.find(x => x.id === id);
+  const app = catalog && (appById(id) || catalog.apps.find(x => x.id === id));
   if (what === 'installed' && app) toast('✓', `${app.name} is updated`, 'Installed by App Vault');
   if (what === 'installed' && typeof reportApps === 'function') reportApps();
 }
@@ -317,6 +329,61 @@ function act(a) {
 // App Vault came back to the front (e.g. the Android install screen closed)
 function onHubResume() { for (const id in flow) if (flow[id].phase === 'installer') flow[id].phase = 'back'; }
 
+/* Beta (page 0.35.0). catalog.json apps[i].beta = { version, note } is a Beta of a public app; betaApps = apps only in Beta.
+   members/{uid}.beta === 'yes' = this person is in Beta (they asked with Join Beta, Su approved in Studio);
+   members/{uid}.early = { appId: entry } = a version Su sent to just this person. Both show a gold BETA tag.
+   A person on the normal version is offered normal updates, and can install the Beta from the app page (after a warning).
+   Once a Beta is installed (installed version newer than public), they get that app's Beta updates by themselves. */
+function vaultMe() { try { return gate.me && gate.me.status === 'approved' ? gate.me : null; } catch { return null; } }
+function betaFor(a) {
+  const m = vaultMe(); if (!m) return null;
+  let best = null;
+  if (m.beta === 'yes' && a.beta && a.beta.version) best = { version:a.beta.version, note:a.beta.note || '' };
+  const e = m.early && m.early[a.id];
+  if (e && e.version && (!best || newer(e.version, best.version))) best = { version:e.version, note:e.note || '', early:true };
+  return best && newer(best.version, a.version) ? best : null;
+}
+function vaultApps() {
+  if (!catalog) return [];
+  const m = vaultMe(), out = [];
+  for (const a of catalog.apps) {
+    if (a.id === 'hub') continue;
+    const have = hasHub ? Hub.installedVersion(a.package) : '', b = betaFor(a), f = flow[a.id];
+    const going = b && ((have && newer(have, a.version)) || (f && f.version === b.version) || (kept2 && Hub.kept(a.id) === b.version));
+    if (going) out.push({ ...a, pubVersion:a.version, version:b.version, isBeta:true, betaNote:b.note, early:b.early });
+    else out.push({ ...a, pubVersion:a.version, betaAvail:b });
+  }
+  if (m) {
+    for (const a of catalog.betaApps || []) {
+      if (out.some(x => x.id === a.id)) continue;
+      const e = m.early && m.early[a.id]; let v = m.beta === 'yes' ? a.version : null;
+      if (e && e.version && (!v || newer(e.version, v))) v = e.version;
+      if (v) out.push({ ...a, version:v, isBeta:true, betaOnly:true, betaNote:(a.beta && a.beta.note) || '', early:!!(e && v === e.version) });
+    }
+    for (const id in m.early || {}) {   // an app Su sent only to this person
+      const e = m.early[id]; if (!e || !e.package || !e.version || out.some(x => x.id === id) || id === 'hub') continue;
+      out.push({ ...e, id, isBeta:true, betaOnly:true, early:true });
+    }
+  }
+  return out;
+}
+const appById = id => vaultApps().find(x => x.id === id);
+const onBetaBuild = (a, have) => !!(have && (a.betaOnly || (a.pubVersion && newer(have, a.pubVersion))));
+// The warning before a Beta goes on this device (Su: going back means a newer normal version, or uninstalling and losing the app's data).
+function betaWarn(a, ver, go) {
+  ask(`Install the Beta of ${esc(a.name)}?`,
+    `<p>Beta versions come early, before everyone else, so they can have bugs.</p>
+     <p><b>Going back is not simple:</b> to get off the Beta, you either wait until a newer normal version of ${esc(a.name)} comes out (App Vault offers it by itself), or you uninstall ${esc(a.name)}, which <b>deletes all its data</b> on this device.</p>`,
+    `Install Beta ${esc(ver)}`, go);
+}
+function ask(title, html, okLabel, go) {
+  let box = $('ask'); if (!box) { document.body.insertAdjacentHTML('beforeend', '<div class="ask-bg" id="ask" hidden></div>'); box = $('ask'); }
+  box.innerHTML = `<div class="ask"><h4 class="goldtext">${title}</h4>${html}<div class="ask-acts"><button class="ask-no" id="ask-no">Not now</button><button class="btn" id="ask-ok">${okLabel}</button></div></div>`;
+  box.hidden = false;
+  const close = () => { box.hidden = true; box.innerHTML = ''; };
+  $('ask-no').onclick = close; box.onclick = e => { if (e.target === box) close(); };
+  $('ask-ok').onclick = () => { close(); go(); };
+}
 /* What an app's card should show right now: a button (or none), a status line, and maybe a progress bar. */
 function stateOf(a, have) {
   const need = !have || newer(a.version, have), f = flow[a.id];
@@ -359,7 +426,12 @@ function button(a, have) {
     b.onclick = () => location.href = '../' + a.webPath; return b;
   }
   const s = stateOf(a, have).btn; if (!s) return null;
-  const b = document.createElement('button'); b.className = 'btn ' + s.cls; b.textContent = s.label; b.onclick = s.fn; return b;
+  const b = document.createElement('button'); b.className = 'btn ' + s.cls; b.textContent = s.label; b.onclick = s.fn;
+  if (a.isBeta && s.cls !== 'open') {
+    b.insertAdjacentHTML('beforeend', ' <i class="bt">BETA</i>');
+    if (!onBetaBuild(a, have)) b.onclick = () => betaWarn(a, a.version, s.fn);   // first time on the Beta: warn first
+  }
+  return b;
 }
 function barHtml(st) { return st && st.pct != null ? `<div class="bar${st.pct < 0 ? ' wait' : ''}"><i style="${st.pct >= 0 ? `width:${st.pct}%` : ''}"></i></div>` : ''; }
 
@@ -386,18 +458,19 @@ function renderRemoved() {
 }
 function render() {
   if (!catalog) return;
-  const apps = catalog.apps.filter(a => a.id !== 'hub'), hub = catalog.apps.find(a => a.id === 'hub');
+  const apps = vaultApps(), hub = catalog.apps.find(a => a.id === 'hub');
   const list = $('list'); list.innerHTML = ''; let busy = false, inst = 0, ups = 0;
   if (!apps.length) list.innerHTML = '<div class="msg">No apps here yet. New apps will appear soon.</div>';
   for (const a of apps) {
     if (!a) continue;
     const have = hasHub ? Hub.installedVersion(a.package) : '';
     const shown = a.live || a.version;
-    let meta = have ? `✓ Installed · v${a.live || have}` : `v${shown}`, up = false;
+    let meta = have ? `✓ Installed · v${have}` : `v${shown}`, up = false;
+    const betaTag = a.isBeta || onBetaBuild(a, have);
     if (have && newer(a.version, have)) { meta = `★ Update · v${a.version}`; up = true; }
     const st = hasHub ? stateOf(a, have) : null; if (st && st.pct != null) busy = true;
     const card = document.createElement('div'); card.className = 'card'; card.dataset.id = a.id;
-    card.innerHTML = `<div class="cover"${a.hero ? ` style="background:${a.hero}"` : ''}>${a.category ? `<span class="cat">${a.category}</span>` : ''}<img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}</div><div class="sub">${a.tagline || ''}</div>${barHtml(st)}${st && st.status ? `<div class="status ${st.cls || ''}">${st.status}</div>` : ''}<div class="foot"><span class="meta${up ? ' up' : ''}">${meta}</span></div></div>`;
+    card.innerHTML = `<div class="cover"${a.hero ? ` style="background:${a.hero}"` : ''}>${a.category ? `<span class="cat">${a.category}</span>` : ''}<img src="../${a.iconUrl}" alt=""></div><div class="info"><div class="name">${a.name}${betaTag ? ' <i class="bt">BETA</i>' : ''}</div><div class="sub">${a.tagline || ''}</div>${a.betaAvail ? `<div class="betaline">Beta v${a.betaAvail.version} available · open to try it</div>` : ''}${barHtml(st)}${st && st.status ? `<div class="status ${st.cls || ''}">${st.status}</div>` : ''}<div class="foot"><span class="meta${up ? ' up' : ''}">${meta}</span></div></div>`;
     const b = button(a, have); if (b) card.querySelector('.foot').appendChild(b);
     card.onclick = e => { if (!e.target.closest('button')) openDetail(a.id); };
     if (have) inst++; if (up) ups++;
@@ -428,7 +501,7 @@ function render() {
 let detailId = null;
 const dayName = d => { try { return new Date(d + 'T12:00').toLocaleDateString([], { month:'short', day:'numeric', year:'numeric' }); } catch { return d; } };
 function openDetail(id) {
-  const a = catalog && catalog.apps.find(x => x.id === id); if (!a) return;
+  const a = catalog && appById(id); if (!a) return;
   const again = detailId && history.state && history.state.detail;
   detailId = id; buildDetail(a);
   $('detail').scrollTop = 0; $('detail').classList.add('show');
@@ -442,6 +515,7 @@ function buildDetail(a) {
   <div class="d-wrap">
     <div class="d-top"><div class="d-icon"${a.hero ? ` style="background:${a.hero}"` : ''}><img src="../${a.iconUrl}" alt=""></div>
       <div class="d-t">${a.category ? `<div class="k">${a.category}</div>` : ''}<h2>${a.name}</h2><p>${a.tagline || ''}</p><div id="d-act"></div></div></div>
+    <div id="d-beta"></div>
     <div class="facts" id="d-facts"></div>
     ${shots.length ? `<h3>Screenshots</h3><div class="shots" id="d-shots">${shots.map(src => `<img src="../${src}" alt="" loading="lazy">`).join('')}</div>${shots.length > 1 ? `<div class="sdots">${shots.map((s, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</div>` : ''}` : ''}
     ${a.description ? `<h3>About this app</h3><div class="box d-about">${a.description}</div>` : ''}
@@ -457,12 +531,17 @@ function buildDetail(a) {
 // The button, status and facts change while installing, so they are redrawn with the list.
 function updateDetail() {
   if (!detailId || !catalog) return;
-  const a = catalog.apps.find(x => x.id === detailId); if (!a) { hideDetail(); return; }
+  const a = appById(detailId); if (!a) { hideDetail(); return; }
   const have = hasHub ? Hub.installedVersion(a.package) : '';
   const st = hasHub ? stateOf(a, have) : null, box = $('d-act'); if (!box) return;
   box.innerHTML = ''; const b = button(a, have); if (b) box.appendChild(b);
   box.insertAdjacentHTML('beforeend', barHtml(st) + (st && st.status ? `<div class="status ${st.cls || ''}">${st.status}</div>` : ''));
   const up = have && newer(a.version, have);
+  const bb = $('d-beta'), from = a.early ? '<small>The developer sent this early version just to you.</small>' : '';
+  if (bb) bb.innerHTML = a.betaAvail ? `<div class="box betabox"><div><b><i class="bt">BETA</i> Version ${a.betaAvail.version}</b>${a.betaAvail.note ? `<span>${esc(a.betaAvail.note)}</span>` : ''}${a.betaAvail.early ? '<small>The developer sent this early version just to you.</small>' : ''}</div>${hasHub ? '<button class="btn" id="d-trybeta">Try the Beta</button>' : ''}</div>`
+    : a.isBeta ? `<div class="box betabox"><div><b><i class="bt">BETA</i> ${onBetaBuild(a, have) ? 'You have the Beta' : 'This is a Beta version'}</b>${a.betaNote ? `<span>${esc(a.betaNote)}</span>` : ''}${from}</div></div>`
+    : onBetaBuild(a, have) ? `<div class="box betabox"><div><b><i class="bt">BETA</i> You have Beta v${have}</b><span>You'll get the next normal version when it is newer.</span></div></div>` : '';
+  if ($('d-trybeta')) $('d-trybeta').onclick = () => betaWarn(a, a.betaAvail.version, () => act({ ...a, version:a.betaAvail.version }));
   const fact = (v, k) => `<div><b>${v}</b><small>${k}</small></div>`;
   $('d-facts').innerHTML = fact('v' + (up ? a.version : (a.live || a.version)), up ? 'New version' : 'Version') + (a.category ? fact(a.category, 'Category') : '') +
     (hasHub ? fact(have ? (up ? 'v' + have : '✓ Yes') : 'No', have ? (up ? 'You have' : 'Installed') : 'Installed') : '');
@@ -495,7 +574,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 /* What changed since the last check: app updates waiting to install, and apps that got a new version by themselves. */
 function news() {
-  const apps = catalog.apps.filter(a => a.id !== 'hub'), out = { updates: [], fresh: [] };
+  const apps = vaultApps(), out = { updates: [], fresh: [] };
   let seen = {}; try { seen = JSON.parse(localStorage.getItem('seenLive') || '{}'); } catch {}
   const first = !Object.keys(seen).length;
   for (const a of apps) {
@@ -710,7 +789,7 @@ function reportApps() { clearTimeout(reportTimer); reportTimer = setTimeout(repo
 async function reportNow() {
   if (!gate.fb || !gate.uid || !gate.me || gate.me.status !== 'approved' || !catalog) return;
   const apps = {};
-  if (hasHub) for (const a of catalog.apps) { const v = a.id === 'hub' ? hubVer : Hub.installedVersion(a.package); if (v) apps[a.id] = String(v).slice(0, 20); }
+  if (hasHub) for (const a of [...catalog.apps, ...vaultApps().filter(x => x.betaOnly)]) { const v = a.id === 'hub' ? hubVer : Hub.installedVersion(a.package); if (v) apps[a.id] = String(v).slice(0, 20); }
   const key = JSON.stringify([apps, PAGE_VER]);
   let last = null; try { last = JSON.parse(localStorage.getItem('vaultReported') || 'null'); } catch {}
   if (last && last.key === key && last.uid === gate.uid && Date.now() - last.t < 864e5) return;
@@ -727,6 +806,22 @@ function renderMe() {
   box.innerHTML = m && m.status === 'approved' ? `<h5>Account</h5><div class="box"><div class="row"><span class="rl"><svg class="ri" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>${esc(m.name)}<small>Approved · ${esc(gate.me && gate.me.device || deviceName())}</small></span></span><span class="vv">✓</span></div></div>` : '';
 }
 renderMe();
+// Join / Leave Beta (page 0.35.0). The rules let a person set members/{uid}.beta only to 'asked' or 'no'; Su approves ('yes') in Studio.
+function renderBeta() {
+  const m = vaultMe(), box = $('s-beta'); if (!box) return;
+  if (!m) { box.innerHTML = ''; return; }
+  const ic = '<svg class="ri" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 18.5A2 2 0 006.2 21h11.6a2 2 0 001.7-2.5L14 9V3"/><path d="M7 15h10"/></svg>';
+  box.innerHTML = `<h5>Beta</h5><div class="box">${m.beta === 'yes'
+    ? `<div class="row"><span class="rl">${ic}<span>You're in Beta <i class="bt">BETA</i><small>You can try new versions before everyone else</small></span></span><button class="ask-no small" id="beta-leave">Leave</button></div>`
+    : m.beta === 'asked'
+    ? `<div class="row"><span class="rl">${ic}<span>Beta<small>Request sent · waiting for approval</small></span></span><span class="vv">…</span></div>`
+    : `<div class="row click" id="beta-join"><span class="rl">${ic}<span>Join Beta<small>Try new versions of apps before everyone else</small></span></span><span>›</span></div>`}</div>`;
+  const set = async v => { try { const { F, db } = gate.fb; await F.updateDoc(F.doc(db, 'members', gate.uid), { beta:v }); } catch (x) { console.warn(x); toast('!', 'That didn\'t go through', navigator.onLine ? 'Please try again later.' : 'Connect to the internet and try again.'); } };
+  if ($('beta-join')) $('beta-join').onclick = () => ask('Join Beta?', '<p>Beta versions come early, before everyone else, so they can have bugs. You choose app by app whether to install a Beta.</p><p>The developer approves your request.</p>', 'Ask to join', async () => { await set('asked'); toast('✓', 'Request sent', 'You\'ll see Beta versions once you\'re approved.'); });
+  if ($('beta-leave')) $('beta-leave').onclick = () => ask('Leave Beta?', '<p>You stop getting Beta versions. Apps where you have a Beta keep it until a newer normal version comes out.</p>', 'Leave Beta', async () => { await set('no'); toast('✓', 'You left Beta', 'You\'ll get normal versions from now on.'); });
+}
+{ const base = gateApply; gateApply = function (d) { base(d); renderBeta(); if (catalog) render(); }; }
+renderBeta();
 gateStart();
 </script>
 <script>

@@ -28,6 +28,11 @@ service cloud.firestore {
         && request.resource.data.apps.size() <= 50
         && request.resource.data.page is string
         && request.resource.data.page.size() <= 20);
+      // Join Beta / Leave Beta (App Vault page 0.34.0+): a person may only ask to join, or leave. Su approves ('yes') in Studio.
+      allow update: if request.auth != null && request.auth.uid == uid
+        && resource.data.status == 'approved'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['beta'])
+        && request.resource.data.beta in ['asked', 'no'];
       allow delete: if isSu();
     }
     function approved() {

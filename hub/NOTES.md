@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (App Vault page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html`. Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.32.0); test copy `hub-next/index.html` 0.34.0 (picked photos/files wait in a tray with ✕ and Cancel until Send; 0.33.0: one chat per person with + button for photo/camera/file, on top of 0.32.0 Navy & Gold) waiting for Su's Publish
+- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.33.0); test copy `hub-next/index.html` 0.35.0 (Beta channel; 0.34.0 = picked photos/files wait in a tray until Send) waiting for Su's Publish
 - App Vault app (APK): 0.12.0 (bridge 6: chat picker can take a photo with the camera or pick any file; 0.11.0 = photo picker, bridge 5) (`android/hub/app/build.gradle`)
 
 ## Su's decisions
@@ -36,3 +36,5 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 
 ## To-do
 - Su tries page 0.22.0 and app 0.10.0 (Tile vault icon) from Studio, then Publishes.
+
+- **Beta (page 0.35.0, Su 2026-11-25):** Settings › Beta: Join Beta (sets `members/{uid}.beta = 'asked'`, Su approves → 'yes' in Studio People) / Leave (sets 'no'). Rules let a person set `beta` only to 'asked' or 'no'. catalog.json `apps[i].beta = {version, note, date}` = Beta of a public app; `betaApps` = apps only in Beta (old pages ignore both). `members/{uid}.early = {appId: entry}` = a version Su sent to one person. `vaultApps()` builds what this person sees: public version offered normally + "Beta vX available · Try the Beta" on the app page; once a Beta is installed (installed newer than public) that app follows Beta updates by itself. First Beta install shows a warning (going back = wait for a newer normal version, or uninstall and lose the app's data). Gold **BETA** tag on the card name, the button and the app page. Leaving Beta keeps installed Betas until a newer normal version.

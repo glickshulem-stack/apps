@@ -1,7 +1,9 @@
 package com.glickshulem.hubstudio;
 
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Intent;
+import android.provider.MediaStore;
 import android.app.PendingIntent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
@@ -83,13 +85,28 @@ public class MainActivity extends Activity {
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
-            // "Choose an app file" on the Studio page: let Su pick an APK from the tablet.
+            // File picker for the Studio page: app files (APKs), and in Messages photos, any file, or the camera (Studio app 0.6.0).
             @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
                 if (picking != null) picking.onReceiveValue(null);
-                picking = cb;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
-                try { startActivityForResult(Intent.createChooser(i, "Choose an app file"), PICK); }
-                catch (Exception e) { picking = null; cb.onReceiveValue(null); return false; }
+                picking = cb; shot = null;
+                String type = "*/*";
+                if (p != null && p.getAcceptTypes() != null && p.getAcceptTypes().length > 0 && p.getAcceptTypes()[0] != null && !p.getAcceptTypes()[0].isEmpty()
+                    && p.getAcceptTypes()[0].startsWith("image")) type = "image/*";
+                try {
+                    if (p != null && p.isCaptureEnabled()) {   // "Take photo": open the camera, it saves into our cache
+                        File dir = new File(getCacheDir(), "camera"); dir.mkdirs();
+                        File[] old = dir.listFiles(); if (old != null) for (File f : old) f.delete();
+                        File f = new File(dir, "shot-" + System.currentTimeMillis() + ".jpg");
+                        shot = FileProvider.getUriForFile(MainActivity.this, "com.glickshulem.hubstudio.files", f); shotFile = f;
+                        Intent c = new Intent(MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, shot)
+                            .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivityForResult(c, PICK);
+                        return true;
+                    }
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType(type);
+                    if (p != null && p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    startActivityForResult(Intent.createChooser(i, type.startsWith("image") ? "Choose a photo" : "Choose a file"), PICK);
+                } catch (Exception e) { picking = null; shot = null; cb.onReceiveValue(null); return false; }
                 return true;
             }
         });
@@ -135,13 +152,20 @@ public class MainActivity extends Activity {
 
     private static final int PICK = 41;
     private ValueCallback<Uri[]> picking;
+    private Uri shot; private File shotFile;   // camera photo being taken
 
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         if (req != PICK || picking == null) { super.onActivityResult(req, res, data); return; }
-        Uri u = (res == RESULT_OK && data != null) ? data.getData() : null;
-        picking.onReceiveValue(u == null ? null : new Uri[]{ u });
-        picking = null;
+        Uri[] out = null;
+        if (shot != null) { if (res == RESULT_OK && shotFile != null && shotFile.length() > 0) out = new Uri[]{ shot }; }
+        else if (res == RESULT_OK && data != null) {
+            ClipData c = data.getClipData();
+            if (c != null && c.getItemCount() > 0) { out = new Uri[c.getItemCount()]; for (int k = 0; k < out.length; k++) out[k] = c.getItemAt(k).getUri(); }
+            else if (data.getData() != null) out = new Uri[]{ data.getData() };
+        }
+        picking.onReceiveValue(out);
+        picking = null; shot = null;
     }
 
     @Override
@@ -360,7 +384,7 @@ public class MainActivity extends Activity {
             if (i != null) startActivity(i);
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 3; }   // 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed')
+        @JavascriptInterface public int bridge() { return 4; }   // 4 = camera in the Messages picker (Studio app 0.6.0); 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed')
         /** Start (or continue) downloading; opens the installer when finished. */
         @JavascriptInterface public void download(String id, String url, String ver) { MainActivity.this.download(id, url, ver, true); }
         /** Open the installer for a download that is already kept. */
