@@ -233,7 +233,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.24.0';
+const PAGE_VER = '0.24.1';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -575,7 +575,7 @@ function gateForm(err) {
   gateShow(`<h2 class="goldtext">Welcome to App Vault</h2><p>Tell us who you are. Once you're approved, you'll see all the apps here.</p>
     <form class="gate-card" id="g-form" autocomplete="off">
       <label for="g-name">Your name</label><input id="g-name" maxlength="40" placeholder="First and last name" required>
-      <label for="g-note">A short note <small>(optional)</small></label><textarea id="g-note" maxlength="200" placeholder="Hi, it's Dan from work"></textarea>
+      <label for="g-note">Note <small>(optional)</small></label><textarea id="g-note" maxlength="200"></textarea>
       <div class="gate-dev">📱 <span>Device: <b>${esc(deviceName())}</b></span></div>
       <button class="bigbtn" id="g-send" type="submit">Ask to join</button>
       <div class="gate-err" id="g-err">${err || ''}</div>

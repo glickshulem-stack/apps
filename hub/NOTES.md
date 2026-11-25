@@ -7,7 +7,7 @@ Su's personal app store. It lists Su's apps from `catalog.json`, installs them a
 - **Edit only `hub-next/index.html`** (the test copy) and raise its `PAGE_VER`. Never edit `hub/index.html`: Su tries the test copy from Studio (App Vault page card › Try, gold "Studio preview" ribbon) and presses Publish, which copies it over `hub/index.html`. Changes to the Android app need a new APK, which also waits for Su to publish it from Studio.
 
 ## Current version
-- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.21.0); test copy `hub-next/index.html` 0.24.0 (Tile vault icon + sign-in and approval + no See what's new) waiting for Su's Publish
+- App Vault page: public = `PAGE_VER` in `hub/index.html` (0.21.0); test copy `hub-next/index.html` 0.24.1 (Tile vault icon + sign-in and approval + no See what's new, join screen says "Note (optional)") waiting for Su's Publish
 - App Vault app (APK): 0.9.0 public; 0.10.0 (new home-screen icon) goes to Studio for Su to publish (`android/hub/app/build.gradle`)
 
 ## Su's decisions
