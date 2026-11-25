@@ -1,4 +1,4 @@
-const VERSION = '0.29.0';
+const VERSION = '0.30.0';
 if (navigator.userAgent.includes('GlickApp')) document.getElementById('back').style.visibility = 'hidden';
 document.getElementById('ver').textContent = VERSION;
 { const t = new URLSearchParams(location.search).get('theme'); if (t) document.body.dataset.theme = t; const bg = new URLSearchParams(location.search).get('bg'); if (bg) document.body.dataset.bg = bg; const fo = new URLSearchParams(location.search).get('font'); if (fo) document.body.dataset.font = fo; }
@@ -636,7 +636,7 @@ function maybeCpu() {
   eng.postMessage(`setoption name MultiPV value ${L.pv || 2}`);
   eng.postMessage('position fen ' + fen(S));
   searching = true; pvLines = {}; pickedUci = null;
-  eng.postMessage(L.depth ? `go depth ${L.depth}` : `go movetime ${L.ms}`);
+  eng.postMessage(L.depth ? `go depth ${L.depth}` : `go movetime ${Math.round(Math.min(L.ms, thinkBudget() * 1000))}`);
 }
 
 // How long the computer "thinks", in seconds, like a person would:
@@ -644,10 +644,21 @@ function maybeCpu() {
 // - longer: several moves look about equal, or it is in check
 // - longest: it sees a checkmate coming and plays it out
 let pickedUci = null;
-function thinkTime(L, m, legal) {
-  const [lo, hi] = L.think, jitter = (Math.random() - .5) * .6;
-  if (legal.length === 1) return .7;
-  if (history.length < 4) return lo * .5 + Math.random() * .4;             // opening moves come quickly
+// Speed games: the clock sets the pace, the level only sets how well it plays.
+// [min, max] seconds for a normal move; long games (no clock, 15|10, 30 min) use the level's own pace.
+const CLOCK_PACE = { 1:[.25, .8], 3:[.7, 1.8], 5:[.8, 2], 10:[1.6, 4] };
+function pace(L) { return (clock && CLOCK_PACE[clock.base]) || L.think; }
+// never more than a fair share of the clock that is left (it hurries when its own clock runs low)
+function clockCap() {
+  if (!clock) return Infinity;
+  const left = clock[S.turn] / 1000, inc = clock.inc;
+  return Math.max(.15, Math.min(left / 30 + inc * .7, left / 4));
+}
+function thinkTime(L, m, legal) { return Math.min(rawThink(L, m, legal), clockCap()); }
+function rawThink(L, m, legal) {
+  const [lo, hi] = pace(L), jitter = (Math.random() - .5) * Math.min(.6, lo * .5);
+  if (legal.length === 1) return Math.min(.7, lo * 1.2);
+  if (history.length < 4) return lo * .5 + Math.random() * Math.min(.4, lo * .4);       // opening moves come quickly
   const prev = history[history.length - 1], tookLast = prev && S.last && (S.captured.w.length + S.captured.b.length) > (prev.captured.w.length + prev.captured.b.length);
   const recapture = tookLast && m.tr === S.last.tr && m.tc === S.last.tc;
   const lines = Object.values(pvLines).sort((a, b) => b.cp - a.cp), mine = lines.find(l => l.move === pickedUci);
@@ -662,9 +673,12 @@ function thinkTime(L, m, legal) {
     const close = lines.filter(l => lines[0].cp - l.cp <= 40).length;     // several good choices = harder to decide
     c = (close >= 3 ? .75 : close === 2 ? .55 : .35) + (inCheck(S, S.turn) ? .15 : 0) + Math.random() * .25;
   }
-  const t = c < 0 ? lo * .45 + Math.random() * .4 : lo + c * (hi - lo) + jitter;
-  return Math.max(.6, t);
+  const t = c < 0 ? lo * .45 + Math.random() * Math.min(.4, lo * .25) : lo + c * (hi - lo) + jitter;
+  return Math.max(Math.min(.6, lo * .7), t);
 }
+
+// how long the engine may search, so Expert/Master don't run over a fast pace
+function thinkBudget() { return Math.max(.1, Math.min(pace({ think:[9, 9] })[1] * .6, clockCap() * .7)); }
 
 // Medium/Hard: choose among the engine's top moves that are nearly as good as the best one
 function pickNearBest(L) {

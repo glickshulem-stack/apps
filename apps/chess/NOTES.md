@@ -7,7 +7,7 @@ Chess for the tablet, played in landscape. Two players on one device, or against
 - Version lives in `const VERSION` in `apps/chess/chess.js`.
 
 ## Current version
-0.29.0 in Studio (0.27.0 public)
+0.30.0 in Studio (0.27.0 public)
 
 ## Su's decisions
 - Name Gambit, gold knight in a shield logo. Cinzel font. Saddle tan leather background.
@@ -22,6 +22,7 @@ Chess for the tablet, played in landscape. Two players on one device, or against
 - Clocks are picked in New game; they start after White's first move and pause when the app is hidden.
 - Computer levels: Beginner and Easy use a simple built-in player; Medium and up use Stockfish. Each level must be a clear step up (Su). Measured 0.28.0 (winning chances lost per middlegame move): Beginner ~28%, Easy ~14%, Medium ~4%, Hard ~2%, Expert ~1%, Master ~0.6%. Medium never gives pieces away mid-game (Su hated that).
 - Computer think time is smart (0.29.0, Su): Medium's normal pace = 3-5 s (Su picked the old Expert pace); levels go Beginner 1.8-3 s up to Master 5-8 s. Obvious moves (only move, taking back, a clearly winning move like a free queen or fork) come fast (about half the level's minimum); several equal choices or being in check take longer; playing out a checkmate takes the longest. First moves of the game are quick. Code: thinkTime() in chess.js.
+- Speed games set the computer's pace (0.30.0, Su): the clock decides speed, the level only decides strength. No clock, 15|10, 30 min = the level's own pace; 10 min 1.6-4 s; 5 min and 3|2 about 0.8-2 s; 1 min 0.25-0.8 s. Still quick on obvious moves. It never uses more than a fair share of its clock (left/30 + most of the increment), so it hurries when low. Expert/Master engine search is shortened to fit. Code: CLOCK_PACE, clockCap(), thinkBudget().
 - Draw on the board: a pen that opens a Drawing card with 4 colors, Undo and Clear. The card is dark brown like the other cards; gold only on the pen icon, the title and a thin border (Su said the yellow header didn't belong, 0.27.1).
 
 ## Known bugs
