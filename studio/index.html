@@ -149,6 +149,13 @@
   .person .h .av { width:50px; height:50px; border-radius:50%; flex:none; display:grid; place-items:center; font:700 1.3rem Cinzel,Georgia,serif; color:#1a1208; background:linear-gradient(180deg,var(--goldhi),var(--gold)); }
   .person.old .h .av { background:var(--surface2); color:var(--muted); }
   .person .quote { margin:0; padding:10px 14px; border-left:3px solid var(--gold); background:var(--surface2); border-radius:0 12px 12px 0; font-style:italic; }
+  .pplhave { display:flex; flex-wrap:wrap; gap:8px; } .pplhave .v { display:inline-flex; align-items:center; gap:6px; color:var(--text); }
+  .pplhave .v img { width:18px; height:18px; border-radius:5px; } .pplhave .v strong { color:var(--strong); }
+  .pplhave .v.old { border-color:var(--dangerline); color:var(--dangertext); } .pplhave .v.old strong { color:var(--dangertext); }
+  .pplhave.none, .pplhave .none { color:var(--muted); font-size:.88rem; } .pplseen { color:var(--muted); font-size:.8rem; margin-top:-4px; }
+  .pplsum { padding:8px 20px; display:flex; flex-direction:column; }
+  .sumrow { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); } .sumrow:first-child { border-top:0; }
+  .sumrow img { width:30px; height:30px; border-radius:8px; } .sumrow b { flex:1; font:700 1rem Cinzel,Georgia,serif; } .sumrow span { color:var(--muted); } .sumrow em { color:var(--dangertext); font-style:normal; font-weight:700; }
   .pplhead { display:flex; align-items:center; gap:10px; margin:30px 0 14px; } .pplhead:first-child { margin-top:0; } .pplhead h3 { flex:1; margin:0; }
 </style>
 </head>
@@ -273,7 +280,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.12.0';
+const VERSION = '0.13.0';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -460,6 +467,7 @@ function pills(a, p) {
   return `<div class="vers">${sv}${a && a.private ? '' : pv}</div>`;
 }
 function render() {
+  try { if (ppl.list.length) setTimeout(pplRender); } catch {}   // People shows app names and public versions too
   const pub = Object.fromEntries(catalog.apps.map(a => [a.id, a]));
   const rank = a => { const st = stateOf(a, pub[a.id]); return needsPublish(st) ? 0 : st === 'live' ? 1 : 2; };
   const list = studio.apps.filter(a => !a.private).sort((a, b) => rank(a) - rank(b));   // Studio itself lives in Settings
@@ -916,12 +924,34 @@ function pplCard(p) {
   const when = p.status === 'pending' ? 'Asked ' + pplDay(p.created) : p.status === 'approved' ? 'Approved ' + pplDay(p.decided) : (p.status === 'removed' ? 'Removed ' : 'Declined ') + pplDay(p.decided);
   return `<div class="app person${p.status === 'pending' ? ' ready' : ''}${p.status === 'declined' || p.status === 'removed' ? ' old' : ''}" data-uid="${esc(p.uid)}">
     <div class="h"><div class="av">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</div><div class="t"><b>${esc(p.name)}</b><small>📱 ${esc(p.device || 'Unknown device')} · ${when}</small></div></div>
-    ${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}<div class="acts">${acts}</div></div>`;
+    ${p.note ? `<p class="quote">“${esc(p.note)}”</p>` : ''}${p.status === 'approved' ? pplApps(p) : ''}<div class="acts">${acts}</div></div>`;
+}
+// Who has what (0.13.0): App Vault 0.25.0+ reports each approved person's apps and versions (members/{uid}.apps, seen).
+// A version matching the public App Vault is plain; an older one is marked "behind".
+function pplAppList() { return ((studio && studio.apps) || []).filter(a => !a.private); }
+const pubVer = id => { const c = catalog && catalog.apps.find(x => x.id === id); return c ? c.version : null; };
+const verOlder = (x, y) => { const p = v => String(v || 0).split('.').map(Number), a = p(x), b = p(y); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
+function pplApps(p) {
+  if (!p.apps) return `<div class="pplhave none">No app info yet. It shows up the next time ${esc((p.name || '').split(' ')[0])} opens the new App Vault.</div>`;
+  const chips = pplAppList().filter(a => p.apps[a.id]).map(a => {
+    const v = p.apps[a.id], pv = pubVer(a.id), old = pv && verOlder(v, pv);
+    return `<span class="v${old ? ' old' : ''}" title="${old ? 'Public is ' + esc(pv) : 'Up to date'}"><img src="${esc(iconSrc(a))}" alt="">${esc(a.name)} <strong>${esc(v)}</strong>${old ? ' · behind' : ''}</span>`;
+  }).join('');
+  return `<div class="pplhave">${chips || '<span class="none">No apps installed yet' + (/Windows|Mac|Linux|iPhone|iPad|Chromebook/.test(p.device || '') ? ' (uses App Vault in a browser)' : '') + '</span>'}</div>
+    <small class="pplseen">Last opened App Vault ${pplDay(p.seen)}${p.page ? ' · page ' + esc(p.page) : ''}</small>`;
+}
+// Summary above the approved list: how many people have each app, and how many are behind.
+function pplSummary(ok) {
+  const rows = pplAppList().map(a => {
+    const have = ok.filter(p => p.apps && p.apps[a.id]), pv = pubVer(a.id), behind = have.filter(p => pv && verOlder(p.apps[a.id], pv)).length;
+    return `<div class="sumrow"><img src="${esc(iconSrc(a))}" alt=""><b>${esc(a.name)}</b><span>${have.length} ${have.length === 1 ? 'person' : 'people'}${behind ? ` · <em>${behind} behind</em>` : ''}</span></div>`;
+  }).join('');
+  return ok.length ? `<div class="card pplsum">${rows}</div>` : '';
 }
 function pplRender() {
   const L = ppl.list, req = L.filter(p => p.status === 'pending'), ok = L.filter(p => p.status === 'approved'), no = L.filter(p => p.status === 'declined' || p.status === 'removed');
   $('ppl-req').innerHTML = req.map(pplCard).join('') || '<div class="empty" style="padding:24px">No new requests. When someone asks to join App Vault, they show up here.</div>';
-  $('ppl-ok').innerHTML = ok.map(pplCard).join('') || '<div class="empty" style="padding:24px">Nobody approved yet.</div>';
+  $('ppl-ok').innerHTML = pplSummary(ok) + ok.map(pplCard).join('') || '<div class="empty" style="padding:24px">Nobody approved yet.</div>';
   $('ppl-no').innerHTML = no.map(pplCard).join(''); $('ppl-no-wrap').hidden = !no.length;
   pplCount(req.length);
 }

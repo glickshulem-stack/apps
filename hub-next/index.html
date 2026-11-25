@@ -233,7 +233,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.24.1';
+const PAGE_VER = '0.25.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -245,6 +245,7 @@ function hubEvent(id, what) {
   render();
   const app = catalog && catalog.apps.find(x => x.id === id);
   if (what === 'installed' && app) toast('✓', `${app.name} is updated`, 'Installed by App Vault');
+  if (what === 'installed' && typeof reportApps === 'function') reportApps();
 }
 function job(id) { try { const s = Hub.job(id); return s ? JSON.parse(s) : null; } catch { return null; } }
 function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB'; }
@@ -474,7 +475,7 @@ async function refresh(manual) {
   }
   if (manual) { await wait(Math.max(0, 900 - (Date.now() - started))); $('refresh').classList.remove('spin'); }
   if (!catalog) { if (manual) toast('!', 'No internet', 'Connect to Wi-Fi and tap refresh again.'); return; }
-  render();
+  render(); if (typeof reportApps === 'function') reportApps();
   if (offline) { if (manual) toast('!', 'No internet', 'Showing your apps from last time.'); return; }
   // A newer App Vault page is online: load it right away (once per visit, so it can never loop).
   const hub = catalog.apps.find(a => a.id === 'hub');
@@ -605,7 +606,7 @@ function gateApply(d) {
   memberSave(d ? { status:d.status, name:d.name } : null);
   renderMe();
   if (!d) return gateForm();
-  if (d.status === 'approved') { const was = !$('gate').hidden; gateHide(); if (was && d.name) toast('✓', `Welcome, ${esc(d.name.split(' ')[0])}!`, 'You\'re approved. Enjoy the apps.'); return; }
+  if (d.status === 'approved') { const was = !$('gate').hidden; gateHide(); reportApps(); if (was && d.name) toast('✓', `Welcome, ${esc(d.name.split(' ')[0])}!`, 'You\'re approved. Enjoy the apps.'); return; }
   if (d.status === 'pending') return gateShow(`<h2 class="goldtext">Request sent</h2><p>Thanks, ${esc(d.name)}.</p>${gateWait('Waiting for approval', 'You can close App Vault. When you\'re approved, this screen opens by itself.')}`);
   const removed = d.status === 'removed';
   gateShow(`<h2 class="goldtext">${removed ? 'Access removed' : 'Not approved'}</h2><p>${removed ? 'Your access to App Vault was removed.' : 'Your request to join App Vault wasn\'t approved.'} If you think this is a mistake, contact the person who shared App Vault with you.</p>`);
@@ -635,6 +636,25 @@ async function gateStart() {
     if (!(saved && saved.status === 'approved')) gateOffline();
   }
 }
+// Who has what (page 0.25.0): approved people tell Studio which of the App Vault apps are on this device, and which versions.
+// Sent when App Vault opens or comes back, after a check for updates and after an install, only when something changed (or once a day).
+// The rules let a person change only these three fields: apps, page, seen.
+let reportTimer = null;
+function reportApps() { clearTimeout(reportTimer); reportTimer = setTimeout(reportNow, 1500); }
+async function reportNow() {
+  if (!gate.fb || !gate.uid || !gate.me || gate.me.status !== 'approved' || !catalog) return;
+  const apps = {};
+  if (hasHub) for (const a of catalog.apps) { const v = a.id === 'hub' ? hubVer : Hub.installedVersion(a.package); if (v) apps[a.id] = String(v).slice(0, 20); }
+  const key = JSON.stringify([apps, PAGE_VER]);
+  let last = null; try { last = JSON.parse(localStorage.getItem('vaultReported') || 'null'); } catch {}
+  if (last && last.key === key && last.uid === gate.uid && Date.now() - last.t < 864e5) return;
+  try {
+    const { F, db } = gate.fb;
+    await F.updateDoc(F.doc(db, 'members', gate.uid), { apps, page:PAGE_VER, seen:F.serverTimestamp() });
+    try { localStorage.setItem('vaultReported', JSON.stringify({ key, uid:gate.uid, t:Date.now() })); } catch {}
+  } catch (x) { console.warn('report', x); }
+}
+addEventListener('visibilitychange', () => { if (!document.hidden) reportApps(); });
 // Settings shows who is signed in on this device.
 function renderMe() {
   const m = gate.me || memberSaved(), box = $('s-me'); if (!box) return;
