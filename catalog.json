@@ -5,8 +5,8 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.9.0",
-      "iconUrl": "icon.svg",
+      "version": "0.10.0",
+      "iconUrl": "vault-icon.svg",
       "tagline": "Your personal app store",
       "live": "0.24.1"
     },
