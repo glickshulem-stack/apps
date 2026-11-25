@@ -5,11 +5,11 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "iconUrl": "vault-icon.svg",
       "tagline": "Your personal app store",
       "live": "0.33.0",
-      "note": "Take a photo or add any file in the chat with the developer"
+      "note": "Save photos and files from the developer"
     },
     {
       "id": "chess",
