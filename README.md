@@ -16,4 +16,4 @@ When you change the Studio page (`studio/index.html`), raise its `VERSION` and m
 Ready-made APKs (like Quillsong) are dropped into Studio, which uploads them to an `upload/...` branch; the *Publish uploaded APK* workflow makes the release and adds the version to `studio.json`.
 
 ## Notes
-`PROJECTS.md` is the master list of every app. Each app folder has a `NOTES.md`; read it before working on that app and update it when you finish.
+`MASTER.md` holds the coordinator rules (at the top) and the master list of every app. Each app folder has a `NOTES.md`; read it before working on that app and update it when you finish.
