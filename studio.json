@@ -5,11 +5,11 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "iconUrl": "vault-icon.svg",
       "tagline": "Your personal app store",
       "live": "0.36.0",
-      "note": "Save photos and files from the developer"
+      "note": "Notifications when the developer replies"
     },
     {
       "id": "chess",
@@ -51,12 +51,12 @@
       "name": "App Vault Studio",
       "icon": "✦",
       "package": "com.glickshulem.hubstudio",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "iconUrl": "studio/icon.svg",
       "tagline": "Where Su makes and publishes apps",
       "private": true,
-      "note": "Take photo opens the camera"
+      "note": "Notifications for new messages and requests"
     }
   ],
-  "studioPage": "0.19.1"
+  "studioPage": "0.20.0"
 }
