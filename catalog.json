@@ -5,7 +5,7 @@
       "name": "App Vault",
       "icon": "▦",
       "package": "com.glickshulem.apphub",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "iconUrl": "vault-icon.svg",
       "tagline": "Your personal app store",
       "live": "0.36.0"
@@ -46,6 +46,12 @@
     }
   ],
   "news": [
+    {
+      "id": "hub",
+      "version": "0.14.0",
+      "date": "2026-11-26",
+      "text": "Notifications when the developer replies"
+    },
     {
       "id": "hub",
       "version": "0.13.0",
