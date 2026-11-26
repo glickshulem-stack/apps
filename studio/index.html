@@ -150,6 +150,9 @@
   .chatbtn { padding:8px 14px; font-size:1.1rem; } .chatbtn:disabled { opacity:.35; }
   .pdetail { display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--line); padding-top:12px; } .pdetail small { color:var(--muted); }
   .prow.open { border-color:var(--gold); }
+  .switch { position:relative; width:52px; height:30px; border-radius:99px; border:1px solid var(--line); background:var(--surface2); cursor:pointer; padding:0; flex:none; transition:background .2s; }
+  .switch i { position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:var(--muted); transition:left .2s, background .2s; }
+  .switch.on { background:linear-gradient(180deg,#f6dc9c,#c9993f); border-color:#c9993f; } .switch.on i { left:25px; background:#2a1d10; }
   .betatag { display:inline-block; font:800 .66rem/1 Inter,sans-serif; letter-spacing:.08em; padding:3px 6px; border-radius:5px; color:#2a1d10; background:linear-gradient(180deg,#f6dc9c,#c9993f); vertical-align:middle; }
   .v.beta { border-color:var(--gold); color:var(--gold2); } .sent { display:block; color:var(--gold2); margin-top:4px; } #ppl-no-wrap { margin-top:24px; } #ppl-no-box { margin-top:6px; }
   .ib { display:grid; grid-template-columns:320px 1fr; gap:0; height:calc(100vh - 190px); min-height:420px; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--surface); }
@@ -304,7 +307,7 @@
 <input type="file" id="pick-shots" accept="image/png,image/jpeg,image/webp" multiple hidden>
 
 <script>
-const VERSION = '0.20.0';
+const VERSION = '0.20.1';
 const OWNER = 'glickshulem-stack', REPO_NAME = 'apps', REPO = `${OWNER}/${REPO_NAME}`;
 const API = `https://api.github.com/repos/${REPO}`;
 const SITE = `https://${OWNER}.github.io/${REPO_NAME}/`;
@@ -1287,15 +1290,29 @@ $('t-reports').onclick = e => {
 // Desktop browser: a notification while Studio is open in a background tab. When Studio is on screen: a short toast.
 const NB = !!(bridge && bridge.bridge && bridge.bridge() >= 5);
 const nt = { seen:null, pending:'' };
+// On / Off switch in Settings (Su, 2026-11-26), remembered on this device. Off = no notifications at all on this device.
+const notifyOn = () => store.get('notifyOff') !== '1';
+function notifyApply() {   // tell the tablet app to start or stop checking
+  if (!NB || !ppl.fb || !ppl.fb.auth.currentUser || !ppl.fb.auth.currentUser.email) return;
+  const u = ppl.fb.auth.currentUser;
+  if (notifyOn()) bridge.notifySetup(FB_CONFIG.apiKey, u.refreshToken, u.uid, 'su'); else bridge.notifyStop();
+}
 function notifyRender() {
   const box = $('set-notify'); if (!box) return;
-  const muted = t => `<span style="color:var(--muted)">${t}</span>`;
-  if (NB) box.innerHTML = bridge.notifyAllowed() ? `<b>On</b>${muted('checks about every 5 minutes')}` : `<b>Off</b><button class="btn" id="nt-on">Turn on</button>`;
-  else if (bridge) box.innerHTML = muted('Update the Studio app above to get notifications');
-  else if (!('Notification' in window)) box.innerHTML = muted('This browser cannot show notifications');
-  else box.innerHTML = Notification.permission === 'granted' ? `<b>On in this browser</b>${muted('while Studio is open in a tab')}`
-    : Notification.permission === 'denied' ? muted('Blocked in this browser. Allow them in the browser\'s site settings.') : `<button class="btn" id="nt-on">Turn on in this browser</button>`;
-  if ($('nt-on')) $('nt-on').onclick = () => { if (NB) bridge.askNotify(); else Notification.requestPermission().then(notifyRender); };
+  const muted = t => `<span style="color:var(--muted)">${t}</span>`, on = notifyOn();
+  let extra = '';
+  if (on && NB && !bridge.notifyAllowed()) extra = `<button class="btn" id="nt-allow">Allow on this tablet</button>`;
+  else if (on && bridge && !NB) extra = muted('Update the Studio app above first');
+  else if (on && !bridge && 'Notification' in window && Notification.permission === 'default') extra = `<button class="btn" id="nt-allow">Allow in this browser</button>`;
+  else if (on && !bridge && 'Notification' in window && Notification.permission === 'denied') extra = muted('Blocked in this browser\'s site settings');
+  else if (on) extra = muted(NB ? 'checks about every 5 minutes' : 'while Studio is open in a tab');
+  box.innerHTML = `${extra}<button class="switch${on ? ' on' : ''}" id="nt-sw" role="switch" aria-checked="${on}" title="Notifications on or off"><i></i></button><b>${on ? 'On' : 'Off'}</b>`;
+  $('nt-sw').onclick = () => {
+    store.set('notifyOff', on ? '1' : null); notifyApply();
+    if (!on) { if (NB && !bridge.notifyAllowed()) bridge.askNotify(); else if (!bridge && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(notifyRender); }
+    toast(on ? 'Notifications are off on this device' : 'Notifications are on'); notifyRender();
+  };
+  if ($('nt-allow')) $('nt-allow').onclick = () => { if (NB) bridge.askNotify(); else Notification.requestPermission().then(notifyRender); };
 }
 addEventListener('visibilitychange', () => { if (!document.hidden) notifyRender(); });
 // Opening from a tapped notification: "chat:<uid>" or "people".
@@ -1324,7 +1341,7 @@ function noticeCheck() {
     nt.seen.add(it.key);
     if (it.go === 'chat:' + rep.sel && !document.hidden && !$('t-reports').hidden) continue;   // already looking at that chat
     const text = it.text.length > 120 ? it.text.slice(0, 120) + '…' : it.text;
-    if (document.hidden && !NB && 'Notification' in window && Notification.permission === 'granted') {
+    if (document.hidden && !NB && notifyOn() && 'Notification' in window && Notification.permission === 'granted') {
       try { const n = new Notification(it.title, { body:text, icon:'icon.svg', tag:it.key }); n.onclick = () => { window.focus(); noticeGo(it.go); n.close(); }; } catch (x) { console.warn(x); }
     } else if (!document.hidden) toast(`${it.title}: ${text}`);
   }
@@ -1338,8 +1355,8 @@ function noticeCheck() {
     A.onAuthStateChanged(auth, u => {
       if (!NB) return;
       if (u && u.email) {
-        bridge.notifySetup(FB_CONFIG.apiKey, u.refreshToken, u.uid, 'su');
-        if (!bridge.notifyAllowed() && !store.get('askedNotify')) { store.set('askedNotify', '1'); bridge.askNotify(); }
+        notifyApply();
+        if (notifyOn() && !bridge.notifyAllowed() && !store.get('askedNotify')) { store.set('askedNotify', '1'); bridge.askNotify(); }
         setTimeout(window.onNotice, 1500);
       } else bridge.notifyStop();
       notifyRender();
