@@ -7,8 +7,8 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - Studio reads `studio.json`. Publishing changes `catalog.json`.
 
 ## Current version
-- Studio page: 0.19.1 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
-- Studio app (APK): 0.6.0, camera for Take photo in Messages (bridge 4) (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
+- Studio page: 0.20.0 (`VERSION` in `studio/index.html`; `"studioPage"` in `studio.json` is raised to match only after Pages has deployed it)
+- Studio app (APK): 0.7.0, notifications (bridge 5; 0.6.0 = camera, bridge 4) (`android/hubstudio/app/build.gradle`), named App Vault Studio, Golden Gear icon (Su picked 2026-11-25; `studio/icon.svg` + launcher PNG)
 
 ## Su's decisions
 - Renamed App Vault Studio on 2026-11-25 (was Play Hub Studio). Package `com.glickshulem.hubstudio`, id `hubstudio` and the `studio/` URL stay the same.
@@ -31,6 +31,8 @@ Su's private developer edition of App Vault, on the tablet and on the desktop. E
 - **Messages fixes (0.19.0):** the gold dot clears when Su opens that person's chat (stamps `suSeenAt` on their reports; dot = status 'new' and not seen since the last message). Picked photos/files show a preview with Send / Cancel first. Take photo opens the camera in Studio app 0.6.0+ (older app: toast to update).
 
 - **Big files (0.19.1):** files up to 10 MB both ways. Over 900k characters the data URL is split into `reports/{rid}/parts/{key}-{i}` = `{from:'su', data}` and the msg carries `file {name,type,size,key,parts}` without data (same format as App Vault page 0.36.0). Studio shows "tap to save" and joins the parts. Delete chat also deletes parts.
+
+- **Notifications (0.20.0, Su 2026-11-25: free, a few minutes' delay OK):** Studio app 0.7.0 `Notifier.java` (BroadcastReceiver + AlarmManager.setAndAllowWhileIdle every 5 min, also after reboot/update) gets a Firebase ID token from the refresh token the page hands over (`Hub.notifySetup(apiKey, refreshToken, uid, 'su')` after People sign-in) and runs Firestore REST queries: reports status 'new' not yet seen (suSeenAt), members pending, members beta 'asked'. Notification = name + start of the message; tap opens the chat (`chat:<uid>`) or People (`Hub.takeOpen()`, `window.onNotice`). Nothing shows while the app is on screen; the first check only remembers what was already there. Desktop: browser notification while Studio is in a background tab; on screen: a toast. Settings › Notifications shows On / Turn on.
 
 ## Known bugs
 - Fixed in 0.9.2: a cached old Studio page could reload itself forever ("Loading apps" blinking). It now reloads once per version with a fresh address, then shows the apps with publishing paused until the new page arrives.

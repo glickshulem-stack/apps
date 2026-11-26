@@ -92,6 +92,7 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+        pendingOpen = getIntent() == null ? null : getIntent().getStringExtra("open");
         web.loadUrl(SITE + "hub/");
         setContentView(web);
     }
@@ -114,9 +115,22 @@ public class MainActivity extends Activity {
         picking = null; shot = null;
     }
 
+    /** A tapped notification ("open" extra: "chat:<uid>", "chat" or "people") waits here until the page asks for it. */
+    static volatile String pendingOpen = null;
+    private void takeOpen(Intent i) {
+        String o = i == null ? null : i.getStringExtra("open");
+        if (o == null) return;
+        pendingOpen = o;
+        if (web != null) web.evaluateJavascript("window.onNotice && onNotice()", null);
+    }
+
+    @Override
+    protected void onPause() { super.onPause(); Notifier.visible = false; }
+
     @Override
     protected void onResume() {
         super.onResume();
+        Notifier.visible = true;
         if (web != null) web.evaluateJavascript("window.onHubResume && onHubResume()", null);
         // Came back from the "allow installs" screen: carry on with the install if it is now allowed.
         if (waitingForPermission != null && canInstall()) {
@@ -125,6 +139,9 @@ public class MainActivity extends Activity {
         }
         if (web != null) web.evaluateJavascript("window.refresh && refresh()", null);
     }
+
+    @Override
+    protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); takeOpen(i); }
 
     @Override
     public void onBackPressed() { if (web.canGoBack()) web.goBack(); else super.onBackPressed(); }
@@ -294,6 +311,24 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        // Notifications (Studio app 0.7.0 / App Vault app 0.14.0): the page hands over its sign-in so Notifier can check every ~5 minutes.
+        @JavascriptInterface public void notifySetup(String apiKey, String refresh, String uid, String mode) { Notifier.setup(MainActivity.this, apiKey, refresh, uid, mode); }
+        @JavascriptInterface public void notifyStop() { Notifier.stop(MainActivity.this); }
+        @JavascriptInterface public boolean notifyAllowed() {
+            android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            return nm != null && nm.areNotificationsEnabled();
+        }
+        @JavascriptInterface public void askNotify() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED)
+                    requestPermissions(new String[]{ "android.permission.POST_NOTIFICATIONS" }, 52);
+                else try {
+                    if (Build.VERSION.SDK_INT >= 26) startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                    else startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+                } catch (Exception e) { }
+            });
+        }
+        @JavascriptInterface public String takeOpen() { String o = pendingOpen; pendingOpen = null; return o == null ? "" : o; }
         @JavascriptInterface public String hubVersion() { return installedVersion(getPackageName()); }
         @JavascriptInterface public String installedVersion(String pkg) {
             try { return getPackageManager().getPackageInfo(pkg, 0).versionName; }
@@ -325,7 +360,7 @@ public class MainActivity extends Activity {
             } catch (Exception e) { return String.valueOf(e.getMessage()); }
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 7; }   // 7 = saveFile(); 6 = camera + any file in the chat picker; 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
+        @JavascriptInterface public int bridge() { return 8; }   // 8 = notifications (notifySetup/notifyStop/notifyAllowed/askNotify/takeOpen); 7 = saveFile(); 6 = camera + any file in the chat picker; 5 = photo picker for bug reports; 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed'); 4 = uninstall()
         /** Open Android's "Uninstall this app?" question for an app that was taken off App Vault. */
         @JavascriptInterface public void uninstall(String pkg) {
             if (pkg == null || pkg.isEmpty() || pkg.equals(getPackageName())) return;

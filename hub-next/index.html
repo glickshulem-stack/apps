@@ -280,6 +280,7 @@
   <div class="sheet-head"><h4 class="goldtext">Settings</h4><button class="iconbtn" id="s-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="s-me"></div>
   <div id="s-beta"></div>
+  <div id="s-notify"></div>
   <h5>Updates</h5>
   <button class="bigbtn" id="refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Check for updates</button>
   <div class="last" id="s-last"></div>
@@ -307,7 +308,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.36.0';
+const PAGE_VER = '0.37.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -1048,6 +1049,33 @@ $('support-open').onclick = rpOpen;
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('rp').hidden) { e.stopImmediatePropagation(); if ($('rp-zoom') && !$('rp-zoom').hidden) $('rp-zoom').click(); else rpBack(); } }, true);
 const gateApplyBase = gateApply;
 gateApply = function (d) { gateApplyBase(d); if (d && d.status === 'approved') rpListen(); };
+</script>
+<script>
+// Notifications (page 0.37.0, App Vault app 0.14.0+ = bridge 8): App Vault checks about every 5 minutes, even when closed,
+// and shows "Reply from the developer" with the start of the message. Tapping it opens the chat. Free: no paid push service.
+const NTB = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 8;
+function renderNotify() {
+  const box = $('s-notify'); if (!box) return;
+  const m = vaultMe(); if (!m || !hasHub) { box.innerHTML = ''; return; }
+  const ic = '<svg class="ri" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>';
+  box.innerHTML = `<h5>Notifications</h5><div class="box">${!NTB
+    ? `<div class="row"><span class="rl">${ic}<span>Notifications<small>Update App Vault (above) to get notified when the developer replies</small></span></span></div>`
+    : Hub.notifyAllowed()
+    ? `<div class="row"><span class="rl">${ic}<span>Notifications are on<small>You'll be told when the developer replies</small></span></span><span class="vv">✓</span></div>`
+    : `<div class="row click" id="nt-on"><span class="rl">${ic}<span>Turn on notifications<small>Get told when the developer replies</small></span></span><span>›</span></div>`}</div>`;
+  if ($('nt-on')) $('nt-on').onclick = () => Hub.askNotify();
+}
+function notifyStart() {
+  if (!NTB || !gate.fb || !gate.uid) return;
+  const u = gate.fb.auth.currentUser; if (!u) return;
+  Hub.notifySetup(FB_CONFIG.apiKey, u.refreshToken, gate.uid, 'user');
+  let asked = null; try { asked = localStorage.getItem('askedNotify'); } catch {}
+  if (!Hub.notifyAllowed() && !asked) { try { localStorage.setItem('askedNotify', '1'); } catch {} Hub.askNotify(); }
+}
+window.onNotice = () => { if (!NTB) return; const o = Hub.takeOpen(); if (o === 'chat' || (o && o.startsWith('chat'))) setTimeout(() => { if (typeof rpOpen === 'function') rpOpen(); }, 300); };
+{ const base = gateApply; gateApply = function (d) { base(d); renderNotify(); if (d && d.status === 'approved') { notifyStart(); setTimeout(window.onNotice, 800); } else if (NTB && d && d.status !== 'pending') Hub.notifyStop(); }; }
+addEventListener('visibilitychange', () => { if (!document.hidden) renderNotify(); });
+renderNotify();
 </script>
 <script>
 // Studio preview: this same file lives in hub-next/ (Claude's test copy, opened from App Vault Studio) until Su presses Publish,

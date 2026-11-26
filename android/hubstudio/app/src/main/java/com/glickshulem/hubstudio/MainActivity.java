@@ -111,13 +111,27 @@ public class MainActivity extends Activity {
             }
         });
         takeIncoming(getIntent());
+        pendingOpen = getIntent() == null ? null : getIntent().getStringExtra("open");
         web.loadUrl(SITE + "studio/");
         setContentView(web);
     }
 
+    /** A tapped notification ("open" extra: "chat:<uid>", "chat" or "people") waits here until the page asks for it. */
+    static volatile String pendingOpen = null;
+    private void takeOpen(Intent i) {
+        String o = i == null ? null : i.getStringExtra("open");
+        if (o == null) return;
+        pendingOpen = o;
+        if (web != null) web.evaluateJavascript("window.onNotice && onNotice()", null);
+    }
+
+    @Override
+    protected void onPause() { super.onPause(); Notifier.visible = false; }
+
     @Override
     protected void onResume() {
         super.onResume();
+        Notifier.visible = true;
         if (web != null) web.evaluateJavascript("window.onHubResume && onHubResume()", null);
         // Came back from the "allow installs" screen: carry on with the install if it is now allowed.
         if (waitingForPermission != null && canInstall()) {
@@ -146,6 +160,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onNewIntent(Intent i) {
         super.onNewIntent(i);
+        takeOpen(i);
         takeIncoming(i);
         if (web != null && incomingNew) web.evaluateJavascript("window.onIncoming && onIncoming()", null);
     }
@@ -336,6 +351,24 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        // Notifications (Studio app 0.7.0 / App Vault app 0.14.0): the page hands over its sign-in so Notifier can check every ~5 minutes.
+        @JavascriptInterface public void notifySetup(String apiKey, String refresh, String uid, String mode) { Notifier.setup(MainActivity.this, apiKey, refresh, uid, mode); }
+        @JavascriptInterface public void notifyStop() { Notifier.stop(MainActivity.this); }
+        @JavascriptInterface public boolean notifyAllowed() {
+            android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            return nm != null && nm.areNotificationsEnabled();
+        }
+        @JavascriptInterface public void askNotify() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED)
+                    requestPermissions(new String[]{ "android.permission.POST_NOTIFICATIONS" }, 52);
+                else try {
+                    if (Build.VERSION.SDK_INT >= 26) startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                    else startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+                } catch (Exception e) { }
+            });
+        }
+        @JavascriptInterface public String takeOpen() { String o = pendingOpen; pendingOpen = null; return o == null ? "" : o; }
         /** Android's share menu with a text/link. */
         @JavascriptInterface public void share(String title, String text) {
             Intent i = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text).putExtra(Intent.EXTRA_SUBJECT, title);
@@ -384,7 +417,7 @@ public class MainActivity extends Activity {
             if (i != null) startActivity(i);
         }
         /** Bridge level, so the page knows which features this App Hub has. 2 = kept downloads + progress. */
-        @JavascriptInterface public int bridge() { return 4; }   // 4 = camera in the Messages picker (Studio app 0.6.0); 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed')
+        @JavascriptInterface public int bridge() { return 5; }   // 5 = notifications (notifySetup/notifyStop/notifyAllowed/askNotify/takeOpen); 4 = camera in the Messages picker (Studio app 0.6.0); 3 = installs by itself (hubEvent 'installing' / 'installed' / 'failed')
         /** Start (or continue) downloading; opens the installer when finished. */
         @JavascriptInterface public void download(String id, String url, String ver) { MainActivity.this.download(id, url, ver, true); }
         /** Open the installer for a download that is already kept. */
