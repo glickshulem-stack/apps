@@ -256,6 +256,9 @@
   .betabox > div { flex:1; display:flex; flex-direction:column; gap:4px; } .betabox span { color:var(--muted); font-size:.9rem; } .betabox small { color:var(--gold2); }
   .ask-bg { position:fixed; inset:0; z-index:300; background:rgba(5,8,15,.72); display:grid; place-items:center; padding:16px; }
   .ask-bg[hidden] { display:none; }
+  .switch { position:relative; width:52px; height:30px; border-radius:99px; border:1px solid #2a3753; background:#1f2b43; cursor:pointer; padding:0; flex:none; transition:background .2s; }
+  .switch i { position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#a8b2c7; transition:left .2s, background .2s; }
+  .switch.on { background:linear-gradient(180deg,#f6dc9c,#c9993f); border-color:#c9993f; } .switch.on i { left:25px; background:#2a1d10; }
   .ask { width:min(440px,100%); background:#172136; border:1px solid #2a3753; border-radius:20px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
   .ask h4 { margin:0 0 10px; font-size:1.2rem; } .ask p { color:#c9d0de; line-height:1.5; margin:0 0 10px; } .ask p b { color:#f1f3f8; }
   .ask-acts { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
@@ -280,6 +283,7 @@
   <div class="sheet-head"><h4 class="goldtext">Settings</h4><button class="iconbtn" id="s-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="s-me"></div>
   <div id="s-beta"></div>
+  <div id="s-notify"></div>
   <h5>Updates</h5>
   <button class="bigbtn" id="refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Check for updates</button>
   <div class="last" id="s-last"></div>
@@ -307,7 +311,7 @@ const $ = id => document.getElementById(id);
 
 function newer(a, b) { const x=a.split('.').map(Number), y=(b||'0').split('.').map(Number); for (let i=0;i<3;i++) if ((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); return false; }
 function apkUrl(a) { return `https://github.com/${REPO}/releases/download/${a.id}-v${a.version}/${a.id}.apk`; }
-const PAGE_VER = '0.36.0';
+const PAGE_VER = '0.38.0';
 // App Vault 0.5.0+ keeps downloads and reports progress. Older App Vault only has Hub.install + onStatus.
 const kept2 = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 2;
 const flow = {};   // id -> { version, phase: 'start' | 'installer' | 'back' | 'permission' }
@@ -1048,6 +1052,39 @@ $('support-open').onclick = rpOpen;
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('rp').hidden) { e.stopImmediatePropagation(); if ($('rp-zoom') && !$('rp-zoom').hidden) $('rp-zoom').click(); else rpBack(); } }, true);
 const gateApplyBase = gateApply;
 gateApply = function (d) { gateApplyBase(d); if (d && d.status === 'approved') rpListen(); };
+</script>
+<script>
+// Notifications (page 0.37.0, App Vault app 0.14.0+ = bridge 8): App Vault checks about every 5 minutes, even when closed,
+// and shows "Reply from the developer" with the start of the message. Tapping it opens the chat. Free: no paid push service.
+const NTB = hasHub && typeof Hub.bridge === 'function' && Hub.bridge() >= 8;
+// On / Off switch (page 0.38.0, Su's wish), remembered on this device.
+const ntOn = () => { try { return localStorage.getItem('notifyOff') !== '1'; } catch { return true; } };
+function renderNotify() {
+  const box = $('s-notify'); if (!box) return;
+  const m = vaultMe(); if (!m || !hasHub) { box.innerHTML = ''; return; }
+  const ic = '<svg class="ri" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>', on = ntOn();
+  const sub = !NTB ? 'Update App Vault (above) to get notifications' : !on ? 'Off on this device' : Hub.notifyAllowed() ? 'You\'ll be told when the developer replies' : 'Tap Allow so Android can show them';
+  box.innerHTML = `<h5>Notifications</h5><div class="box"><div class="row"><span class="rl">${ic}<span>Notifications<small>${sub}</small></span></span>
+    <span style="display:flex;gap:10px;align-items:center">${NTB && on && !Hub.notifyAllowed() ? '<button class="ask-no small" id="nt-allow">Allow</button>' : ''}${NTB ? `<button class="switch${on ? ' on' : ''}" id="nt-sw" role="switch" aria-checked="${on}" aria-label="Notifications on or off"><i></i></button>` : ''}</span></div></div>`;
+  if ($('nt-allow')) $('nt-allow').onclick = () => Hub.askNotify();
+  if ($('nt-sw')) $('nt-sw').onclick = () => {
+    try { on ? localStorage.setItem('notifyOff', '1') : localStorage.removeItem('notifyOff'); } catch {}
+    if (on) Hub.notifyStop(); else { notifyStart(true); }
+    toast(on ? '🔕' : '🔔', on ? 'Notifications off' : 'Notifications on', on ? 'You won\'t be notified on this device.' : 'You\'ll be told when the developer replies.');
+    renderNotify();
+  };
+}
+function notifyStart(ask) {
+  if (!NTB || !gate.fb || !gate.uid || !ntOn()) return;
+  const u = gate.fb.auth.currentUser; if (!u) return;
+  Hub.notifySetup(FB_CONFIG.apiKey, u.refreshToken, gate.uid, 'user');
+  let asked = null; try { asked = localStorage.getItem('askedNotify'); } catch {}
+  if (!Hub.notifyAllowed() && (ask || !asked)) { try { localStorage.setItem('askedNotify', '1'); } catch {} Hub.askNotify(); }
+}
+window.onNotice = () => { if (!NTB) return; const o = Hub.takeOpen(); if (o === 'chat' || (o && o.startsWith('chat'))) setTimeout(() => { if (typeof rpOpen === 'function') rpOpen(); }, 300); };
+{ const base = gateApply; gateApply = function (d) { base(d); renderNotify(); if (d && d.status === 'approved') { notifyStart(); setTimeout(window.onNotice, 800); } else if (NTB && d && d.status !== 'pending') Hub.notifyStop(); }; }
+addEventListener('visibilitychange', () => { if (!document.hidden) renderNotify(); });
+renderNotify();
 </script>
 <script>
 // Studio preview: this same file lives in hub-next/ (Claude's test copy, opened from App Vault Studio) until Su presses Publish,
