@@ -27,8 +27,8 @@ Each app folder has a `NOTES.md` with more detail. Read it before starting work 
 
 | App | Folder | Current version | Status | Next to-do |
 |---|---|---|---|---|
-| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.20.0 (notifications; Beta channel; Messages fixes), app 0.7.0 (notifications) | testing | Su updates the Studio app, allows notifications, tests. Next: one version number for App Vault and Studio |
-| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.36.0 public, 0.37.0 in Studio (notifications when the developer replies); app 0.13.0 public, 0.14.0 in Studio (notifications) | testing | Su publishes App Vault app 0.14.0 and page 0.37.0 after trying them |
+| App Vault Studio | `studio/` (page) + `android/hubstudio/` (app) | page 0.20.1 (notifications with On/Off switch; Beta channel; Messages fixes), app 0.7.0 (notifications) | testing | Su updates the Studio app, allows notifications, tests. Next: one version number for App Vault and Studio |
+| App Vault | `hub/` (page) + `android/hub/` (app) | page 0.36.0 public, 0.38.0 in Studio (notifications when the developer replies, On/Off switch); app 0.13.0 public, 0.14.0 in Studio (notifications) | testing | Su publishes App Vault app 0.14.0 and page 0.38.0 after trying them |
 | Gambit (chess) | `apps/chess/` + `android/chess/` | 0.31.0 in Studio (0.27.0 public) | in progress | Puzzles (0.11 step of the plan), then stats and saved games, then 1.0 |
 | Quillsong | `apps/quillsong/` (icon only, source kept outside the repo) | 1.9.0 | testing | Su tests the Gentle voice power setting |
 | App Vault for Windows | `hub/` installed from Edge/Chrome | (uses the App Vault page) | in progress | PR #26 waits for Su's go |
